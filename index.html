@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Labyrinth | Final Fix</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #e8ebf2; 
+            font-family: 'Inter', sans-serif; color: #333;
+            user-select: none; -webkit-user-select: none;
+            overscroll-behavior: none;
+        }
+
+        #canvas-container {
+            width: 100%; height: 100%; display: block; cursor: grab;
+        }
+        #canvas-container:active { cursor: grabbing; }
+
+        /* UI Layers */
+        .ui-layer {
+            position: absolute; pointer-events: none;
+            width: 100%; height: 100%; top: 0; left: 0;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 40px; box-sizing: border-box; z-index: 5;
+            transition: opacity 0.3s;
+        }
+        .ui-layer.hidden { opacity: 0; pointer-events: none; }
+
+        /* Stats & HUD */
+        .header-row { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+        h1 { font-weight: 500; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6; margin: 0; color: #1a1a1a; }
+        .stats-container { text-align: right; display: flex; gap: 25px; }
+        .stat-item { display: flex; flex-direction: column; align-items: flex-end; }
+        .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; margin-bottom: 2px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #1a1a1a; font-variant-numeric: tabular-nums; }
+        .stat-value.gold { color: #d4af37; }
+        .stat-value.critical { color: #d32f2f; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .instruction {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.05); backdrop-filter: blur(10px);
+            padding: 12px 24px; border-radius: 30px; font-size: 12px; letter-spacing: 0.5px;
+            border: 1px solid rgba(0,0,0,0.1); color: rgba(0,0,0,0.6);
+        }
+
+        .boss-alert {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 48px; font-weight: 900; color: #d4af37; text-transform: uppercase;
+            letter-spacing: 5px; opacity: 0; pointer-events: none; transition: opacity 0.5s; text-align: center;
+        }
+        .boss-alert.visible { opacity: 1; animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .boss-sub { font-size: 14px; font-weight: 500; letter-spacing: 2px; color: #333; margin-top: 10px; }
+        @keyframes scaleIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+        /* SCREENS & OVERLAYS */
+        .screen-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(232, 235, 242, 0.85); backdrop-filter: blur(20px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; 
+            /* FIXED: Ensure invisible screens cannot be clicked */
+            pointer-events: none; 
+            z-index: 0;
+            transition: opacity 0.3s ease; 
+        }
+        
+        /* FIXED: Visible screens get high Z-index to cover everything else */
+        .screen-overlay.visible { 
+            opacity: 1; 
+            pointer-events: all; 
+            z-index: 20;
+        }
+
+        .modal-content {
+            text-align: center; width: 100%; max-width: 400px;
+            background: #fff; padding: 40px; border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        .screen-title { font-size: 32px; font-weight: 700; color: #1a1a1a; margin: 0; }
+        .screen-subtitle { font-size: 14px; color: #666; margin-bottom: 10px; }
+
+        .btn-row { display: flex; gap: 15px; justify-content: center; width: 100%; }
+        .btn {
+            border: none; padding: 16px 24px; font-size: 13px; letter-spacing: 1px;
+            text-transform: uppercase; border-radius: 12px; cursor: pointer;
+            font-family: 'Inter', sans-serif; font-weight: 600; transition: transform 0.2s, background 0.2s;
+            flex: 1; position: relative;
+        }
+        .btn:hover { transform: scale(1.03); }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #1a1a1a; color: #fff; }
+        .btn-gold { background: #d4af37; color: #fff; }
+        .btn-gold:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .btn-outline { background: transparent; border: 2px solid #e0e0e0; color: #555; }
+        .btn-outline:hover { border-color: #1a1a1a; color: #1a1a1a; }
+
+        /* Shop Grid */
+        .menu-stats {
+            display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;
+            padding: 15px; background: #f8f9fa; border-radius: 12px;
+        }
+        .menu-stat-val { font-size: 18px; font-weight: 700; color: #d4af37; }
+
+        .shop-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            max-height: 300px; overflow-y: auto; padding: 5px;
+            pointer-events: auto;
+            -webkit-overflow-scrolling: touch; 
+        }
+        
+        .shop-item {
+            background: #f5f5f5; border-radius: 12px; padding: 15px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            border: 2px solid transparent; cursor: pointer; transition: 0.2s;
+        }
+        .shop-item.active { border-color: #1a1a1a; background: #fff; }
+        .shop-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+        .color-preview { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+        .item-name { font-size: 12px; font-weight: 600; }
+        .item-price { font-size: 11px; color: #888; }
+        .item-owned { font-size: 10px; color: #00cc44; font-weight: 700; text-transform: uppercase; }
+
+        /* Confirm Modal - Higher Z-Index */
+        #confirm-modal { z-index: 30 !important; background: rgba(0,0,0,0.4); }
+        .confirm-box { 
+            background: #fff; padding: 30px; border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 90%; max-width: 300px; 
+        }
+        .cost-label { font-size: 10px; opacity: 0.8; margin-top: 4px; display: block; }
+
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="ui-layer hidden" id="game-ui">
+        <div class="header-row">
+            <h1>Inverted / Standard</h1>
+            <div class="stats-container">
+                <div class="stat-item"><div class="stat-label">Time</div><div class="stat-value" id="timer-display">∞</div></div>
+                <div class="stat-item"><div class="stat-label">Points</div><div class="stat-value gold" id="points-display">0</div></div>
+                <div class="stat-item"><div class="stat-label">Level</div><div class="stat-value" id="level-display">1</div></div>
+            </div>
+        </div>
+        <div class="boss-alert" id="boss-alert">GOLD RUSH<div class="boss-sub">Collect Data Shards</div></div>
+        <div class="instruction">Reach green light &middot; Collect Gold</div>
+    </div>
+
+    <div id="main-menu" class="screen-overlay visible">
+        <div class="modal-content">
+            <h2 class="screen-title">Labyrinth</h2>
+            <div class="screen-subtitle">Inverted Control Initiative</div>
+            <div class="menu-stats">
+                <div class="stat-item"><div class="stat-label">Gold Stash</div><div class="menu-stat-val" id="menu-gold">0</div></div>
+            </div>
+            <button class="btn btn-primary" id="play-btn">Play</button>
+            <button class="btn btn-outline" id="shop-btn">Shop</button>
+        </div>
+    </div>
+
+    <div id="shop-screen" class="screen-overlay">
+        <div class="modal-content">
+            <h2 class="screen-title">Fabrication</h2>
+            <div class="screen-subtitle">Equip or Synthesize Skins</div>
+            <div class="menu-stats" style="padding: 10px;">
+                <span class="menu-stat-val" id="shop-gold">0</span> <span style="font-size:12px; align-self:center;">PTS</span>
+            </div>
+            <div class="shop-grid" id="shop-grid"></div>
+            <button class="btn btn-primary" id="close-shop-btn" style="margin-top: 10px;">Back</button>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="screen-overlay">
+        <div class="confirm-box">
+            <h3 style="margin: 0 0 10px 0;">Confirm Purchase?</h3>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                Unlock <strong id="confirm-name">Skin</strong> for <span id="confirm-cost" style="color: #d4af37; font-weight: bold;">0</span> pts?
+            </p>
+            <div class="btn-row">
+                <button class="btn btn-outline" id="cancel-buy-btn">Cancel</button>
+                <button class="btn btn-gold" id="confirm-buy-btn">Buy</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="screen-overlay">
+        <div class="modal-content">
+            <h2 class="screen-title">Disconnected</h2>
+            <div class="screen-subtitle" id="go-desc">Level Failed</div>
+            <div class="btn-row">
+                <button class="btn btn-gold" id="continue-btn">Revive <span class="cost-label" id="revive-cost">100</span></button>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="restart-btn">Restart</button>
+                <button class="btn btn-outline" id="menu-return-btn">Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+        
+        // --- Configuration ---
+        const CONFIG = {
+            gridSize: 11, cellSize: 2, wallHeight: 1.2,
+            
+            // FIXED PHYSICS:
+            ballRadius: 0.42, 
+            
+            // DECOUPLED WALL SIZE:
+            // Visual size is 2.0 (matches cellSize) so there are NO GAPS.
+            // Hitbox size is 1.85 so the ball has wiggle room and doesn't snag.
+            wallHitboxSize: 1.85, 
+
+            tiltSpeed: 0.0025, maxTilt: 0.35, restitution: 0.4,
+            pointsPerLevel: 100, pointsPerArtifact: 250, pointsPerBossShard: 50,
+            baseTime: 60, timeDecrement: 5, minTime: 10,
+            bossInterval: 5, bossRoundDuration: 15
+        };
+
+        const SKINS = [
+            { id: 'default', name: 'Standard Red', color: 0xee4444, cost: 0 },
+            { id: 'blue', name: 'Cobalt', color: 0x2266cc, cost: 500 },
+            { id: 'gold', name: 'Midas', color: 0xffd700, cost: 2000 },
+            { id: 'void', name: 'Void', color: 0x111111, cost: 5000 },
+            { id: 'neon', name: 'Cyber Pink', color: 0xff00ff, cost: 1000 },
+            { id: 'ghost', name: 'Specter', color: 0xffffff, cost: 3000 },
+        ];
+
+        let playerData = { gold: 0, unlockedSkins: ['default'], equippedSkin: 'default' };
+
+        // --- State ---
+        let scene, camera, renderer;
+        let ball, mazeContainer, wallMaterial, ballMaterial;
+        let walls = [], artifacts = [];
+        let gameState = 'MENU'; 
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let targetRotation = { x: 0, z: 0 };
+        let currentRotation = { x: 0, z: 0 };
+        let velocity = { x: 0, z: 0 };
+        let goalArea;
+        let currentLevel = 1;
+        let isBossRound = false;
+        let levelStartTime = 0;
+        let currentLevelDuration = 0;
+        let pendingSkin = null;
+
+        function loadData() {
+            const saved = localStorage.getItem('labyrinth_save_v1');
+            if (saved) playerData = JSON.parse(saved);
+            updateMenuUI();
+        }
+        function saveData() {
+            localStorage.setItem('labyrinth_save_v1', JSON.stringify(playerData));
+            updateMenuUI();
+        }
+        function updateMenuUI() {
+            document.getElementById('menu-gold').innerText = playerData.gold;
+            document.getElementById('shop-gold').innerText = playerData.gold;
+            document.getElementById('points-display').innerText = playerData.gold;
+        }
+
+        function initShop() {
+            const grid = document.getElementById('shop-grid');
+            grid.innerHTML = '';
+            SKINS.forEach(skin => {
+                const isUnlocked = playerData.unlockedSkins.includes(skin.id);
+                const isEquipped = playerData.equippedSkin === skin.id;
+                const card = document.createElement('div');
+                card.className = `shop-item ${isEquipped ? 'active' : ''}`;
+                const colorHex = '#' + skin.color.toString(16).padStart(6, '0');
+                card.innerHTML = `
+                    <div class="color-preview" style="background-color: ${colorHex};"></div>
+                    <div class="item-name">${skin.name}</div>
+                    ${isUnlocked ? `<div class="item-owned">${isEquipped ? 'EQUIPPED' : 'OWNED'}</div>` : `<div class="item-price">${skin.cost} PTS</div>`}
+                `;
+                card.onclick = () => handleShopClick(skin);
+                grid.appendChild(card);
+            });
+        }
+
+        function handleShopClick(skin) {
+            if (playerData.unlockedSkins.includes(skin.id)) {
+                playerData.equippedSkin = skin.id;
+                updateBallSkin();
+                saveData();
+                initShop();
+            } else {
+                pendingSkin = skin;
+                document.getElementById('confirm-name').innerText = skin.name;
+                document.getElementById('confirm-cost').innerText = skin.cost;
+                document.getElementById('confirm-modal').classList.add('visible');
+            }
+        }
+
+        function confirmPurchase() {
+            if (pendingSkin && playerData.gold >= pendingSkin.cost) {
+                playerData.gold -= pendingSkin.cost;
+                playerData.unlockedSkins.push(pendingSkin.id);
+                playerData.equippedSkin = pendingSkin.id;
+                updateBallSkin();
+                saveData();
+                initShop();
+            }
+            closeConfirmation();
+        }
+
+        function closeConfirmation() {
+            pendingSkin = null;
+            document.getElementById('confirm-modal').classList.remove('visible');
+        }
+
+        function updateBallSkin() {
+            const skin = SKINS.find(s => s.id === playerData.equippedSkin);
+            if (skin && ballMaterial) {
+                ballMaterial.color.setHex(skin.color);
+                ballMaterial.emissive.setHex(skin.id === 'void' ? 0x000000 : 0x222222);
+            }
+        }
+
+        // --- Level Generation ---
+        function generateMaze(size) {
+            const grid = Array(size).fill().map(() => Array(size).fill(1));
+            const visited = Array(size).fill().map(() => Array(size).fill(false));
+            function carve(x, y) {
+                visited[y][x] = true;
+                grid[y][x] = 0;
+                const directions = [[0, -2], [0, 2], [-2, 0], [2, 0]].sort(() => Math.random() - 0.5);
+                for (let [dx, dy] of directions) {
+                    const nx = x + dx, ny = y + dy;
+                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && !visited[ny][nx]) {
+                        grid[y + dy/2][x + dx/2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+            carve(1, 1);
+            return grid;
+        }
+
+        function clearLevel() {
+            walls.forEach(w => mazeContainer.remove(w));
+            walls = [];
+            artifacts.forEach(a => mazeContainer.remove(a));
+            artifacts = [];
+        }
+
+        function buildStandardLevel() {
+            clearLevel();
+            isBossRound = false;
+            goalArea.visible = true;
+            const size = CONFIG.gridSize;
+            const grid = generateMaze(size);
+            const offset = (size * CONFIG.cellSize) / 2 - CONFIG.cellSize/2;
+
+            for(let y=0; y<size; y++){
+                for(let x=0; x<size; x++){
+                    if(grid[y][x] === 1) {
+                        // VISUAL MESH: Uses Full Cell Size (no gaps)
+                        const mesh = new THREE.Mesh(
+                            new RoundedBoxGeometry(CONFIG.cellSize, CONFIG.wallHeight, CONFIG.cellSize, 2, 0.1), 
+                            wallMaterial
+                        );
+                        mesh.position.set(x * CONFIG.cellSize - offset, CONFIG.wallHeight/2, y * CONFIG.cellSize - offset);
+                        mesh.castShadow = true; mesh.receiveShadow = true;
+                        mazeContainer.add(mesh);
+                        walls.push(mesh);
+                    }
+                }
+            }
+            goalArea.position.set((size-2) * CONFIG.cellSize - offset, 0.1, (size-2) * CONFIG.cellSize - offset);
+
+            let attempts = 0;
+            while (attempts < 50) {
+                const rx = Math.floor(Math.random() * (size-2)) + 1;
+                const ry = Math.floor(Math.random() * (size-2)) + 1;
+                if (grid[ry][rx] === 0) {
+                    const ax = rx * CONFIG.cellSize - offset;
+                    const az = ry * CONFIG.cellSize - offset;
+                    const distToGoal = Math.hypot(ax - goalArea.position.x, az - goalArea.position.z);
+                    const distToStart = Math.hypot(ax - (1 * CONFIG.cellSize - offset), az - (1 * CONFIG.cellSize - offset));
+                    if (distToGoal > 8 && distToStart > 4) {
+                        const artifact = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 1, roughness: 0.2, emissive: 0x443300}));
+                        artifact.position.set(ax, 0.5, az);
+                        artifact.userData = { type: 'artifact' };
+                        mazeContainer.add(artifact);
+                        artifacts.push(artifact);
+                        break;
+                    }
+                }
+                attempts++;
+            }
+            setupPhysicsAndTimer();
+        }
+
+        function buildBossLevel() {
+            clearLevel();
+            isBossRound = true;
+            goalArea.visible = false;
+            const alert = document.getElementById('boss-alert');
+            alert.classList.add('visible');
+            setTimeout(() => alert.classList.remove('visible'), 3000);
+            setupPhysicsAndTimer();
+            currentLevelDuration = CONFIG.bossRoundDuration * 1000;
+        }
+
+        function setupPhysicsAndTimer() {
+            const size = CONFIG.gridSize;
+            const offset = (size * CONFIG.cellSize) / 2 - CONFIG.cellSize/2;
+            velocity = { x: 0, z: 0 };
+            if(isBossRound) ball.position.set(0, CONFIG.ballRadius, 0);
+            else ball.position.set(1 * CONFIG.cellSize - offset, CONFIG.ballRadius, 1 * CONFIG.cellSize - offset);
+            
+            ball.rotation.set(0,0,0);
+            targetRotation = { x: 0, z: 0 };
+            currentRotation = { x: 0, z: 0 };
+            mazeContainer.rotation.set(0,0,0);
+
+            if (!isBossRound) {
+                if (currentLevel === 1) currentLevelDuration = Infinity;
+                else {
+                    let calc = CONFIG.baseTime - ((currentLevel - 2) * CONFIG.timeDecrement);
+                    currentLevelDuration = (calc < CONFIG.minTime ? CONFIG.minTime : calc) * 1000;
+                }
+            }
+            levelStartTime = Date.now();
+            updateGameUI();
+        }
+
+        function spawnBossShard() {
+            const limit = (CONFIG.gridSize * CONFIG.cellSize) / 2 - 2;
+            const x = (Math.random() * limit * 2) - limit;
+            const z = (Math.random() * limit * 2) - limit;
+            const shard = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x0044aa, metalness: 0.8 }));
+            shard.position.set(x, 0.5, z);
+            shard.rotation.set(Math.random(), Math.random(), Math.random());
+            shard.userData = { type: 'shard' };
+            mazeContainer.add(shard);
+            artifacts.push(shard);
+        }
+
+        // --- Physics ---
+        function updatePhysics() {
+            if (gameState !== 'PLAYING') return;
+
+            const g = 0.018; 
+            velocity.x += Math.sin(currentRotation.z) * g; velocity.x *= 0.97;
+            velocity.z += -Math.sin(currentRotation.x) * g; velocity.z *= 0.97;
+
+            let nextX = ball.position.x + velocity.x;
+            let nextZ = ball.position.z + velocity.z;
+
+            // Wall Collisions
+            if (!isBossRound) {
+                for (let wall of walls) {
+                    // PHYSICS HITBOX: Uses wallHitboxSize (smaller than visual)
+                    const halfSize = CONFIG.wallHitboxSize / 2 + CONFIG.ballRadius;
+                    const minX = wall.position.x - halfSize;
+                    const maxX = wall.position.x + halfSize;
+                    const minZ = wall.position.z - halfSize;
+                    const maxZ = wall.position.z + halfSize;
+
+                    if (nextX > minX && nextX < maxX && nextZ > minZ && nextZ < maxZ) {
+                        const inX = ball.position.x > minX && ball.position.x < maxX;
+                        const inZ = ball.position.z > minZ && ball.position.z < maxZ;
+                        if (!inX) { velocity.x *= -CONFIG.restitution; nextX = ball.position.x; }
+                        if (!inZ) { velocity.z *= -CONFIG.restitution; nextZ = ball.position.z; }
+                    }
+                }
+            } else {
+                const limit = (CONFIG.gridSize * CONFIG.cellSize) / 2 - 1;
+                if (Math.abs(nextX) > limit) { nextX = ball.position.x; velocity.x *= -0.8; }
+                if (Math.abs(nextZ) > limit) { nextZ = ball.position.z; velocity.z *= -0.8; }
+            }
+
+            const boundary = (CONFIG.gridSize * CONFIG.cellSize) / 2;
+            if (Math.abs(nextX) > boundary) { nextX = ball.position.x; velocity.x *= -0.5; }
+            if (Math.abs(nextZ) > boundary) { nextZ = ball.position.z; velocity.z *= -0.5; }
+
+            ball.position.x = nextX;
+            ball.position.z = nextZ;
+            ball.rotation.x -= velocity.z * 0.5;
+            ball.rotation.z += velocity.x * 0.5;
+
+            // Artifacts
+            for (let i = artifacts.length - 1; i >= 0; i--) {
+                const a = artifacts[i];
+                if (Math.hypot(ball.position.x - a.position.x, ball.position.z - a.position.z) < 1.0) {
+                    playerData.gold += (a.userData.type === 'artifact' ? CONFIG.pointsPerArtifact : CONFIG.pointsPerBossShard);
+                    mazeContainer.remove(a);
+                    artifacts.splice(i, 1);
+                    saveData();
+                }
+            }
+
+            if (!isBossRound && Math.hypot(ball.position.x - goalArea.position.x, ball.position.z - goalArea.position.z) < 0.8) {
+                completeLevel();
+            }
+        }
+
+        function checkTimer() {
+            if (gameState !== 'PLAYING' || currentLevelDuration === Infinity) {
+                if(currentLevelDuration === Infinity) document.getElementById('timer-display').innerText = "∞";
+                return;
+            }
+            const remaining = currentLevelDuration - (Date.now() - levelStartTime);
+            if (remaining <= 0) {
+                document.getElementById('timer-display').innerText = "00:00";
+                isBossRound ? completeLevel() : triggerGameOver();
+            } else {
+                const s = Math.ceil(remaining / 1000);
+                const el = document.getElementById('timer-display');
+                el.innerText = `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+                s <= 5 ? el.classList.add('critical') : el.classList.remove('critical');
+                if(isBossRound && Math.random() < 0.05 && artifacts.length < 10) spawnBossShard();
+            }
+        }
+
+        // --- Game Flow ---
+        function startNewGame() {
+            gameState = 'PLAYING';
+            currentLevel = 1;
+            document.getElementById('main-menu').classList.remove('visible');
+            document.getElementById('game-over-screen').classList.remove('visible');
+            document.getElementById('game-ui').classList.remove('hidden');
+            buildStandardLevel();
+        }
+
+        function completeLevel() {
+            if(!isBossRound) playerData.gold += CONFIG.pointsPerLevel;
+            saveData();
+            currentLevel++;
+            (currentLevel % CONFIG.bossInterval === 0) ? buildBossLevel() : buildStandardLevel();
+        }
+
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+            isDragging = false;
+            const cost = currentLevel * 50;
+            document.getElementById('go-desc').innerText = `Level ${currentLevel} Failed`;
+            document.getElementById('revive-cost').innerText = `${cost} pts`;
+            const btn = document.getElementById('continue-btn');
+            btn.disabled = playerData.gold < cost;
+            btn.onclick = () => {
+                if (playerData.gold >= cost) {
+                    playerData.gold -= cost;
+                    saveData();
+                    document.getElementById('game-over-screen').classList.remove('visible');
+                    gameState = 'PLAYING';
+                    setupPhysicsAndTimer();
+                }
+            };
+            document.getElementById('game-ui').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('visible');
+        }
+
+        function returnToMenu() {
+            gameState = 'MENU';
+            document.getElementById('game-over-screen').classList.remove('visible');
+            document.getElementById('shop-screen').classList.remove('visible');
+            document.getElementById('game-ui').classList.add('hidden');
+            document.getElementById('main-menu').classList.add('visible');
+            clearLevel();
+            buildStandardLevel();
+            ball.position.set(0, 0.5, 0);
+            mazeContainer.rotation.set(0,0,0);
+            targetRotation = {x:0, z:0};
+            currentRotation = {x:0, z:0};
+            updateMenuUI();
+        }
+
+        function updateGameUI() {
+            document.getElementById('level-display').innerText = currentLevel;
+            document.getElementById('points-display').innerText = playerData.gold;
+        }
+
+        // --- Setup ---
+        function init() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe8ebf2);
+            scene.fog = new THREE.FogExp2(0xe8ebf2, 0.02);
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.HemisphereLight(0xffffff, 0xffeedd, 1.2));
+            const dl = new THREE.DirectionalLight(0xffffff, 1.5);
+            dl.position.set(15, 30, 10); dl.castShadow = true;
+            dl.shadow.mapSize.width = 2048; dl.shadow.mapSize.height = 2048;
+            scene.add(dl);
+
+            wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.1 });
+            ballMaterial = new THREE.MeshStandardMaterial({ color: 0xee4444, metalness: 0.4, roughness: 0.3 });
+            
+            mazeContainer = new THREE.Group();
+            scene.add(mazeContainer);
+
+            const floorSize = CONFIG.gridSize * CONFIG.cellSize;
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(floorSize, 0.5, floorSize), 
+                new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, transmission: 0.9, thickness: 1.5, transparent: true, opacity: 0.1 }));
+            floor.position.y = -0.5; floor.receiveShadow = true;
+            mazeContainer.add(floor);
+
+            ball = new THREE.Mesh(new THREE.SphereGeometry(CONFIG.ballRadius, 32, 32), ballMaterial);
+            ball.castShadow = true; mazeContainer.add(ball);
+
+            goalArea = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.1, 32), new THREE.MeshBasicMaterial({ color: 0x00cc44, transparent: true, opacity: 0.6 }));
+            mazeContainer.add(goalArea);
+
+            loadData();
+            updateBallSkin();
+            buildStandardLevel();
+            
+            document.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
+            document.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, {passive: false});
+            document.addEventListener('mouseup', () => isDragging = false);
+            document.addEventListener('touchend', () => isDragging = false);
+            document.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+            
+            document.addEventListener('touchmove', (e) => { 
+                if (gameState === 'PLAYING') {
+                    e.preventDefault(); 
+                    handleMove(e.touches[0].clientX, e.touches[0].clientY); 
+                }
+            }, {passive: false});
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                updateCameraPos();
+            });
+
+            document.getElementById('play-btn').onclick = startNewGame;
+            document.getElementById('restart-btn').onclick = startNewGame;
+            document.getElementById('menu-return-btn').onclick = returnToMenu;
+            
+            document.getElementById('shop-btn').onclick = () => {
+                document.getElementById('main-menu').classList.remove('visible');
+                document.getElementById('shop-screen').classList.add('visible');
+                initShop();
+                gameState = 'SHOP';
+            };
+            document.getElementById('close-shop-btn').onclick = () => {
+                document.getElementById('shop-screen').classList.remove('visible');
+                document.getElementById('main-menu').classList.add('visible');
+                gameState = 'MENU';
+            };
+            
+            document.getElementById('confirm-buy-btn').onclick = confirmPurchase;
+            document.getElementById('cancel-buy-btn').onclick = closeConfirmation;
+
+            updateCameraPos();
+            animate();
+        }
+
+        function handleMove(cx, cy) {
+            if (gameState === 'PLAYING' && isDragging) {
+                const dx = cx - previousMousePosition.x;
+                const dy = cy - previousMousePosition.y;
+                targetRotation.z -= dx * CONFIG.tiltSpeed;
+                targetRotation.x -= dy * CONFIG.tiltSpeed;
+                targetRotation.z = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.z));
+                targetRotation.x = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.x));
+                previousMousePosition = { x: cx, y: cy };
+            }
+            const ndcX = (cx / window.innerWidth) * 2 - 1;
+            camera.position.x += (ndcX * 2 - camera.position.x) * 0.05;
+        }
+
+        function updateCameraPos() {
+            const aspect = window.innerWidth / window.innerHeight;
+            const sf = aspect < 1 ? 1/aspect : (aspect < 1.2 ? 1.2/aspect : 1);
+            camera.position.set(0, 30 * sf, 20 * sf);
+            camera.lookAt(0, 0, 0);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (gameState === 'PLAYING') {
+                checkTimer();
+                currentRotation.x += (targetRotation.x - currentRotation.x) * 0.1;
+                currentRotation.z += (targetRotation.z - currentRotation.z) * 0.1;
+                mazeContainer.rotation.x = currentRotation.x;
+                mazeContainer.rotation.z = currentRotation.z;
+                artifacts.forEach(a => { a.rotation.y += 0.02; a.rotation.x += 0.01; });
+                updatePhysics();
+            } else if (gameState === 'MENU' || gameState === 'SHOP') {
+                mazeContainer.rotation.y += 0.002;
+                mazeContainer.rotation.x = Math.sin(Date.now() * 0.0005) * 0.1;
+            }
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
