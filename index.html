@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Labyrinth | Final Fix</title>
+    <title>Axiomort | Inverted Reality</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Cinzel:wght@400;700&display=swap');
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -30,9 +30,10 @@
         }
         .ui-layer.hidden { opacity: 0; pointer-events: none; }
 
-        /* Stats & HUD */
+        /* HUD Headers */
         .header-row { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-        h1 { font-weight: 500; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6; margin: 0; color: #1a1a1a; }
+        h1 { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.6; margin: 0; color: #1a1a1a; }
+        
         .stats-container { text-align: right; display: flex; gap: 25px; }
         .stat-item { display: flex; flex-direction: column; align-items: flex-end; }
         .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; margin-bottom: 2px; }
@@ -41,13 +42,7 @@
         .stat-value.critical { color: #d32f2f; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .instruction {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.05); backdrop-filter: blur(10px);
-            padding: 12px 24px; border-radius: 30px; font-size: 12px; letter-spacing: 0.5px;
-            border: 1px solid rgba(0,0,0,0.1); color: rgba(0,0,0,0.6);
-        }
-
+        /* Boss Alert */
         .boss-alert {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             font-size: 48px; font-weight: 900; color: #d4af37; text-transform: uppercase;
@@ -62,30 +57,28 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(232, 235, 242, 0.85); backdrop-filter: blur(20px);
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; 
-            /* FIXED: Ensure invisible screens cannot be clicked */
-            pointer-events: none; 
-            z-index: 0;
+            opacity: 0; pointer-events: none; z-index: 0;
             transition: opacity 0.3s ease; 
         }
-        
-        /* FIXED: Visible screens get high Z-index to cover everything else */
-        .screen-overlay.visible { 
-            opacity: 1; 
-            pointer-events: all; 
-            z-index: 20;
-        }
+        .screen-overlay.visible { opacity: 1; pointer-events: all; z-index: 20; }
 
         .modal-content {
             text-align: center; width: 100%; max-width: 400px;
             background: #fff; padding: 40px; border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.1);
             display: flex; flex-direction: column; gap: 20px;
+            position: relative;
         }
 
-        .screen-title { font-size: 32px; font-weight: 700; color: #1a1a1a; margin: 0; }
-        .screen-subtitle { font-size: 14px; color: #666; margin-bottom: 10px; }
+        /* Typography */
+        .screen-title { 
+            font-family: 'Cinzel', serif; /* Fancy font for Axiomort */
+            font-size: 42px; font-weight: 700; color: #1a1a1a; margin: 0; 
+            letter-spacing: -1px;
+        }
+        .screen-subtitle { font-size: 14px; color: #666; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
 
+        /* Buttons */
         .btn-row { display: flex; gap: 15px; justify-content: center; width: 100%; }
         .btn {
             border: none; padding: 16px 24px; font-size: 13px; letter-spacing: 1px;
@@ -100,6 +93,8 @@
         .btn-gold:disabled { background: #ccc; cursor: not-allowed; transform: none; }
         .btn-outline { background: transparent; border: 2px solid #e0e0e0; color: #555; }
         .btn-outline:hover { border-color: #1a1a1a; color: #1a1a1a; }
+        .btn-text { background: transparent; color: #888; border: none; font-size: 11px; margin-top: 10px; }
+        .btn-text:hover { color: #333; text-decoration: underline; }
 
         /* Shop Grid */
         .menu-stats {
@@ -111,8 +106,7 @@
         .shop-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
             max-height: 300px; overflow-y: auto; padding: 5px;
-            pointer-events: auto;
-            -webkit-overflow-scrolling: touch; 
+            pointer-events: auto; -webkit-overflow-scrolling: touch; 
         }
         
         .shop-item {
@@ -128,13 +122,60 @@
         .item-price { font-size: 11px; color: #888; }
         .item-owned { font-size: 10px; color: #00cc44; font-weight: 700; text-transform: uppercase; }
 
-        /* Confirm Modal - Higher Z-Index */
-        #confirm-modal { z-index: 30 !important; background: rgba(0,0,0,0.4); }
-        .confirm-box { 
-            background: #fff; padding: 30px; border-radius: 16px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 90%; max-width: 300px; 
+        /* CREDITS Styles */
+        .credits-box {
+            background: #fafafa; border: 1px solid #eee; padding: 25px; border-radius: 12px;
+            margin-bottom: 20px;
         }
-        .cost-label { font-size: 10px; opacity: 0.8; margin-top: 4px; display: block; }
+        .axiom-def {
+            font-family: 'Times New Roman', serif; font-style: italic; font-size: 18px;
+            line-height: 1.6; color: #444; margin-bottom: 15px;
+        }
+        .axiom-def span { font-weight: bold; color: #1a1a1a; font-style: normal; font-family: 'Cinzel', serif; }
+        .creator-tag {
+            font-size: 12px; color: #888; font-family: 'Inter', sans-serif; letter-spacing: 1px;
+            border-top: 1px solid #ddd; padding-top: 15px; display: block;
+        }
+
+        /* TUTORIAL ANIMATION */
+        .tutorial-container {
+            position: relative; height: 150px; display: flex; align-items: center; justify-content: center;
+            background: #f4f4f4; border-radius: 12px; margin-bottom: 20px; overflow: hidden;
+        }
+        .hand-icon {
+            width: 40px; height: 40px; background: rgba(0,0,0,0.1); border-radius: 50%;
+            border: 2px solid #333; position: relative;
+            animation: dragGesture 2s infinite ease-in-out;
+        }
+        .hand-icon::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
+            background: #333; border-radius: 50%; transform: translate(-50%, -50%);
+        }
+        .arrow-indicator {
+            position: absolute; font-size: 24px; opacity: 0; color: #d4af37; font-weight: bold;
+        }
+        .arrow-up { top: 20px; animation: fadeUp 2s infinite; }
+        .arrow-down { bottom: 20px; animation: fadeDown 2s infinite; }
+
+        @keyframes dragGesture {
+            0% { transform: translateY(0) scale(1); background: rgba(0,0,0,0.1); }
+            50% { transform: translateY(40px) scale(0.9); background: rgba(0,0,0,0.2); } /* Drag Down */
+            100% { transform: translateY(0) scale(1); background: rgba(0,0,0,0.1); }
+        }
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(10px); }
+            50% { opacity: 1; transform: translateY(0); } /* Ball goes UP */
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        @keyframes fadeDown {
+            0% { opacity: 0; transform: translateY(-10px); } /* Hand goes DOWN */
+            50% { opacity: 0.5; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(10px); }
+        }
+
+        /* Z-Index Overrides */
+        #confirm-modal { z-index: 30 !important; background: rgba(0,0,0,0.4); }
+        .confirm-box { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 300px; }
 
     </style>
     <script type="importmap">
@@ -152,7 +193,7 @@
 
     <div class="ui-layer hidden" id="game-ui">
         <div class="header-row">
-            <h1>Inverted / Standard</h1>
+            <h1>Axiomort / Standard</h1>
             <div class="stats-container">
                 <div class="stat-item"><div class="stat-label">Time</div><div class="stat-value" id="timer-display">∞</div></div>
                 <div class="stat-item"><div class="stat-label">Points</div><div class="stat-value gold" id="points-display">0</div></div>
@@ -160,25 +201,65 @@
             </div>
         </div>
         <div class="boss-alert" id="boss-alert">GOLD RUSH<div class="boss-sub">Collect Data Shards</div></div>
-        <div class="instruction">Reach green light &middot; Collect Gold</div>
     </div>
 
     <div id="main-menu" class="screen-overlay visible">
         <div class="modal-content">
-            <h2 class="screen-title">Labyrinth</h2>
-            <div class="screen-subtitle">Inverted Control Initiative</div>
+            <h2 class="screen-title">Axiomort</h2>
+            <div class="screen-subtitle">Inverted Reality</div>
             <div class="menu-stats">
                 <div class="stat-item"><div class="stat-label">Gold Stash</div><div class="menu-stat-val" id="menu-gold">0</div></div>
             </div>
             <button class="btn btn-primary" id="play-btn">Play</button>
-            <button class="btn btn-outline" id="shop-btn">Shop</button>
+            <div class="btn-row">
+                <button class="btn btn-outline" id="shop-btn">Shop</button>
+                <button class="btn btn-outline" id="credits-btn">Credits</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tutorial-screen" class="screen-overlay">
+        <div class="modal-content">
+            <h2 class="screen-title" style="font-size: 24px;">Controls</h2>
+            <div class="screen-subtitle">How to survive</div>
+            
+            <div class="tutorial-container">
+                <div class="arrow-up">BALL MOVES UP</div>
+                <div class="hand-icon"></div>
+                <div class="arrow-down">DRAG DOWN</div>
+            </div>
+
+            <p style="font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 20px;">
+                The world is inverted. <br>
+                <strong>Drag Down</strong> to tilt forward.<br>
+                <strong>Drag Right</strong> to tilt left.
+            </p>
+
+            <button class="btn btn-primary" id="close-tutorial-btn">Understood</button>
+        </div>
+    </div>
+
+    <div id="credits-screen" class="screen-overlay">
+        <div class="modal-content">
+            <h2 class="screen-title" style="font-size: 28px;">Origins</h2>
+            <div class="screen-subtitle">File 001</div>
+            
+            <div class="credits-box">
+                <div class="axiom-def">
+                    <span>Axiomort</span>: Means Axiom + Mort. <br><br>
+                    The fundamental laws of existence & The annihilation of those laws.
+                </div>
+                <span class="creator-tag">This is a Demo test made by @BreadFlows</span>
+            </div>
+
+            <button class="btn btn-primary" id="close-credits-btn">Back</button>
         </div>
     </div>
 
     <div id="shop-screen" class="screen-overlay">
         <div class="modal-content">
-            <h2 class="screen-title">Fabrication</h2>
-            <div class="screen-subtitle">Equip or Synthesize Skins</div>
+            <h2 class="screen-title" style="font-size: 28px;">Fabrication</h2>
+            <div class="screen-subtitle">Equip Skins</div>
             <div class="menu-stats" style="padding: 10px;">
                 <span class="menu-stat-val" id="shop-gold">0</span> <span style="font-size:12px; align-self:center;">PTS</span>
             </div>
@@ -202,8 +283,8 @@
 
     <div id="game-over-screen" class="screen-overlay">
         <div class="modal-content">
-            <h2 class="screen-title">Disconnected</h2>
-            <div class="screen-subtitle" id="go-desc">Level Failed</div>
+            <h2 class="screen-title" style="font-size: 32px;">Voided</h2>
+            <div class="screen-subtitle" id="go-desc">Sequence Failed</div>
             <div class="btn-row">
                 <button class="btn btn-gold" id="continue-btn">Revive <span class="cost-label" id="revive-cost">100</span></button>
             </div>
@@ -221,15 +302,7 @@
         // --- Configuration ---
         const CONFIG = {
             gridSize: 11, cellSize: 2, wallHeight: 1.2,
-            
-            // FIXED PHYSICS:
-            ballRadius: 0.42, 
-            
-            // DECOUPLED WALL SIZE:
-            // Visual size is 2.0 (matches cellSize) so there are NO GAPS.
-            // Hitbox size is 1.85 so the ball has wiggle room and doesn't snag.
-            wallHitboxSize: 1.85, 
-
+            ballRadius: 0.42, wallHitboxSize: 1.85, // Decoupled size
             tiltSpeed: 0.0025, maxTilt: 0.35, restitution: 0.4,
             pointsPerLevel: 100, pointsPerArtifact: 250, pointsPerBossShard: 50,
             baseTime: 60, timeDecrement: 5, minTime: 10,
@@ -245,7 +318,7 @@
             { id: 'ghost', name: 'Specter', color: 0xffffff, cost: 3000 },
         ];
 
-        let playerData = { gold: 0, unlockedSkins: ['default'], equippedSkin: 'default' };
+        let playerData = { gold: 0, unlockedSkins: ['default'], equippedSkin: 'default', tutorialSeen: false };
 
         // --- State ---
         let scene, camera, renderer;
@@ -265,12 +338,12 @@
         let pendingSkin = null;
 
         function loadData() {
-            const saved = localStorage.getItem('labyrinth_save_v1');
+            const saved = localStorage.getItem('axiomort_save_v1');
             if (saved) playerData = JSON.parse(saved);
             updateMenuUI();
         }
         function saveData() {
-            localStorage.setItem('labyrinth_save_v1', JSON.stringify(playerData));
+            localStorage.setItem('axiomort_save_v1', JSON.stringify(playerData));
             updateMenuUI();
         }
         function updateMenuUI() {
@@ -337,7 +410,7 @@
             }
         }
 
-        // --- Level Generation ---
+        // --- Maze Logic ---
         function generateMaze(size) {
             const grid = Array(size).fill().map(() => Array(size).fill(1));
             const visited = Array(size).fill().map(() => Array(size).fill(false));
@@ -375,7 +448,6 @@
             for(let y=0; y<size; y++){
                 for(let x=0; x<size; x++){
                     if(grid[y][x] === 1) {
-                        // VISUAL MESH: Uses Full Cell Size (no gaps)
                         const mesh = new THREE.Mesh(
                             new RoundedBoxGeometry(CONFIG.cellSize, CONFIG.wallHeight, CONFIG.cellSize, 2, 0.1), 
                             wallMaterial
@@ -472,7 +544,6 @@
             // Wall Collisions
             if (!isBossRound) {
                 for (let wall of walls) {
-                    // PHYSICS HITBOX: Uses wallHitboxSize (smaller than visual)
                     const halfSize = CONFIG.wallHitboxSize / 2 + CONFIG.ballRadius;
                     const minX = wall.position.x - halfSize;
                     const maxX = wall.position.x + halfSize;
@@ -537,9 +608,20 @@
 
         // --- Game Flow ---
         function startNewGame() {
+            // Check Tutorial Status
+            if (!playerData.tutorialSeen) {
+                document.getElementById('main-menu').classList.remove('visible');
+                document.getElementById('tutorial-screen').classList.add('visible');
+                return; // Wait for user to click "Understood"
+            }
+            proceedToGame();
+        }
+
+        function proceedToGame() {
             gameState = 'PLAYING';
             currentLevel = 1;
             document.getElementById('main-menu').classList.remove('visible');
+            document.getElementById('tutorial-screen').classList.remove('visible');
             document.getElementById('game-over-screen').classList.remove('visible');
             document.getElementById('game-ui').classList.remove('hidden');
             buildStandardLevel();
@@ -577,6 +659,7 @@
             gameState = 'MENU';
             document.getElementById('game-over-screen').classList.remove('visible');
             document.getElementById('shop-screen').classList.remove('visible');
+            document.getElementById('credits-screen').classList.remove('visible');
             document.getElementById('game-ui').classList.add('hidden');
             document.getElementById('main-menu').classList.add('visible');
             clearLevel();
@@ -635,6 +718,7 @@
             updateBallSkin();
             buildStandardLevel();
             
+            // Listeners
             document.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
             document.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, {passive: false});
             document.addEventListener('mouseup', () => isDragging = false);
@@ -655,6 +739,7 @@
                 updateCameraPos();
             });
 
+            // UI Button Mapping
             document.getElementById('play-btn').onclick = startNewGame;
             document.getElementById('restart-btn').onclick = startNewGame;
             document.getElementById('menu-return-btn').onclick = returnToMenu;
@@ -665,12 +750,29 @@
                 initShop();
                 gameState = 'SHOP';
             };
+            document.getElementById('credits-btn').onclick = () => {
+                document.getElementById('main-menu').classList.remove('visible');
+                document.getElementById('credits-screen').classList.add('visible');
+                gameState = 'CREDITS';
+            };
             document.getElementById('close-shop-btn').onclick = () => {
                 document.getElementById('shop-screen').classList.remove('visible');
                 document.getElementById('main-menu').classList.add('visible');
                 gameState = 'MENU';
             };
+            document.getElementById('close-credits-btn').onclick = () => {
+                document.getElementById('credits-screen').classList.remove('visible');
+                document.getElementById('main-menu').classList.add('visible');
+                gameState = 'MENU';
+            };
             
+            // Tutorial Button
+            document.getElementById('close-tutorial-btn').onclick = () => {
+                playerData.tutorialSeen = true;
+                saveData();
+                proceedToGame();
+            };
+
             document.getElementById('confirm-buy-btn').onclick = confirmPurchase;
             document.getElementById('cancel-buy-btn').onclick = closeConfirmation;
 
@@ -709,7 +811,7 @@
                 mazeContainer.rotation.z = currentRotation.z;
                 artifacts.forEach(a => { a.rotation.y += 0.02; a.rotation.x += 0.01; });
                 updatePhysics();
-            } else if (gameState === 'MENU' || gameState === 'SHOP') {
+            } else if (['MENU', 'SHOP', 'CREDITS'].includes(gameState)) {
                 mazeContainer.rotation.y += 0.002;
                 mazeContainer.rotation.x = Math.sin(Date.now() * 0.0005) * 0.1;
             }
