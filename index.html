@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Axiomort | Early Alpha</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Cinzel:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Base Reset & Full-Bleed Setup */
+        /* Base Reset */
         * { box-sizing: border-box; }
         body, html {
             margin: 0; padding: 0; width: 100%;
@@ -19,7 +19,14 @@
             scroll-behavior: smooth;
         }
 
-        /* Architectural Grid Overlay for Light Sections */
+        /* Fluid Typography & Scaling */
+        :root {
+            /* clamp(min, preferred, max) ensures text never gets too small or too huge */
+            --title-size: clamp(40px, 8vw, 120px);
+            --subtitle-size: clamp(10px, 1.2vw, 18px);
+            --body-text: clamp(14px, 1.1vw, 18px);
+        }
+
         .grid-bg {
             background-image: 
                 linear-gradient(rgba(26, 26, 26, 0.03) 1px, transparent 1px),
@@ -27,195 +34,144 @@
             background-size: 40px 40px;
         }
 
-        /* Typography */
-        h1, h2, h3 { margin: 0; }
-        .title { 
-            font-family: 'Cinzel', serif; 
-            font-size: 8vw; 
-            font-weight: 700; 
-            color: #1a1a1a; 
-            letter-spacing: -2px;
-            line-height: 1;
-            text-transform: uppercase;
-        }
-        .subtitle { 
-            font-size: 1vw; 
-            color: #666; 
-            letter-spacing: 12px; 
-            text-transform: uppercase; 
-            margin-top: 10px;
-            font-family: 'Space Mono', monospace; /* Tech font */
-        }
-        .gold-text { color: #d4af37; font-weight: 700; }
-
-        /* Navigation Bar */
+        /* Navigation - Optimized for Mobile Tap */
         nav {
             position: fixed;
             top: 0; left: 0; width: 100%;
-            padding: 25px 50px;
+            padding: 15px 5%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(232, 235, 242, 0.8);
+            background: rgba(232, 235, 242, 0.85);
             backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(26, 26, 26, 0.05);
             z-index: 100;
         }
-        .nav-logo { font-family: 'Cinzel', serif; font-size: 24px; font-weight: 700; letter-spacing: 2px; }
+        .nav-logo { font-family: 'Cinzel', serif; font-size: clamp(18px, 2vw, 24px); font-weight: 700; letter-spacing: 2px; }
+        
+        .nav-links { display: flex; gap: clamp(15px, 3vw, 40px); }
         .nav-links a {
-            margin-left: 40px;
             text-decoration: none;
             color: #1a1a1a;
             font-family: 'Space Mono', monospace;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: color 0.3s;
+            letter-spacing: 1px;
             cursor: pointer;
-            position: relative;
+            white-space: nowrap;
         }
         .nav-links a:hover { color: #d4af37; }
-        /* Tech underline effect */
-        .nav-links a::after {
-            content: ''; position: absolute; width: 0%; height: 1px; bottom: -5px; left: 0;
-            background-color: #d4af37; transition: width 0.3s;
-        }
-        .nav-links a:hover::after { width: 100%; }
 
-        /* Buttons - IP Specific Vibe */
-        .btn {
-            border: none; 
-            padding: 20px 45px; 
-            font-size: 14px; 
-            letter-spacing: 4px;
-            text-transform: uppercase; 
-            cursor: pointer;
-            font-family: 'Space Mono', monospace; 
-            font-weight: 700; 
-            text-decoration: none;
-            display: inline-block;
-            position: relative;
-            overflow: hidden;
-            transition: color 0.3s, background 0.3s, transform 0.2s;
-        }
-        .btn-primary { 
-            background: #1a1a1a; 
-            color: #fff; 
-            border: 1px solid #1a1a1a;
-        }
-        /* Scanning Light Hover Effect */
-        .btn-primary::before {
-            content: '';
-            position: absolute; top: 0; left: -100%;
-            width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: skewX(-20deg);
-            transition: left 0.5s ease;
-        }
-        .btn-primary:hover::before { left: 150%; }
-        .btn-primary:active { transform: scale(0.98); }
-
-        /* Hero Section */
+        /* Hero Section - Height Adjusts for Mobile */
         .hero {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 0 20px;
-            position: relative;
+            padding: 100px 20px;
         }
+        .title { 
+            font-family: 'Cinzel', serif; 
+            font-size: var(--title-size);
+            font-weight: 700; 
+            color: #1a1a1a; 
+            letter-spacing: -1px;
+            line-height: 0.9;
+            text-transform: uppercase;
+        }
+        .subtitle { 
+            font-size: var(--subtitle-size);
+            color: #666; 
+            letter-spacing: clamp(4px, 0.8vw, 12px); 
+            text-transform: uppercase; 
+            margin-top: 15px;
+            font-family: 'Space Mono', monospace;
+        }
+
         .hero-desc {
             max-width: 600px;
-            font-size: 18px;
+            font-size: var(--body-text);
             color: #555;
             line-height: 1.6;
             margin: 40px 0;
         }
         .version-tag {
             font-family: 'Space Mono', monospace;
-            background: transparent;
             border: 1px solid #d4af37;
             color: #d4af37;
-            padding: 8px 20px;
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 30px;
+            padding: 6px 15px;
+            font-size: 10px;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
         }
 
-        /* Dark Media Section */
+        /* Buttons */
+        .btn {
+            border: none; 
+            padding: clamp(15px, 2vw, 20px) clamp(30px, 4vw, 50px); 
+            font-size: 13px; 
+            letter-spacing: 3px;
+            text-transform: uppercase; 
+            cursor: pointer;
+            font-family: 'Space Mono', monospace; 
+            font-weight: 700; 
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-primary { background: #1a1a1a; color: #fff; }
+        .btn-primary:hover { background: #d4af37; transform: translateY(-2px); }
+
+        /* Media Section - Stacked on Mobile, Side-by-Side on Desktop */
         .media-section {
             background-color: #0a0a0a;
             color: #fff;
-            padding: 120px 5%;
-            border-top: 1px solid #222;
-            border-bottom: 1px solid #222;
+            padding: 100px 5%;
         }
-        .media-section h2 {
-            font-family: 'Cinzel', serif;
-            font-size: 48px;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-        .media-section .subtitle { color: #888; margin-bottom: 60px; }
+        .media-section h2 { font-family: 'Cinzel', serif; font-size: clamp(28px, 4vw, 48px); margin-bottom: 10px; text-align: center;}
+        .media-section .subtitle { color: #888; margin-bottom: 50px; text-align: center;}
         
         .video-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            max-width: 1600px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         .video-wrapper {
             position: relative;
             padding-bottom: 56.25%; 
-            height: 0;
-            background: #050505;
-            border: 1px solid #222; /* Tech framing */
+            background: #000;
+            border: 1px solid #222;
         }
         .video-wrapper iframe {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
             border: none;
-            opacity: 0.7;
-            transition: opacity 0.4s, transform 0.4s;
-            filter: grayscale(20%);
-        }
-        .video-wrapper:hover iframe { 
-            opacity: 1; 
-            filter: grayscale(0%);
         }
 
-        /* Sign Up / Account Section */
+        /* Sign Up Section */
         .signup-section {
-            padding: 150px 5%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 100px 5%;
+            text-align: center;
             background: #fff;
         }
-        .signup-section h2 {
-            font-family: 'Cinzel', serif;
-            font-size: 48px;
-        }
+        .signup-section h2 { font-family: 'Cinzel', serif; font-size: clamp(28px, 4vw, 48px); }
+        
         .signup-form {
             display: flex;
-            flex-direction: column;
-            width: 100%;
-            max-width: 500px;
-            margin-top: 50px;
-            gap: 30px; 
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 600px;
+            margin: 40px auto 0;
+            gap: 20px; 
         }
         
-        /* Terminal Style Inputs */
-        .input-group {
-            position: relative;
-            width: 100%;
-        }
+        .input-group { position: relative; flex: 1 1 250px; }
         .input-group input {
             width: 100%;
             padding: 15px 0;
@@ -226,109 +182,51 @@
             font-size: 14px;
             color: #1a1a1a;
             outline: none;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s;
         }
-        .input-group input::placeholder {
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .input-group input:focus {
-            border-bottom-color: #d4af37;
-            padding-left: 15px; /* Cinematic indent on focus */
-        }
-        /* The glowing dot indicator */
-        .input-group::after {
-            content: '';
-            position: absolute;
-            right: 0; bottom: -2px;
-            width: 6px; height: 2px;
-            background: #d4af37;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .input-group input:focus ~ ::after { opacity: 1; }
+        .input-group input:focus { border-bottom-color: #d4af37; }
 
-        .signup-form .btn { width: 100%; margin-top: 20px; }
+        .signup-form .btn { flex: 1 1 100%; max-width: 300px; }
 
         /* Footer */
         footer {
             background: #0a0a0a;
             color: #444;
             text-align: center;
-            padding: 60px 20px;
+            padding: 50px 20px;
             font-family: 'Space Mono', monospace;
-            font-size: 11px;
+            font-size: 10px;
             letter-spacing: 2px;
-            text-transform: uppercase;
         }
 
-        /* --- LOGIN MODAL STYLES --- */
+        /* Modal - Sharp & Focused */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.95); /* Darker, starker backdrop */
-            display: none; 
-            justify-content: center;
-            align-items: center;
+            background: rgba(10, 10, 10, 0.98);
+            display: none; justify-content: center; align-items: center;
             z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
-        .modal-overlay.active {
-            display: flex;
-            opacity: 1;
-        }
+        .modal-overlay.active { display: flex; }
         .modal-card {
-            background: #1a1a1a; /* Inverted for login */
-            padding: 60px 50px;
-            width: 90%;
-            max-width: 450px;
-            position: relative;
-            box-shadow: 0 0 0 1px #333, 0 25px 50px rgba(0,0,0,0.8);
-        }
-        .close-btn {
-            position: absolute;
-            top: 20px; right: 25px;
-            font-size: 28px;
-            color: #666;
-            cursor: pointer;
-            line-height: 1;
-            transition: color 0.2s;
-            font-family: 'Space Mono', monospace;
-        }
-        .close-btn:hover { color: #d4af37; }
-        
-        .modal-card h2 {
-            font-family: 'Cinzel', serif;
-            font-size: 32px;
-            margin-bottom: 40px;
-            color: #fff;
+            background: #1a1a1a;
+            padding: clamp(30px, 5vw, 60px);
+            width: 90%; max-width: 400px;
             text-align: center;
+            border: 1px solid #333;
         }
-        
-        /* Dark Terminal Inputs for Modal */
-        .modal-card .input-group input {
-            color: #fff;
-            border-bottom: 1px solid #444;
+        .modal-card h2 { font-family: 'Cinzel', serif; color: #fff; margin-bottom: 30px; }
+        .modal-card input {
+            width: 100%; padding: 15px; margin-bottom: 15px;
+            background: transparent; border: 1px solid #444;
+            color: #fff; font-family: 'Space Mono', monospace;
         }
-        .modal-card .input-group input:focus {
-            border-bottom-color: #d4af37;
-        }
-        .modal-card .btn {
-            background: #d4af37;
-            color: #1a1a1a;
-            border: none;
-        }
-        .modal-card .btn:hover { background: #fff; }
 
-        /* Responsive */
-        @media (max-width: 900px) {
-            .title { font-size: 60px; }
-            .subtitle { font-size: 14px; letter-spacing: 4px; }
-            .video-grid { grid-template-columns: 1fr; }
-            .nav-links { display: none; } 
-            .signup-section { padding: 100px 5%; }
+        /* Responsive Breakpoints */
+        @media (max-aspect-ratio: 1/1) {
+            /* Portrait mode adjustments (Phones) */
+            .nav-links { display: none; } /* Simplified Nav for mobile */
+            .hero { padding-top: 150px; }
         }
     </style>
 </head>
@@ -337,7 +235,7 @@
     <nav>
         <div class="nav-logo">AXIOMORT</div>
         <div class="nav-links">
-            <a href="#media">Dev Logs</a>
+            <a href="#media">Logs</a>
             <a href="#register">Register</a>
             <a onclick="openLogin()">Login</a>
             <a href="game.html" style="color: #d4af37;">Play Demo</a>
@@ -357,37 +255,31 @@
     </section>
 
     <section id="media" class="media-section">
-        <div style="text-align: center;">
-            <h2>Development Logs</h2>
-            <div class="subtitle">SIGNAL_404 // DIMENSIONAL EXTRACTS</div>
-        </div>
+        <h2>Development Logs</h2>
+        <div class="subtitle">SIGNAL_404 // DIMENSIONAL EXTRACTS</div>
         
         <div class="video-grid">
             <div class="video-wrapper">
-                <iframe src="https://www.youtube.com/embed/uSZg3YSKZYQ?autoplay=0&rel=0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe src="https://www.youtube.com/embed/uSZg3YSKZYQ?autoplay=0&rel=0" allowfullscreen></iframe>
             </div>
             <div class="video-wrapper">
-                <iframe src="https://www.youtube.com/embed/bLUE7sG7KbU?autoplay=0&rel=0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe src="https://www.youtube.com/embed/bLUE7sG7KbU?autoplay=0&rel=0" allowfullscreen></iframe>
             </div>
         </div>
     </section>
 
     <section id="register" class="signup-section grid-bg">
         <h2>Create Profile</h2>
-        <div class="subtitle" style="color: #888;">System Registration</div>
+        <div class="subtitle">System Registration</div>
         
-        <p style="color: #555; max-width: 600px; text-align: center; margin: 0 auto; line-height: 1.6;">
-            Register a pilot account to save your in-game progress, secure your collected Data Shards, and retain your skin unlocks across all devices.
+        <p style="color: #555; max-width: 600px; margin: 30px auto; line-height: 1.6;">
+            Register a pilot account to save your in-game progress and secure your collected Data Shards.
         </p>
 
         <form class="signup-form" onsubmit="alert('Account creation is not available yet.'); return false;">
-            <div class="input-group">
-                <input type="text" name="username" placeholder="Enter Username" required>
-            </div>
-            <div class="input-group">
-                <input type="password" name="password" placeholder="Enter Password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Register Account</button>
+            <div class="input-group"><input type="text" placeholder="Username" required></div>
+            <div class="input-group"><input type="password" placeholder="Password" required></div>
+            <button type="submit" class="btn btn-primary">Register</button>
         </form>
     </section>
 
@@ -398,36 +290,22 @@
 
     <div id="loginModal" class="modal-overlay">
         <div class="modal-card">
-            <span class="close-btn" onclick="closeLogin()">&times;</span>
-            
+            <div style="text-align: right; color: #666; cursor: pointer;" onclick="closeLogin()">[CLOSE]</div>
             <h2>System Login</h2>
-            
-            <form class="login-form" onsubmit="alert('Login system is not available yet.'); return false;">
-                <div class="input-group">
-                    <input type="text" placeholder="Username" required>
-                </div>
-                <div class="input-group">
-                    <input type="password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="btn btn-gold" style="margin-top: 30px;">Authenticate</button>
+            <form onsubmit="alert('Login system is not available yet.'); return false;">
+                <input type="text" placeholder="USERNAME" required>
+                <input type="password" placeholder="PASSWORD" required>
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: #d4af37; color: #000;">Authenticate</button>
             </form>
         </div>
     </div>
 
     <script>
-        function openLogin() {
-            document.getElementById('loginModal').classList.add('active');
-        }
-
-        function closeLogin() {
-            document.getElementById('loginModal').classList.remove('active');
-        }
-
+        function openLogin() { document.getElementById('loginModal').classList.add('active'); }
+        function closeLogin() { document.getElementById('loginModal').classList.remove('active'); }
         window.onclick = function(event) {
             let modal = document.getElementById('loginModal');
-            if (event.target == modal) {
-                closeLogin();
-            }
+            if (event.target == modal) closeLogin();
         }
     </script>
 
