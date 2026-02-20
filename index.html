@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Axiomort | Inverted Reality</title>
+    <title>Axiomort | Inverted Reality (WebGPU Edition)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Cinzel:wght@400;700&display=swap');
 
@@ -181,8 +181,9 @@
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+                "three/webgpu": "https://unpkg.com/three@latest/build/three.webgpu.js",
+                "three": "https://unpkg.com/three@latest/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
             }
         }
     </script>
@@ -296,13 +297,14 @@
     </div>
 
     <script type="module">
-        import * as THREE from 'three';
+        // WEBGPU FIX 2: Explicitly import from the new three/webgpu path
+        import * as THREE from 'three/webgpu';
         import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
         
         // --- Configuration ---
         const CONFIG = {
             gridSize: 11, cellSize: 2, wallHeight: 1.2,
-            ballRadius: 0.42, wallHitboxSize: 1.85, // Decoupled size
+            ballRadius: 0.42, wallHitboxSize: 1.85, 
             tiltSpeed: 0.0025, maxTilt: 0.35, restitution: 0.4,
             pointsPerLevel: 100, pointsPerArtifact: 250, pointsPerBossShard: 50,
             baseTime: 60, timeDecrement: 5, minTime: 10,
@@ -676,14 +678,16 @@
             document.getElementById('points-display').innerText = playerData.gold;
         }
 
-        // --- Setup ---
-        function init() {
+        // WEBGPU FIX 3: Turn the init function into an async function
+        async function init() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xe8ebf2);
             scene.fog = new THREE.FogExp2(0xe8ebf2, 0.02);
             camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            
+            // WEBGPU FIX 4: Call the new WebGPURenderer instead of WebGLRenderer
+            renderer = new THREE.WebGPURenderer({ antialias: true, alpha: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
@@ -777,6 +781,9 @@
             document.getElementById('cancel-buy-btn').onclick = closeConfirmation;
 
             updateCameraPos();
+
+            // WEBGPU FIX 5: Await the renderer initialization before kicking off the animation loop
+            await renderer.init();
             animate();
         }
 
@@ -818,7 +825,8 @@
             renderer.render(scene, camera);
         }
 
-        init();
+        // WEBGPU FIX 6: Since init() is now async, we await it here at the root level!
+        await init();
     </script>
 </body>
 </html>
