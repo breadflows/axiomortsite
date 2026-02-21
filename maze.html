@@ -763,11 +763,27 @@
             container.appendChild(renderer.domElement);
 
             scene.add(new THREE.HemisphereLight(0xffffff, 0xffeedd, 1.2));
+            
+            // Create the main light
             const dl = new THREE.DirectionalLight(0xffffff, 1.5);
-            dl.position.set(15, 30, 10); dl.castShadow = true;
-            dl.shadow.mapSize.width = 1024; // Lowered to 1024 for a massive performance boost
+            
+            // Position it relative to the camera (like a headlamp)
+            dl.position.set(5, 10, 5); 
+            dl.castShadow = true;
+            
+            // Fix the shadow box size so it covers the whole maze board
+            const shadowSize = 20;
+            dl.shadow.camera.left = -shadowSize;
+            dl.shadow.camera.right = shadowSize;
+            dl.shadow.camera.top = shadowSize;
+            dl.shadow.camera.bottom = -shadowSize;
+            
+            dl.shadow.mapSize.width = 1024;
             dl.shadow.mapSize.height = 1024;
-            scene.add(dl);
+
+            // ATTACH LIGHT TO CAMERA: This ensures the board is always lit
+            camera.add(dl);
+            scene.add(camera);
 
             wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.1 });
             ballMaterial = new THREE.MeshStandardMaterial({ color: 0xee4444, metalness: 0.4, roughness: 0.3 });
