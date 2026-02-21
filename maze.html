@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Axiomort | Inverted Reality (WebGPU Edition)</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Cinzel:wght@400;700&display=swap');
 
@@ -72,7 +73,7 @@
 
         /* Typography */
         .screen-title { 
-            font-family: 'Cinzel', serif; /* Fancy font for Axiomort */
+            font-family: 'Cinzel', serif; 
             font-size: 42px; font-weight: 700; color: #1a1a1a; margin: 0; 
             letter-spacing: -1px;
         }
@@ -159,16 +160,16 @@
 
         @keyframes dragGesture {
             0% { transform: translateY(0) scale(1); background: rgba(0,0,0,0.1); }
-            50% { transform: translateY(40px) scale(0.9); background: rgba(0,0,0,0.2); } /* Drag Down */
+            50% { transform: translateY(40px) scale(0.9); background: rgba(0,0,0,0.2); }
             100% { transform: translateY(0) scale(1); background: rgba(0,0,0,0.1); }
         }
         @keyframes fadeUp {
             0% { opacity: 0; transform: translateY(10px); }
-            50% { opacity: 1; transform: translateY(0); } /* Ball goes UP */
+            50% { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(-10px); }
         }
         @keyframes fadeDown {
-            0% { opacity: 0; transform: translateY(-10px); } /* Hand goes DOWN */
+            0% { opacity: 0; transform: translateY(-10px); } 
             50% { opacity: 0.5; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(10px); }
         }
@@ -297,9 +298,7 @@
     </div>
 
     <script type="module">
-        // WEBGPU FIX 2: Explicitly import from the new three/webgpu path
         import * as THREE from 'three/webgpu';
-        import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
         
         // --- Configuration ---
         const CONFIG = {
@@ -308,7 +307,9 @@
             tiltSpeed: 0.0025, maxTilt: 0.35, restitution: 0.4,
             pointsPerLevel: 100, pointsPerArtifact: 250, pointsPerBossShard: 50,
             baseTime: 60, timeDecrement: 5, minTime: 10,
-            bossInterval: 5, bossRoundDuration: 15
+            bossInterval: 5, bossRoundDuration: 15,
+            saveKey: 'axiomort_save_v2',
+            encryptionSalt: 'Axiomort_2026_Secret' 
         };
 
         const SKINS = [
@@ -338,16 +339,47 @@
         let levelStartTime = 0;
         let currentLevelDuration = 0;
         let pendingSkin = null;
+        let lastFrameTime = 0; 
+        let wallInstancedMesh = null; 
+
+        // --- Security / Obfuscation ---
+        function obfuscateData(data) {
+            const str = JSON.stringify(data);
+            let encoded = '';
+            for(let i = 0; i < str.length; i++) {
+                encoded += String.fromCharCode(str.charCodeAt(i) ^ CONFIG.encryptionSalt.charCodeAt(i % CONFIG.encryptionSalt.length));
+            }
+            return btoa(encoded);
+        }
+
+        function deobfuscateData(hash) {
+            try {
+                const decoded = atob(hash);
+                let str = '';
+                for(let i = 0; i < decoded.length; i++) {
+                    str += String.fromCharCode(decoded.charCodeAt(i) ^ CONFIG.encryptionSalt.charCodeAt(i % CONFIG.encryptionSalt.length));
+                }
+                return JSON.parse(str);
+            } catch (e) {
+                console.warn("Save file corrupted or tampered with. Resetting.");
+                return null;
+            }
+        }
 
         function loadData() {
-            const saved = localStorage.getItem('axiomort_save_v1');
-            if (saved) playerData = JSON.parse(saved);
+            const saved = localStorage.getItem(CONFIG.saveKey);
+            if (saved) {
+                const parsed = deobfuscateData(saved);
+                if (parsed) playerData = parsed;
+            }
             updateMenuUI();
         }
+
         function saveData() {
-            localStorage.setItem('axiomort_save_v1', JSON.stringify(playerData));
+            localStorage.setItem(CONFIG.saveKey, obfuscateData(playerData));
             updateMenuUI();
         }
+
         function updateMenuUI() {
             document.getElementById('menu-gold').innerText = playerData.gold;
             document.getElementById('shop-gold').innerText = playerData.gold;
@@ -433,9 +465,19 @@
         }
 
         function clearLevel() {
-            walls.forEach(w => mazeContainer.remove(w));
+            if (wallInstancedMesh) {
+                mazeContainer.remove(wallInstancedMesh);
+                if (wallInstancedMesh.geometry) wallInstancedMesh.geometry.dispose();
+                wallInstancedMesh.dispose();
+                wallInstancedMesh = null;
+            }
             walls = [];
-            artifacts.forEach(a => mazeContainer.remove(a));
+            
+            artifacts.forEach(a => {
+                mazeContainer.remove(a);
+                if (a.geometry) a.geometry.dispose();
+                if (a.material) a.material.dispose();
+            });
             artifacts = [];
         }
 
@@ -447,20 +489,43 @@
             const grid = generateMaze(size);
             const offset = (size * CONFIG.cellSize) / 2 - CONFIG.cellSize/2;
 
+            // 1. Count how many walls we need
+            let wallCount = 0;
+            for(let y=0; y<size; y++){
+                for(let x=0; x<size; x++){
+                    if(grid[y][x] === 1) wallCount++;
+                }
+            }
+
+            // 2. Create ONE InstancedMesh for all walls (Replaced heavy RoundedBox with standard Box)
+            const sharedGeo = new THREE.BoxGeometry(CONFIG.cellSize, CONFIG.wallHeight, CONFIG.cellSize);
+            wallInstancedMesh = new THREE.InstancedMesh(sharedGeo, wallMaterial, wallCount);
+            wallInstancedMesh.castShadow = true; 
+            wallInstancedMesh.receiveShadow = true;
+            mazeContainer.add(wallInstancedMesh);
+
+            // 3. Position each instance and save lightweight collision data
+            const matrix = new THREE.Matrix4();
+            let instanceIndex = 0;
+
             for(let y=0; y<size; y++){
                 for(let x=0; x<size; x++){
                     if(grid[y][x] === 1) {
-                        const mesh = new THREE.Mesh(
-                            new RoundedBoxGeometry(CONFIG.cellSize, CONFIG.wallHeight, CONFIG.cellSize, 2, 0.1), 
-                            wallMaterial
-                        );
-                        mesh.position.set(x * CONFIG.cellSize - offset, CONFIG.wallHeight/2, y * CONFIG.cellSize - offset);
-                        mesh.castShadow = true; mesh.receiveShadow = true;
-                        mazeContainer.add(mesh);
-                        walls.push(mesh);
+                        const px = x * CONFIG.cellSize - offset;
+                        const py = CONFIG.wallHeight / 2;
+                        const pz = y * CONFIG.cellSize - offset;
+                        
+                        matrix.setPosition(px, py, pz);
+                        wallInstancedMesh.setMatrixAt(instanceIndex, matrix);
+                        
+                        walls.push({ x: px, z: pz });
+                        
+                        instanceIndex++;
                     }
                 }
             }
+
+            // 4. Set Goal and spawn artifacts
             goalArea.position.set((size-2) * CONFIG.cellSize - offset, 0.1, (size-2) * CONFIG.cellSize - offset);
 
             let attempts = 0;
@@ -533,24 +598,29 @@
         }
 
         // --- Physics ---
-        function updatePhysics() {
+        function updatePhysics(dt) {
             if (gameState !== 'PLAYING') return;
 
-            const g = 0.018; 
-            velocity.x += Math.sin(currentRotation.z) * g; velocity.x *= 0.97;
-            velocity.z += -Math.sin(currentRotation.x) * g; velocity.z *= 0.97;
+            const g = 1.08 * dt; 
+            
+            velocity.x += Math.sin(currentRotation.z) * g; 
+            velocity.z += -Math.sin(currentRotation.x) * g; 
+            
+            const friction = Math.pow(0.97, dt * 60);
+            velocity.x *= friction;
+            velocity.z *= friction;
 
-            let nextX = ball.position.x + velocity.x;
-            let nextZ = ball.position.z + velocity.z;
+            let nextX = ball.position.x + (velocity.x * dt * 60);
+            let nextZ = ball.position.z + (velocity.z * dt * 60);
 
             // Wall Collisions
             if (!isBossRound) {
                 for (let wall of walls) {
                     const halfSize = CONFIG.wallHitboxSize / 2 + CONFIG.ballRadius;
-                    const minX = wall.position.x - halfSize;
-                    const maxX = wall.position.x + halfSize;
-                    const minZ = wall.position.z - halfSize;
-                    const maxZ = wall.position.z + halfSize;
+                    const minX = wall.x - halfSize;
+                    const maxX = wall.x + halfSize;
+                    const minZ = wall.z - halfSize;
+                    const maxZ = wall.z + halfSize;
 
                     if (nextX > minX && nextX < maxX && nextZ > minZ && nextZ < maxZ) {
                         const inX = ball.position.x > minX && ball.position.x < maxX;
@@ -571,8 +641,9 @@
 
             ball.position.x = nextX;
             ball.position.z = nextZ;
-            ball.rotation.x -= velocity.z * 0.5;
-            ball.rotation.z += velocity.x * 0.5;
+            
+            ball.rotation.x -= (velocity.z * dt * 60) * 0.5;
+            ball.rotation.z += (velocity.x * dt * 60) * 0.5;
 
             // Artifacts
             for (let i = artifacts.length - 1; i >= 0; i--) {
@@ -610,11 +681,10 @@
 
         // --- Game Flow ---
         function startNewGame() {
-            // Check Tutorial Status
             if (!playerData.tutorialSeen) {
                 document.getElementById('main-menu').classList.remove('visible');
                 document.getElementById('tutorial-screen').classList.add('visible');
-                return; // Wait for user to click "Understood"
+                return; 
             }
             proceedToGame();
         }
@@ -678,7 +748,6 @@
             document.getElementById('points-display').innerText = playerData.gold;
         }
 
-        // WEBGPU FIX 3: Turn the init function into an async function
         async function init() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
@@ -686,10 +755,9 @@
             scene.fog = new THREE.FogExp2(0xe8ebf2, 0.02);
             camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
             
-            // WEBGPU FIX 4: Call the new WebGPURenderer instead of WebGLRenderer
             renderer = new THREE.WebGPURenderer({ antialias: true, alpha: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Capped at 1.5 for performance
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
@@ -697,7 +765,8 @@
             scene.add(new THREE.HemisphereLight(0xffffff, 0xffeedd, 1.2));
             const dl = new THREE.DirectionalLight(0xffffff, 1.5);
             dl.position.set(15, 30, 10); dl.castShadow = true;
-            dl.shadow.mapSize.width = 2048; dl.shadow.mapSize.height = 2048;
+            dl.shadow.mapSize.width = 1024; // Lowered to 1024 for a massive performance boost
+            dl.shadow.mapSize.height = 1024;
             scene.add(dl);
 
             wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.1 });
@@ -707,8 +776,11 @@
             scene.add(mazeContainer);
 
             const floorSize = CONFIG.gridSize * CONFIG.cellSize;
-            const floor = new THREE.Mesh(new THREE.BoxGeometry(floorSize, 0.5, floorSize), 
-                new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, transmission: 0.9, thickness: 1.5, transparent: true, opacity: 0.1 }));
+            // Highly optimized solid floor replacing the heavy transmission glass
+            const floor = new THREE.Mesh(
+                new THREE.BoxGeometry(floorSize, 0.5, floorSize), 
+                new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.1, metalness: 0.2 })
+            );
             floor.position.y = -0.5; floor.receiveShadow = true;
             mazeContainer.add(floor);
 
@@ -722,7 +794,6 @@
             updateBallSkin();
             buildStandardLevel();
             
-            // Listeners
             document.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
             document.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, {passive: false});
             document.addEventListener('mouseup', () => isDragging = false);
@@ -743,7 +814,6 @@
                 updateCameraPos();
             });
 
-            // UI Button Mapping
             document.getElementById('play-btn').onclick = startNewGame;
             document.getElementById('restart-btn').onclick = startNewGame;
             document.getElementById('menu-return-btn').onclick = returnToMenu;
@@ -770,7 +840,6 @@
                 gameState = 'MENU';
             };
             
-            // Tutorial Button
             document.getElementById('close-tutorial-btn').onclick = () => {
                 playerData.tutorialSeen = true;
                 saveData();
@@ -782,50 +851,79 @@
 
             updateCameraPos();
 
-            // WEBGPU FIX 5: Await the renderer initialization before kicking off the animation loop
             await renderer.init();
+            lastFrameTime = performance.now();
             animate();
-        }
-
-        function handleMove(cx, cy) {
-            if (gameState === 'PLAYING' && isDragging) {
-                const dx = cx - previousMousePosition.x;
-                const dy = cy - previousMousePosition.y;
-                targetRotation.z -= dx * CONFIG.tiltSpeed;
-                targetRotation.x -= dy * CONFIG.tiltSpeed;
-                targetRotation.z = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.z));
-                targetRotation.x = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.x));
-                previousMousePosition = { x: cx, y: cy };
-            }
-            const ndcX = (cx / window.innerWidth) * 2 - 1;
-            camera.position.x += (ndcX * 2 - camera.position.x) * 0.05;
         }
 
         function updateCameraPos() {
             const aspect = window.innerWidth / window.innerHeight;
-            const sf = aspect < 1 ? 1/aspect : (aspect < 1.2 ? 1.2/aspect : 1);
-            camera.position.set(0, 30 * sf, 20 * sf);
+            
+            let targetY = 30;
+            let targetZ = 20;
+
+            if (aspect < 1.0) {
+                targetY /= aspect;
+                targetZ /= aspect;
+            } else if (aspect > 2.3) {
+                targetY *= 0.85;
+                targetZ *= 0.85;
+            }
+
+            camera.position.set(0, targetY, targetZ);
             camera.lookAt(0, 0, 0);
+        }
+
+        function handleMove(cx, cy) {
+            if (gameState === 'PLAYING' && isDragging) {
+                const dx = (cx - previousMousePosition.x) / window.innerWidth;
+                const dy = (cy - previousMousePosition.y) / window.innerHeight;
+                
+                const normalizedSensitivity = 3.5; 
+                
+                targetRotation.z -= dx * normalizedSensitivity;
+                targetRotation.x -= dy * normalizedSensitivity;
+                
+                targetRotation.z = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.z));
+                targetRotation.x = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.x));
+                
+                previousMousePosition = { x: cx, y: cy };
+            }
+            
+            const ndcX = (cx / window.innerWidth) * 2 - 1;
+            camera.position.x += (ndcX * 2 - camera.position.x) * 0.05;
         }
 
         function animate() {
             requestAnimationFrame(animate);
+            
+            const now = performance.now();
+            let dt = (now - lastFrameTime) / 1000;
+            lastFrameTime = now;
+            
+            if (dt > 0.1) dt = 0.1;
+
             if (gameState === 'PLAYING') {
                 checkTimer();
-                currentRotation.x += (targetRotation.x - currentRotation.x) * 0.1;
-                currentRotation.z += (targetRotation.z - currentRotation.z) * 0.1;
+                currentRotation.x += (targetRotation.x - currentRotation.x) * (10.0 * dt);
+                currentRotation.z += (targetRotation.z - currentRotation.z) * (10.0 * dt);
+                
                 mazeContainer.rotation.x = currentRotation.x;
                 mazeContainer.rotation.z = currentRotation.z;
-                artifacts.forEach(a => { a.rotation.y += 0.02; a.rotation.x += 0.01; });
-                updatePhysics();
+                
+                artifacts.forEach(a => { 
+                    a.rotation.y += 1.2 * dt; 
+                    a.rotation.x += 0.6 * dt; 
+                });
+                
+                updatePhysics(dt);
             } else if (['MENU', 'SHOP', 'CREDITS'].includes(gameState)) {
-                mazeContainer.rotation.y += 0.002;
+                mazeContainer.rotation.y += 0.12 * dt;
                 mazeContainer.rotation.x = Math.sin(Date.now() * 0.0005) * 0.1;
             }
             renderer.render(scene, camera);
         }
 
-        // WEBGPU FIX 6: Since init() is now async, we await it here at the root level!
         await init();
     </script>
 </body>
