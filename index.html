@@ -4,309 +4,853 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Axiomort | Early Alpha</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Cinzel:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:title" content="AXIOMORT — Inverted Reality">
+    <meta property="og:description" content="The fundamental laws of existence have collapsed. An early alpha prototype from BreadFlows Studios.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://axiomort.com">
+    <meta property="og:image" content="https://breadflows.com/assets/axiomort-og.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AXIOMORT — Inverted Reality">
+    <meta name="twitter:description" content="The fundamental laws of existence have collapsed.">
+    <meta name="twitter:image" content="https://breadflows.com/assets/axiomort-og.jpg">
+    <meta name="description" content="AXIOMORT — Navigate shifting gravity, collect Data Shards, and master the maze. An early alpha prototype from BreadFlows Studios.">
+    <meta name="theme-color" content="#0a0a0a">
+
+    <!-- Inline SVG Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Ctext x='16' y='24' font-size='22' font-family='serif' fill='%23d4af37' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700;900&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <style>
-        /* Base Reset */
-        * { box-sizing: border-box; }
-        body, html {
-            margin: 0; padding: 0; width: 100%;
-            background-color: #e8ebf2; 
-            font-family: 'Inter', sans-serif; 
-            color: #1a1a1a;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-        }
+        /* ═══════════════════════════════════════
+           RESET & VARIABLES
+        ═══════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Fluid Typography & Scaling */
         :root {
-            /* clamp(min, preferred, max) ensures text never gets too small or too huge */
-            --title-size: clamp(40px, 8vw, 120px);
-            --subtitle-size: clamp(10px, 1.2vw, 18px);
-            --body-text: clamp(14px, 1.1vw, 18px);
+            --void: #050507;
+            --surface: #0a0a0e;
+            --surface-2: #111116;
+            --surface-3: #1a1a22;
+            --bone: #e8e4dc;
+            --bone-dim: #a09a8e;
+            --gold: #d4af37;
+            --gold-dim: rgba(212, 175, 55, 0.15);
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            --ink: #2a1a3a;
+            --bleed: #1a0a2a;
+            --font-display: 'Cinzel', serif;
+            --font-mono: 'Space Mono', monospace;
+            --font-body: 'DM Sans', sans-serif;
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .grid-bg {
-            background-image: 
-                linear-gradient(rgba(26, 26, 26, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(26, 26, 26, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--void);
+            color: var(--bone);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Navigation - Optimized for Mobile Tap */
+        ::selection {
+            background: var(--gold);
+            color: var(--void);
+        }
+
+        /* ═══════════════════════════════════════
+           AMBIENT BACKGROUND
+        ═══════════════════════════════════════ */
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .ambient-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background:
+                radial-gradient(ellipse 600px 400px at 20% 30%, rgba(42, 26, 58, 0.25), transparent),
+                radial-gradient(ellipse 500px 500px at 80% 60%, rgba(26, 10, 42, 0.2), transparent),
+                radial-gradient(ellipse 300px 300px at 50% 80%, var(--gold-dim), transparent);
+            animation: drift 30s ease-in-out infinite alternate;
+        }
+        @keyframes drift {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-3%, 2%) rotate(3deg); }
+        }
+
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(228, 224, 216, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(228, 224, 216, 0.015) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.035;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 128px 128px;
+        }
+
+        /* ═══════════════════════════════════════
+           NAVIGATION
+        ═══════════════════════════════════════ */
         nav {
             position: fixed;
             top: 0; left: 0; width: 100%;
-            padding: 15px 5%;
+            padding: 0 clamp(20px, 5vw, 60px);
+            height: 64px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(232, 235, 242, 0.85);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid rgba(26, 26, 26, 0.05);
+            background: rgba(5, 5, 7, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(228, 224, 216, 0.04);
             z-index: 100;
+            transition: background 0.3s;
         }
-        .nav-logo { font-family: 'Cinzel', serif; font-size: clamp(18px, 2vw, 24px); font-weight: 700; letter-spacing: 2px; }
-        
-        .nav-links { display: flex; gap: clamp(15px, 3vw, 40px); }
+        .nav-logo {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: var(--bone);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: clamp(20px, 3vw, 40px);
+        }
         .nav-links a {
             text-decoration: none;
-            color: #1a1a1a;
-            font-family: 'Space Mono', monospace;
+            color: var(--bone-dim);
+            font-family: var(--font-mono);
+            font-size: 10px;
             font-weight: 700;
-            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             cursor: pointer;
+            transition: color 0.3s;
             white-space: nowrap;
         }
-        .nav-links a:hover { color: #d4af37; }
+        .nav-links a:hover { color: var(--gold); }
+        .nav-links .nav-cta {
+            color: var(--void);
+            background: var(--gold);
+            padding: 8px 18px;
+            letter-spacing: 2px;
+            transition: all 0.3s var(--ease-out);
+        }
+        .nav-links .nav-cta:hover {
+            background: var(--bone);
+            transform: translateY(-1px);
+        }
 
-        /* Hero Section - Height Adjusts for Mobile */
+        /* Hamburger */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 200;
+            background: none;
+            border: none;
+        }
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 1.5px;
+            background: var(--bone);
+            transition: all 0.3s var(--ease-out);
+            transform-origin: center;
+        }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(4.5px, 4.5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(4.5px, -4.5px); }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 5, 7, 0.97);
+            backdrop-filter: blur(30px);
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 35px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s var(--ease-out);
+        }
+        .mobile-menu.active { opacity: 1; pointer-events: all; }
+        .mobile-menu a {
+            text-decoration: none;
+            color: var(--bone);
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+        .mobile-menu a:hover { color: var(--gold); }
+        .mobile-menu .mob-cta {
+            color: var(--void);
+            background: var(--gold);
+            padding: 14px 36px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin-top: 10px;
+        }
+
+        /* ═══════════════════════════════════════
+           CONTENT WRAPPER
+        ═══════════════════════════════════════ */
+        .content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ═══════════════════════════════════════
+           HERO
+        ═══════════════════════════════════════ */
         .hero {
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 100px 20px;
+            padding: 100px 20px 80px;
+            position: relative;
         }
-        .title { 
-            font-family: 'Cinzel', serif; 
-            font-size: var(--title-size);
-            font-weight: 700; 
-            color: #1a1a1a; 
-            letter-spacing: -1px;
+
+        /* Decorative ring */
+        .hero-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: min(500px, 80vw);
+            height: min(500px, 80vw);
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(212, 175, 55, 0.06);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: ringPulse 8s ease-in-out infinite;
+        }
+        .hero-ring::after {
+            content: '';
+            position: absolute;
+            inset: 30px;
+            border: 1px solid rgba(212, 175, 55, 0.04);
+            border-radius: 50%;
+        }
+        @keyframes ringPulse {
+            0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+            50%      { opacity: 1; transform: translate(-50%, -50%) scale(1.03); }
+        }
+
+        .version-tag {
+            font-family: var(--font-mono);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--gold);
+            padding: 6px 18px;
+            font-size: 9px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            animation: fadeUp 1s var(--ease-out) 0.2s both;
+        }
+
+        .title {
+            font-family: var(--font-display);
+            font-size: clamp(48px, 10vw, 140px);
+            font-weight: 900;
+            color: var(--bone);
+            letter-spacing: clamp(2px, 0.5vw, 8px);
             line-height: 0.9;
             text-transform: uppercase;
+            animation: fadeUp 1s var(--ease-out) 0.4s both;
         }
-        .subtitle { 
-            font-size: var(--subtitle-size);
-            color: #666; 
-            letter-spacing: clamp(4px, 0.8vw, 12px); 
-            text-transform: uppercase; 
-            margin-top: 15px;
-            font-family: 'Space Mono', monospace;
+
+        .subtitle-line {
+            font-family: var(--font-mono);
+            font-size: clamp(9px, 1.1vw, 14px);
+            color: var(--bone-dim);
+            letter-spacing: clamp(6px, 1.2vw, 18px);
+            text-transform: uppercase;
+            margin-top: 18px;
+            animation: fadeUp 1s var(--ease-out) 0.6s both;
+        }
+
+        .hero-divider {
+            width: 40px;
+            height: 1px;
+            background: var(--gold);
+            margin: 35px 0;
+            animation: fadeUp 1s var(--ease-out) 0.7s both;
         }
 
         .hero-desc {
-            max-width: 600px;
-            font-size: var(--body-text);
-            color: #555;
-            line-height: 1.6;
-            margin: 40px 0;
+            max-width: 520px;
+            font-size: clamp(14px, 1.1vw, 17px);
+            color: var(--bone-dim);
+            line-height: 1.8;
+            margin-bottom: 45px;
+            animation: fadeUp 1s var(--ease-out) 0.8s both;
         }
-        .version-tag {
-            font-family: 'Space Mono', monospace;
-            border: 1px solid #d4af37;
-            color: #d4af37;
-            padding: 6px 15px;
+        .gold-text { color: var(--gold); font-weight: 600; }
+
+        .hero-actions {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeUp 1s var(--ease-out) 1s both;
+        }
+
+        .btn {
+            border: none;
+            padding: 16px 40px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.35s var(--ease-out);
+        }
+        .btn-primary {
+            background: var(--gold);
+            color: var(--void);
+        }
+        .btn-primary:hover {
+            background: var(--bone);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.2);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--bone-dim);
+            border: 1px solid rgba(228, 224, 216, 0.12);
+        }
+        .btn-ghost:hover {
+            color: var(--gold);
+            border-color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            animation: fadeUp 1s var(--ease-out) 1.5s both;
+        }
+        .scroll-hint span {
+            font-family: var(--font-mono);
+            font-size: 8px;
+            letter-spacing: 3px;
+            color: rgba(228, 224, 216, 0.2);
+            text-transform: uppercase;
+        }
+        .scroll-line {
+            width: 1px;
+            height: 30px;
+            background: linear-gradient(to bottom, var(--gold), transparent);
+            animation: scrollPulse 2s ease-in-out infinite;
+        }
+        @keyframes scrollPulse {
+            0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+            50%      { opacity: 1; transform: scaleY(1); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(25px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ═══════════════════════════════════════
+           SECTION SHARED
+        ═══════════════════════════════════════ */
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(28px, 4vw, 52px);
+            font-weight: 700;
+            color: var(--bone);
+            margin-bottom: 15px;
+        }
+        .section-sub {
+            font-family: var(--font-mono);
             font-size: 10px;
             letter-spacing: 3px;
-            margin-bottom: 20px;
+            color: rgba(228, 224, 216, 0.25);
+            text-transform: uppercase;
         }
 
-        /* Buttons */
-        .btn {
-            border: none; 
-            padding: clamp(15px, 2vw, 20px) clamp(30px, 4vw, 50px); 
-            font-size: 13px; 
+        /* ═══════════════════════════════════════
+           LORE / ABOUT SECTION
+        ═══════════════════════════════════════ */
+        .lore-section {
+            padding: clamp(80px, 10vw, 140px) clamp(20px, 8vw, 120px);
+            border-top: 1px solid rgba(228, 224, 216, 0.04);
+        }
+        .lore-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(20px, 3vw, 30px);
+            max-width: 1100px;
+            margin: 50px auto 0;
+        }
+        .lore-card {
+            padding: clamp(25px, 3vw, 40px);
+            border: 1px solid rgba(228, 224, 216, 0.05);
+            background: rgba(255, 255, 255, 0.01);
+            transition: all 0.4s var(--ease-out);
+        }
+        .lore-card:hover {
+            border-color: rgba(212, 175, 55, 0.15);
+            background: rgba(212, 175, 55, 0.02);
+            transform: translateY(-3px);
+        }
+        .lore-card .card-num {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--gold);
             letter-spacing: 3px;
-            text-transform: uppercase; 
-            cursor: pointer;
-            font-family: 'Space Mono', monospace; 
-            font-weight: 700; 
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
+            margin-bottom: 18px;
         }
-        .btn-primary { background: #1a1a1a; color: #fff; }
-        .btn-primary:hover { background: #d4af37; transform: translateY(-2px); }
+        .lore-card h3 {
+            font-family: var(--font-display);
+            font-size: clamp(18px, 2vw, 24px);
+            font-weight: 500;
+            color: var(--bone);
+            margin-bottom: 14px;
+        }
+        .lore-card p {
+            font-size: clamp(13px, 1vw, 15px);
+            color: var(--bone-dim);
+            line-height: 1.7;
+        }
 
-        /* Media Section - Stacked on Mobile, Side-by-Side on Desktop */
+        /* ═══════════════════════════════════════
+           MEDIA / DEV LOGS
+        ═══════════════════════════════════════ */
         .media-section {
-            background-color: #0a0a0a;
-            color: #fff;
-            padding: 100px 5%;
+            padding: clamp(80px, 10vw, 140px) clamp(20px, 5vw, 60px);
+            border-top: 1px solid rgba(228, 224, 216, 0.04);
+            text-align: center;
         }
-        .media-section h2 { font-family: 'Cinzel', serif; font-size: clamp(28px, 4vw, 48px); margin-bottom: 10px; text-align: center;}
-        .media-section .subtitle { color: #888; margin-bottom: 50px; text-align: center;}
-        
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1400px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+            gap: 25px;
+            max-width: 1100px;
+            margin: 50px auto 0;
         }
         .video-wrapper {
             position: relative;
-            padding-bottom: 56.25%; 
-            background: #000;
-            border: 1px solid #222;
+            padding-bottom: 56.25%;
+            background: var(--surface);
+            border: 1px solid rgba(228, 224, 216, 0.05);
+            overflow: hidden;
         }
         .video-wrapper iframe {
             position: absolute;
-            top: 0; left: 0;
+            inset: 0;
             width: 100%; height: 100%;
             border: none;
         }
 
-        /* Sign Up Section */
-        .signup-section {
-            padding: 100px 5%;
+        /* ═══════════════════════════════════════
+           WAITLIST / SIGNUP
+        ═══════════════════════════════════════ */
+        .waitlist-section {
+            padding: clamp(80px, 10vw, 140px) clamp(20px, 5vw, 60px);
             text-align: center;
-            background: #fff;
+            border-top: 1px solid rgba(228, 224, 216, 0.04);
         }
-        .signup-section h2 { font-family: 'Cinzel', serif; font-size: clamp(28px, 4vw, 48px); }
-        
-        .signup-form {
+        .waitlist-box {
+            max-width: 500px;
+            margin: 45px auto 0;
+            padding: clamp(30px, 4vw, 50px);
+            border: 1px solid rgba(228, 224, 216, 0.06);
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .waitlist-box p {
+            font-size: clamp(13px, 1vw, 15px);
+            color: var(--bone-dim);
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+        .email-row {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 600px;
-            margin: 40px auto 0;
-            gap: 20px; 
+            gap: 0;
         }
-        
-        .input-group { position: relative; flex: 1 1 250px; }
-        .input-group input {
-            width: 100%;
-            padding: 15px 0;
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid #ccc;
-            font-family: 'Space Mono', monospace;
-            font-size: 14px;
-            color: #1a1a1a;
+        .email-row input {
+            flex: 1;
+            padding: 15px 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(228, 224, 216, 0.1);
+            border-right: none;
+            color: var(--bone);
+            font-family: var(--font-mono);
+            font-size: 12px;
             outline: none;
             transition: border-color 0.3s;
         }
-        .input-group input:focus { border-bottom-color: #d4af37; }
-
-        .signup-form .btn { flex: 1 1 100%; max-width: 300px; }
-
-        /* Footer */
-        footer {
-            background: #0a0a0a;
-            color: #444;
-            text-align: center;
-            padding: 50px 20px;
-            font-family: 'Space Mono', monospace;
+        .email-row input::placeholder { color: rgba(228, 224, 216, 0.2); }
+        .email-row input:focus { border-color: var(--gold); }
+        .email-row button {
+            padding: 15px 25px;
+            background: var(--gold);
+            color: var(--void);
+            border: 1px solid var(--gold);
+            font-family: var(--font-mono);
             font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s var(--ease-out);
+        }
+        .email-row button:hover { background: var(--bone); border-color: var(--bone); }
+
+        .waitlist-note {
+            margin-top: 18px;
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: rgba(228, 224, 216, 0.15);
             letter-spacing: 2px;
         }
 
-        /* Modal - Sharp & Focused */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.98);
-            display: none; justify-content: center; align-items: center;
-            z-index: 999;
+        /* Status flash */
+        .status-msg {
+            margin-top: 12px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--gold);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        .modal-overlay.active { display: flex; }
-        .modal-card {
-            background: #1a1a1a;
-            padding: clamp(30px, 5vw, 60px);
-            width: 90%; max-width: 400px;
+        .status-msg.show { opacity: 1; }
+
+        /* ═══════════════════════════════════════
+           FOOTER
+        ═══════════════════════════════════════ */
+        footer {
+            border-top: 1px solid rgba(228, 224, 216, 0.04);
+            padding: 60px clamp(20px, 5vw, 60px) 40px;
+        }
+        .footer-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        .footer-brand {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: var(--bone);
+            margin-bottom: 10px;
+        }
+        .footer-copy {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: rgba(228, 224, 216, 0.2);
+        }
+        .footer-links {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        .footer-links a {
+            text-decoration: none;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--bone-dim);
+            transition: color 0.3s;
+        }
+        .footer-links a:hover { color: var(--gold); }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 40px auto 0;
+            padding-top: 25px;
+            border-top: 1px solid rgba(228, 224, 216, 0.04);
             text-align: center;
-            border: 1px solid #333;
         }
-        .modal-card h2 { font-family: 'Cinzel', serif; color: #fff; margin-bottom: 30px; }
-        .modal-card input {
-            width: 100%; padding: 15px; margin-bottom: 15px;
-            background: transparent; border: 1px solid #444;
-            color: #fff; font-family: 'Space Mono', monospace;
+        .footer-bottom span {
+            font-family: var(--font-mono);
+            font-size: 8px;
+            letter-spacing: 3px;
+            color: rgba(228, 224, 216, 0.1);
+            text-transform: uppercase;
         }
 
-        /* Responsive Breakpoints */
-        @media (max-aspect-ratio: 1/1) {
-            /* Portrait mode adjustments (Phones) */
-            .nav-links { display: none; } /* Simplified Nav for mobile */
-            .hero { padding-top: 150px; }
+        /* ═══════════════════════════════════════
+           SCROLL REVEAL
+        ═══════════════════════════════════════ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ═══════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+            .lore-grid { grid-template-columns: 1fr; }
+            .email-row {
+                flex-direction: column;
+            }
+            .email-row input {
+                border-right: 1px solid rgba(228, 224, 216, 0.1);
+                border-bottom: none;
+            }
+            .email-row button { width: 100%; }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu { display: none !important; }
         }
     </style>
 </head>
-<body class="grid-bg">
+<body>
 
+    <!-- Atmosphere -->
+    <div class="ambient-bg"></div>
+    <div class="grid-overlay"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- Navigation -->
     <nav>
         <div class="nav-logo">AXIOMORT</div>
         <div class="nav-links">
+            <a href="#lore">Lore</a>
             <a href="#media">Logs</a>
-            <a href="#register">Register</a>
-            <a onclick="openLogin()">Login</a>
-            <a href="game.html" style="color: #d4af37;">Play Demo</a>
+            <a href="#waitlist">Waitlist</a>
+            <a href="game.html" class="nav-cta">Play Demo</a>
         </div>
+        <button class="hamburger" onclick="toggleMobile()" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
     </nav>
 
-    <section class="hero">
-        <div class="version-tag">Alpha.Build_v0.0.1</div>
-        <h1 class="title">Axiomort</h1>
-        <div class="subtitle">Inverted Reality</div>
-        
-        <p class="hero-desc">
-            The fundamental laws of existence have collapsed. Navigate shifting gravity, collect <span class="gold-text">Data Shards</span>, and master the maze in this early prototype.
-        </p>
-        
-        <a href="game.html" class="btn btn-primary">Initialize Demo</a>
-    </section>
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#lore" onclick="closeMobile()">Lore</a>
+        <a href="#media" onclick="closeMobile()">Logs</a>
+        <a href="#waitlist" onclick="closeMobile()">Waitlist</a>
+        <a href="game.html" class="mob-cta">Play Demo</a>
+    </div>
 
-    <section id="media" class="media-section">
-        <h2>Development Logs</h2>
-        <div class="subtitle">SIGNAL_404 // DIMENSIONAL EXTRACTS</div>
-        
-        <div class="video-grid">
-            <div class="video-wrapper">
-                <iframe src="https://www.youtube.com/embed/uSZg3YSKZYQ?autoplay=0&rel=0" allowfullscreen></iframe>
+    <div class="content">
+
+        <!-- ═══ HERO ═══ -->
+        <section class="hero">
+            <div class="hero-ring"></div>
+            <div class="version-tag">Alpha.Build_v0.0.1</div>
+            <h1 class="title">Axiomort</h1>
+            <div class="subtitle-line">Inverted Reality</div>
+            <div class="hero-divider"></div>
+            <p class="hero-desc">
+                The fundamental laws of existence have collapsed. Navigate shifting gravity, collect <span class="gold-text">Data Shards</span>, and master the maze in this early prototype.
+            </p>
+            <div class="hero-actions">
+                <a href="game.html" class="btn btn-primary">Initialize Demo</a>
+                <a href="#media" class="btn btn-ghost">Dev Logs</a>
             </div>
-            <div class="video-wrapper">
-                <iframe src="https://www.youtube.com/embed/bLUE7sG7KbU?autoplay=0&rel=0" allowfullscreen></iframe>
+            <div class="scroll-hint">
+                <span>Scroll</span>
+                <div class="scroll-line"></div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="register" class="signup-section grid-bg">
-        <h2>Create Profile</h2>
-        <div class="subtitle">System Registration</div>
-        
-        <p style="color: #555; max-width: 600px; margin: 30px auto; line-height: 1.6;">
-            Register a pilot account to save your in-game progress and secure your collected Data Shards.
-        </p>
+        <!-- ═══ LORE ═══ -->
+        <section id="lore" class="lore-section">
+            <div style="text-align: center;">
+                <div class="section-label reveal">Classified // Clearance Lvl. 2</div>
+                <h2 class="section-title reveal">Dimensional Brief</h2>
+                <div class="section-sub reveal">What Remains After the Collapse</div>
+            </div>
+            <div class="lore-grid">
+                <div class="lore-card reveal">
+                    <div class="card-num">ENTRY_001</div>
+                    <h3>The Collapse</h3>
+                    <p>Gravity no longer obeys consensus. Spatial rules shift between rooms. What was once floor becomes void. Pilots report corridors folding into themselves without warning.</p>
+                </div>
+                <div class="lore-card reveal">
+                    <div class="card-num">ENTRY_002</div>
+                    <h3>Data Shards</h3>
+                    <p>Fragments of the old world's source code, scattered across the inverted maze. Each shard holds a piece of what reality used to be. Collect enough and the pattern starts to emerge.</p>
+                </div>
+                <div class="lore-card reveal">
+                    <div class="card-num">ENTRY_003</div>
+                    <h3>The Maze</h3>
+                    <p>Not a structure — a living system. It reconfigures based on the pilot's movement, as if it learns. Some theorize the maze is what's left of a mind that once held all of this together.</p>
+                </div>
+                <div class="lore-card reveal">
+                    <div class="card-num">ENTRY_004</div>
+                    <h3>Axiomort Protocol</h3>
+                    <p>A last-resort procedure encoded before the collapse. Its full contents are still being decrypted. What's been recovered suggests it was designed to invert inversion itself.</p>
+                </div>
+            </div>
+        </section>
 
-        <form class="signup-form" onsubmit="alert('Account creation is not available yet.'); return false;">
-            <div class="input-group"><input type="text" placeholder="Username" required></div>
-            <div class="input-group"><input type="password" placeholder="Password" required></div>
-            <button type="submit" class="btn btn-primary">Register</button>
-        </form>
-    </section>
+        <!-- ═══ MEDIA / DEV LOGS ═══ -->
+        <section id="media" class="media-section">
+            <div class="section-label reveal">Signal_404</div>
+            <h2 class="section-title reveal">Development Logs</h2>
+            <div class="section-sub reveal">Dimensional Extracts // Transmission Archive</div>
+            <div class="video-grid">
+                <div class="video-wrapper reveal">
+                    <iframe src="https://www.youtube.com/embed/uSZg3YSKZYQ?autoplay=0&rel=0" allowfullscreen loading="lazy"></iframe>
+                </div>
+                <div class="video-wrapper reveal">
+                    <iframe src="https://www.youtube.com/embed/bLUE7sG7KbU?autoplay=0&rel=0" allowfullscreen loading="lazy"></iframe>
+                </div>
+            </div>
+        </section>
 
-    <footer>
-        &copy; 2026 BreadFlows Studios. <br><br>
-        File 001 // Prototype Build
-    </footer>
+        <!-- ═══ WAITLIST ═══ -->
+        <section id="waitlist" class="waitlist-section">
+            <div class="section-label reveal">Transmission Channel</div>
+            <h2 class="section-title reveal">Join the Waitlist</h2>
+            <div class="section-sub reveal">Get Notified When Systems Come Online</div>
+            <div class="waitlist-box reveal">
+                <p>Account creation and save systems are in development. Drop your email to be first in line when pilot registration opens.</p>
+                <div class="email-row">
+                    <input type="email" id="waitlistEmail" placeholder="pilot@dimensional.void">
+                    <button onclick="handleWaitlist()">Transmit</button>
+                </div>
+                <div class="waitlist-note">No spam. Signal only.</div>
+                <div class="status-msg" id="statusMsg"></div>
+            </div>
+        </section>
 
-    <div id="loginModal" class="modal-overlay">
-        <div class="modal-card">
-            <div style="text-align: right; color: #666; cursor: pointer;" onclick="closeLogin()">[CLOSE]</div>
-            <h2>System Login</h2>
-            <form onsubmit="alert('Login system is not available yet.'); return false;">
-                <input type="text" placeholder="USERNAME" required>
-                <input type="password" placeholder="PASSWORD" required>
-                <button type="submit" class="btn btn-primary" style="width: 100%; background: #d4af37; color: #000;">Authenticate</button>
-            </form>
-        </div>
+        <!-- ═══ FOOTER ═══ -->
+        <footer>
+            <div class="footer-inner">
+                <div>
+                    <div class="footer-brand">AXIOMORT</div>
+                    <div class="footer-copy">&copy; 2026 BreadFlows Studios</div>
+                </div>
+                <div class="footer-links">
+                    <a href="https://instagram.com/breadflows" target="_blank" rel="noopener">Instagram</a>
+                    <a href="https://open.spotify.com/artist/breadflows" target="_blank" rel="noopener">Spotify</a>
+                    <a href="https://youtube.com/@breadflows" target="_blank" rel="noopener">YouTube</a>
+                    <a href="https://tiktok.com/@breadflows" target="_blank" rel="noopener">TikTok</a>
+                    <a href="https://breadflows.com" target="_blank" rel="noopener">Portfolio</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>File 001 // Prototype Build // All Dimensions Reserved</span>
+            </div>
+        </footer>
+
     </div>
 
     <script>
-        function openLogin() { document.getElementById('loginModal').classList.add('active'); }
-        function closeLogin() { document.getElementById('loginModal').classList.remove('active'); }
-        window.onclick = function(event) {
-            let modal = document.getElementById('loginModal');
-            if (event.target == modal) closeLogin();
+        /* ── Mobile Menu ── */
+        function toggleMobile() {
+            document.querySelector('.hamburger').classList.toggle('active');
+            document.getElementById('mobileMenu').classList.toggle('active');
+            document.body.style.overflow =
+                document.getElementById('mobileMenu').classList.contains('active') ? 'hidden' : '';
         }
+        function closeMobile() {
+            document.querySelector('.hamburger').classList.remove('active');
+            document.getElementById('mobileMenu').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        /* ── Scroll Reveal ── */
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        /* ── Waitlist Handler ── */
+        function handleWaitlist() {
+            const email = document.getElementById('waitlistEmail').value;
+            const msg = document.getElementById('statusMsg');
+            if (!email || !email.includes('@')) {
+                msg.textContent = 'INVALID SIGNAL — CHECK INPUT';
+                msg.style.color = '#ff4444';
+                msg.classList.add('show');
+                return;
+            }
+            /* ── Replace with your actual endpoint (Mailchimp, ConvertKit, etc.) ── */
+            msg.textContent = 'SIGNAL RECEIVED — STANDBY FOR TRANSMISSION';
+            msg.style.color = 'var(--gold)';
+            msg.classList.add('show');
+            document.getElementById('waitlistEmail').value = '';
+        }
+
+        /* ── Nav darken on scroll ── */
+        window.addEventListener('scroll', () => {
+            document.querySelector('nav').style.background =
+                window.scrollY > 80 ? 'rgba(5,5,7,0.92)' : 'rgba(5,5,7,0.7)';
+        }, { passive: true });
     </script>
 
 </body>
