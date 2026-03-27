@@ -12,293 +12,178 @@
 
         :root {
             --void: #050507;
-            --surface: #0a0a0e;
-            --surface-2: #111116;
-            --surface-3: #1a1a22;
             --bone: #e8e4dc;
             --bone-dim: #a09a8e;
             --gold: #d4af37;
             --gold-dim: rgba(212, 175, 55, 0.15);
             --danger: #d32f2f;
             --success: #00cc44;
-            --cyan: #00eeff;
             --font-display: 'Cinzel', serif;
             --font-mono: 'Space Mono', monospace;
             --font-body: 'DM Sans', sans-serif;
             --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-            --radius: 0px; /* Sharp edges to match index.html */
         }
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: var(--void);
-            font-family: var(--font-body); color: var(--bone);
+            overflow: hidden; background-color: #e8ebf2;
+            font-family: var(--font-body); color: #333;
             user-select: none; -webkit-user-select: none;
-            overscroll-behavior: none;
-            -webkit-font-smoothing: antialiased;
+            overscroll-behavior: none; -webkit-font-smoothing: antialiased;
         }
-
         ::selection { background: var(--gold); color: var(--void); }
 
-        /* ═══════════════════════════════════════
-           BOOT SEQUENCE
-        ═══════════════════════════════════════ */
+        /* ═══ BOOT SEQUENCE ═══ */
         #boot-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 500;
-            background: var(--void);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: fixed; inset: 0; z-index: 500; background: var(--void);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.8s ease, visibility 0.8s;
         }
-        #boot-screen.dismissed {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        /* Wallpaper layer behind boot content */
+        #boot-screen.dismissed { opacity: 0; visibility: hidden; pointer-events: none; }
         .boot-wallpaper {
-            position: absolute;
-            inset: 0;
-            background-image: url("./wallpaper.jpeg");
-            background-size: cover;
-            background-position: center;
-            opacity: 0;
-            transition: opacity 1.5s ease;
+            position: absolute; inset: 0; background-image: url("./wallpaper.jpeg");
+            background-size: cover; background-position: center;
+            opacity: 0; transition: opacity 1.5s ease;
         }
         .boot-wallpaper.visible { opacity: 0.15; }
-
         .boot-noise {
-            position: absolute;
-            inset: 0;
-            opacity: 0.04;
+            position: absolute; inset: 0; opacity: 0.04; pointer-events: none;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
             background-size: 128px 128px;
-            pointer-events: none;
         }
-
         .boot-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
+            position: relative; z-index: 2; text-align: center;
+            display: flex; flex-direction: column; align-items: center;
         }
-
         .boot-status {
-            font-family: var(--font-mono);
-            font-size: 9px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--gold);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            padding: 6px 18px;
-            margin-bottom: 30px;
-            opacity: 0;
-            animation: bootFadeUp 0.6s var(--ease-out) 0.3s both;
+            font-family: var(--font-mono); font-size: 9px; letter-spacing: 4px;
+            text-transform: uppercase; color: var(--gold);
+            border: 1px solid rgba(212,175,55,0.3); padding: 6px 18px;
+            margin-bottom: 30px; opacity: 0; animation: bootFadeUp 0.6s var(--ease-out) 0.3s both;
         }
-
         .boot-title {
-            font-family: var(--font-display);
-            font-size: clamp(52px, 12vw, 160px);
-            font-weight: 900;
-            color: var(--bone);
-            letter-spacing: clamp(2px, 0.6vw, 10px);
-            line-height: 0.9;
-            text-transform: uppercase;
-            opacity: 0;
+            font-family: var(--font-display); font-size: clamp(52px, 12vw, 160px);
+            font-weight: 900; color: var(--bone); letter-spacing: clamp(2px, 0.6vw, 10px);
+            line-height: 0.9; text-transform: uppercase; opacity: 0;
             animation: bootFadeUp 0.8s var(--ease-out) 0.6s both;
         }
-
         .boot-sub {
-            font-family: var(--font-mono);
-            font-size: clamp(8px, 1vw, 12px);
-            letter-spacing: clamp(4px, 1vw, 14px);
-            text-transform: uppercase;
-            color: var(--bone-dim);
-            margin-top: 15px;
-            opacity: 0;
+            font-family: var(--font-mono); font-size: clamp(8px, 1vw, 12px);
+            letter-spacing: clamp(4px, 1vw, 14px); text-transform: uppercase;
+            color: var(--bone-dim); margin-top: 15px; opacity: 0;
             animation: bootFadeUp 0.6s var(--ease-out) 1s both;
         }
-
         .boot-line {
-            width: 40px;
-            height: 1px;
-            background: var(--gold);
-            margin: 30px 0;
-            opacity: 0;
-            animation: bootFadeUp 0.5s var(--ease-out) 1.3s both;
+            width: 40px; height: 1px; background: var(--gold); margin: 30px 0;
+            opacity: 0; animation: bootFadeUp 0.5s var(--ease-out) 1.3s both;
         }
-
         .boot-terminal {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: rgba(228, 224, 216, 0.25);
-            text-transform: uppercase;
-            min-height: 18px;
-            opacity: 0;
-            animation: bootFadeUp 0.5s var(--ease-out) 1.5s both;
+            font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px;
+            color: rgba(228,224,216,0.25); text-transform: uppercase; min-height: 18px;
+            opacity: 0; animation: bootFadeUp 0.5s var(--ease-out) 1.5s both;
         }
-
         .boot-enter {
-            margin-top: 40px;
-            opacity: 0;
-            animation: bootFadeUp 0.6s var(--ease-out) 2.8s both;
+            margin-top: 40px; opacity: 0; animation: bootFadeUp 0.6s var(--ease-out) 2.8s both;
         }
         .boot-enter button {
-            background: var(--gold);
-            color: var(--void);
-            border: none;
-            padding: 16px 50px;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.35s var(--ease-out);
+            background: var(--gold); color: var(--void); border: none;
+            padding: 16px 50px; font-family: var(--font-mono);
+            font-size: 11px; font-weight: 700; letter-spacing: 3px;
+            text-transform: uppercase; cursor: pointer; transition: all 0.35s var(--ease-out);
         }
         .boot-enter button:hover {
-            background: var(--bone);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.2);
+            background: var(--bone); transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212,175,55,0.2);
         }
-
         .boot-back {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            z-index: 3;
-            opacity: 0;
-            animation: bootFadeUp 0.5s var(--ease-out) 0.3s both;
+            position: absolute; top: 25px; left: 25px; z-index: 3;
+            opacity: 0; animation: bootFadeUp 0.5s var(--ease-out) 0.3s both;
         }
         .boot-back a {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--bone-dim);
-            text-decoration: none;
-            transition: color 0.3s;
+            font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase; color: var(--bone-dim);
+            text-decoration: none; transition: color 0.3s;
         }
         .boot-back a:hover { color: var(--gold); }
-
         @keyframes bootFadeUp {
             from { opacity: 0; transform: translateY(15px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ═══════════════════════════════════════
-           GAME CANVAS
-        ═══════════════════════════════════════ */
-        #canvas-container {
-            width: 100%; height: 100%; display: block; cursor: grab;
-        }
+        /* ═══ GAME CANVAS ═══ */
+        #canvas-container { width: 100%; height: 100%; display: block; cursor: grab; }
         #canvas-container:active { cursor: grabbing; }
 
-        /* ═══════════════════════════════════════
-           HUD
-        ═══════════════════════════════════════ */
+        /* ═══ HUD ═══ */
         .ui-layer {
-            position: absolute; pointer-events: none;
-            width: 100%; height: 100%; top: 0; left: 0;
+            position: absolute; pointer-events: none; width: 100%; height: 100%; top: 0; left: 0;
             display: flex; flex-direction: column; justify-content: space-between;
             padding: clamp(20px, 4vw, 40px); box-sizing: border-box; z-index: 5;
             transition: opacity 0.3s;
         }
         .ui-layer.hidden { opacity: 0; pointer-events: none; }
-
-        .header-row {
-            display: flex; justify-content: space-between; align-items: flex-start; width: 100%;
-        }
+        .header-row { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
         .hud-title {
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 10px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            opacity: 0.4;
-            color: #1a1a1a;
+            font-family: var(--font-mono); font-weight: 700; font-size: 10px;
+            letter-spacing: 2px; text-transform: uppercase; opacity: 0.4; color: #1a1a1a;
         }
-
         .stats-container { text-align: right; display: flex; gap: clamp(15px, 3vw, 25px); }
         .stat-item { display: flex; flex-direction: column; align-items: flex-end; }
         .stat-label {
-            font-family: var(--font-mono);
-            font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px;
-            opacity: 0.4; margin-bottom: 2px; color: #555;
+            font-family: var(--font-mono); font-size: 9px; text-transform: uppercase;
+            letter-spacing: 1.5px; opacity: 0.4; margin-bottom: 2px; color: #555;
         }
         .stat-value {
-            font-family: var(--font-body);
-            font-size: clamp(18px, 3vw, 24px); font-weight: 700; color: #1a1a1a;
-            font-variant-numeric: tabular-nums;
+            font-family: var(--font-body); font-size: clamp(18px, 3vw, 24px);
+            font-weight: 700; color: #1a1a1a; font-variant-numeric: tabular-nums;
         }
         .stat-value.gold { color: var(--gold); }
         .stat-value.critical { color: var(--danger); animation: pulse 1s infinite; }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* Boss Alert */
         .boss-alert {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-family: var(--font-display);
-            font-size: clamp(32px, 6vw, 48px); font-weight: 900; color: var(--gold);
-            text-transform: uppercase; letter-spacing: 5px;
-            opacity: 0; pointer-events: none; transition: opacity 0.5s; text-align: center;
+            font-family: var(--font-display); font-size: clamp(32px, 6vw, 48px);
+            font-weight: 900; color: var(--gold); text-transform: uppercase;
+            letter-spacing: 5px; opacity: 0; pointer-events: none; transition: opacity 0.5s; text-align: center;
         }
         .boss-alert.visible { opacity: 1; animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .boss-sub {
-            font-family: var(--font-mono);
-            font-size: 11px; font-weight: 500; letter-spacing: 3px; color: #666; margin-top: 10px;
+            font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+            letter-spacing: 3px; color: #666; margin-top: 10px;
         }
-        @keyframes scaleIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        @keyframes scaleIn {
+            from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
 
-        /* ═══════════════════════════════════════
-           SCREEN OVERLAYS (Menus)
-        ═══════════════════════════════════════ */
+        /* ═══ SCREEN OVERLAYS ═══ */
         .screen-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(232, 235, 242, 0.85); backdrop-filter: blur(20px);
             display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; z-index: 0;
-            transition: opacity 0.3s ease;
+            opacity: 0; pointer-events: none; z-index: 0; transition: opacity 0.3s ease;
         }
         .screen-overlay.visible { opacity: 1; pointer-events: all; z-index: 20; }
-
         .modal-content {
-            text-align: center; width: 90%; max-width: 400px;
-            background: #fff; padding: clamp(25px, 5vw, 40px);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
-            display: flex; flex-direction: column; gap: 18px;
-            position: relative;
-            border: 1px solid rgba(0,0,0,0.06);
+            text-align: center; width: 90%; max-width: 400px; background: #fff;
+            padding: clamp(25px, 5vw, 40px); box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; gap: 18px; border: 1px solid rgba(0,0,0,0.06);
         }
-
         .screen-title {
-            font-family: var(--font-display);
-            font-size: clamp(28px, 6vw, 42px); font-weight: 700; color: #1a1a1a;
-            margin: 0; letter-spacing: 1px;
+            font-family: var(--font-display); font-size: clamp(28px, 6vw, 42px);
+            font-weight: 700; color: #1a1a1a; margin: 0; letter-spacing: 1px;
         }
         .screen-subtitle {
-            font-family: var(--font-mono);
-            font-size: 10px; color: #999; letter-spacing: 3px; text-transform: uppercase;
+            font-family: var(--font-mono); font-size: 10px; color: #999;
+            letter-spacing: 3px; text-transform: uppercase;
         }
 
-        /* Buttons */
         .btn-row { display: flex; gap: 12px; justify-content: center; width: 100%; }
         .btn {
-            border: none; padding: 15px 22px;
-            font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-            cursor: pointer; font-family: var(--font-mono); font-weight: 700;
-            transition: all 0.25s var(--ease-out);
-            flex: 1; position: relative;
+            border: none; padding: 15px 22px; font-size: 11px; letter-spacing: 2px;
+            text-transform: uppercase; cursor: pointer; font-family: var(--font-mono);
+            font-weight: 700; transition: all 0.25s var(--ease-out); flex: 1;
         }
         .btn:hover { transform: translateY(-2px); }
         .btn:active { transform: translateY(0); }
@@ -309,128 +194,88 @@
         .btn-gold:disabled { background: #ccc; cursor: not-allowed; transform: none; }
         .btn-outline { background: transparent; border: 1.5px solid #ddd; color: #777; }
         .btn-outline:hover { border-color: #1a1a1a; color: #1a1a1a; }
-        .btn-text { background: transparent; color: #aaa; border: none; font-size: 10px; margin-top: 8px; }
-        .btn-text:hover { color: #333; }
 
-        /* Menu Stats */
         .menu-stats {
             display: flex; justify-content: center; gap: 30px;
             padding: 14px; background: #f8f9fa; border: 1px solid #eee;
         }
-        .menu-stat-val {
-            font-family: var(--font-body);
-            font-size: 20px; font-weight: 700; color: var(--gold);
-        }
+        .menu-stat-val { font-family: var(--font-body); font-size: 20px; font-weight: 700; color: var(--gold); }
 
-        /* Shop Grid */
         .shop-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
             max-height: 280px; overflow-y: auto; padding: 4px;
             pointer-events: auto; -webkit-overflow-scrolling: touch;
         }
         .shop-item {
-            background: #f5f5f5; padding: 14px;
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
-            border: 1.5px solid transparent; cursor: pointer; transition: 0.2s;
+            background: #f5f5f5; padding: 14px; display: flex; flex-direction: column;
+            align-items: center; gap: 8px; border: 1.5px solid transparent; cursor: pointer; transition: 0.2s;
         }
         .shop-item.active { border-color: #1a1a1a; background: #fff; }
         .shop-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
-        .color-preview {
-            width: 36px; height: 36px; border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
+        .color-preview { width: 36px; height: 36px; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .item-name { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #333; }
         .item-price { font-size: 10px; color: #999; }
         .item-owned { font-family: var(--font-mono); font-size: 9px; color: var(--success); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Credits */
-        .credits-box {
-            background: #fafafa; border: 1px solid #eee; padding: 22px;
-        }
-        .axiom-def {
-            font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 16px;
-            line-height: 1.7; color: #555;
-        }
-        .axiom-def span {
-            font-weight: bold; color: #1a1a1a; font-style: normal; font-family: var(--font-display);
-        }
+        .credits-box { background: #fafafa; border: 1px solid #eee; padding: 22px; }
+        .axiom-def { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 16px; line-height: 1.7; color: #555; }
+        .axiom-def span { font-weight: bold; color: #1a1a1a; font-style: normal; font-family: var(--font-display); }
         .creator-tag {
-            font-family: var(--font-mono);
-            font-size: 10px; color: #aaa; letter-spacing: 1.5px;
+            font-family: var(--font-mono); font-size: 10px; color: #aaa; letter-spacing: 1.5px;
             border-top: 1px solid #eee; padding-top: 14px; display: block; margin-top: 14px;
         }
 
-        /* Tutorial */
         .tutorial-container {
-            position: relative; height: 140px;
-            display: flex; align-items: center; justify-content: center;
-            background: #f4f4f4; overflow: hidden; border: 1px solid #eee;
+            position: relative; height: 140px; display: flex; align-items: center;
+            justify-content: center; background: #f4f4f4; overflow: hidden; border: 1px solid #eee;
         }
         .hand-icon {
             width: 36px; height: 36px; background: rgba(0,0,0,0.08); border-radius: 50%;
-            border: 2px solid #444; position: relative;
-            animation: dragGesture 2s infinite ease-in-out;
+            border: 2px solid #444; position: relative; animation: dragGesture 2s infinite ease-in-out;
         }
         .hand-icon::after {
             content: ''; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px;
             background: #444; border-radius: 50%; transform: translate(-50%, -50%);
         }
         .arrow-indicator {
-            position: absolute; font-family: var(--font-mono);
-            font-size: 10px; letter-spacing: 2px; opacity: 0; color: var(--gold); font-weight: bold;
+            position: absolute; font-family: var(--font-mono); font-size: 10px;
+            letter-spacing: 2px; opacity: 0; color: var(--gold); font-weight: bold;
         }
         .arrow-up { top: 18px; animation: fadeUp 2s infinite; }
         .arrow-down { bottom: 18px; animation: fadeDown 2s infinite; }
-
         @keyframes dragGesture {
-            0% { transform: translateY(0) scale(1); background: rgba(0,0,0,0.08); }
-            50% { transform: translateY(35px) scale(0.92); background: rgba(0,0,0,0.15); }
+            0%   { transform: translateY(0) scale(1); background: rgba(0,0,0,0.08); }
+            50%  { transform: translateY(35px) scale(0.92); background: rgba(0,0,0,0.15); }
             100% { transform: translateY(0) scale(1); background: rgba(0,0,0,0.08); }
         }
         @keyframes fadeUp {
-            0% { opacity: 0; transform: translateY(8px); }
-            50% { opacity: 1; transform: translateY(0); }
+            0%   { opacity: 0; transform: translateY(8px); }
+            50%  { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(-8px); }
         }
         @keyframes fadeDown {
-            0% { opacity: 0; transform: translateY(-8px); }
-            50% { opacity: 0.5; transform: translateY(0); }
+            0%   { opacity: 0; transform: translateY(-8px); }
+            50%  { opacity: 0.5; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(8px); }
         }
 
-        /* Confirm Modal */
         #confirm-modal { z-index: 30 !important; background: rgba(0,0,0,0.4); }
-        .confirm-box {
-            background: #fff; padding: 28px; width: 90%; max-width: 300px;
-            border: 1px solid #eee;
-        }
-        .confirm-box h3 {
-            font-family: var(--font-display); font-size: 18px; margin: 0 0 8px 0; color: #1a1a1a;
-        }
+        .confirm-box { background: #fff; padding: 28px; width: 90%; max-width: 300px; border: 1px solid #eee; }
+        .confirm-box h3 { font-family: var(--font-display); font-size: 18px; margin: 0 0 8px 0; color: #1a1a1a; }
         .confirm-box p { font-size: 13px; color: #666; margin-bottom: 18px; }
-
-        /* Revive cost label */
-        .cost-label {
-            font-family: var(--font-mono);
-            font-size: 10px; letter-spacing: 1px;
+        .cost-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; }
+        #perf-indicator {
+            position: fixed; bottom: 10px; right: 10px; z-index: 50;
+            font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px;
+            color: rgba(0,0,0,0.15); text-transform: uppercase;
         }
     </style>
-
     <script type="importmap">
-        {
-            "imports": {
-                "three/webgpu": "https://unpkg.com/three@latest/build/three.webgpu.js",
-                "three": "https://unpkg.com/three@latest/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
-            }
-        }
+        { "imports": { "three": "https://unpkg.com/three@0.170.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/" } }
     </script>
 </head>
 <body>
 
-    <!-- ═══════════════════════════════════════
-         BOOT SEQUENCE (replaces old game.html)
-    ═══════════════════════════════════════ -->
     <div id="boot-screen">
         <div class="boot-wallpaper" id="bootWallpaper"></div>
         <div class="boot-noise"></div>
@@ -441,20 +286,13 @@
             <div class="boot-sub">Inverted Reality</div>
             <div class="boot-line"></div>
             <div class="boot-terminal" id="bootTerminal"></div>
-            <div class="boot-enter" id="bootEnter">
-                <button onclick="dismissBoot()">Initialize</button>
-            </div>
+            <div class="boot-enter" id="bootEnter"><button onclick="dismissBoot()">Initialize</button></div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         GAME CANVAS
-    ═══════════════════════════════════════ -->
     <div id="canvas-container"></div>
+    <div id="perf-indicator"></div>
 
-    <!-- ═══════════════════════════════════════
-         HUD (in-game)
-    ═══════════════════════════════════════ -->
     <div class="ui-layer hidden" id="game-ui">
         <div class="header-row">
             <div class="hud-title">Axiomort / Standard</div>
@@ -467,9 +305,6 @@
         <div class="boss-alert" id="boss-alert">Gold Rush<div class="boss-sub">Collect Data Shards</div></div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         MAIN MENU
-    ═══════════════════════════════════════ -->
     <div id="main-menu" class="screen-overlay">
         <div class="modal-content">
             <h2 class="screen-title">Axiomort</h2>
@@ -485,68 +320,49 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         TUTORIAL
-    ═══════════════════════════════════════ -->
     <div id="tutorial-screen" class="screen-overlay">
         <div class="modal-content">
-            <h2 class="screen-title" style="font-size: clamp(20px, 4vw, 24px);">Controls</h2>
+            <h2 class="screen-title" style="font-size:clamp(20px,4vw,24px);">Controls</h2>
             <div class="screen-subtitle">How to Survive</div>
             <div class="tutorial-container">
                 <div class="arrow-indicator arrow-up">Ball Moves Up</div>
                 <div class="hand-icon"></div>
                 <div class="arrow-indicator arrow-down">Drag Down</div>
             </div>
-            <p style="font-size: 13px; color: #666; line-height: 1.6;">
-                The world is inverted.<br>
-                <strong>Drag Down</strong> to tilt forward.
-                <strong>Drag Right</strong> to tilt left.
-            </p>
+            <p style="font-size:13px;color:#666;line-height:1.6;">The world is inverted.<br><strong>Drag Down</strong> to tilt forward. <strong>Drag Right</strong> to tilt left.</p>
             <button class="btn btn-primary" id="close-tutorial-btn">Understood</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         CREDITS
-    ═══════════════════════════════════════ -->
     <div id="credits-screen" class="screen-overlay">
         <div class="modal-content">
-            <h2 class="screen-title" style="font-size: clamp(22px, 4vw, 28px);">Origins</h2>
+            <h2 class="screen-title" style="font-size:clamp(22px,4vw,28px);">Origins</h2>
             <div class="screen-subtitle">File 001</div>
             <div class="credits-box">
-                <div class="axiom-def">
-                    <span>Axiomort</span>: Axiom + Mort.<br><br>
-                    The fundamental laws of existence &amp; the annihilation of those laws.
-                </div>
+                <div class="axiom-def"><span>Axiomort</span>: Axiom + Mort.<br><br>The fundamental laws of existence &amp; the annihilation of those laws.</div>
                 <span class="creator-tag">A demo prototype by @BreadFlows</span>
             </div>
             <button class="btn btn-primary" id="close-credits-btn">Back</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         SHOP
-    ═══════════════════════════════════════ -->
     <div id="shop-screen" class="screen-overlay">
         <div class="modal-content">
-            <h2 class="screen-title" style="font-size: clamp(22px, 4vw, 28px);">Fabrication</h2>
+            <h2 class="screen-title" style="font-size:clamp(22px,4vw,28px);">Fabrication</h2>
             <div class="screen-subtitle">Equip Skins</div>
-            <div class="menu-stats" style="padding: 10px;">
+            <div class="menu-stats" style="padding:10px;">
                 <span class="menu-stat-val" id="shop-gold">0</span>
-                <span style="font-family: var(--font-mono); font-size: 10px; align-self: center; color: #999; letter-spacing: 2px;">PTS</span>
+                <span style="font-family:var(--font-mono);font-size:10px;align-self:center;color:#999;letter-spacing:2px;">PTS</span>
             </div>
             <div class="shop-grid" id="shop-grid"></div>
-            <button class="btn btn-primary" id="close-shop-btn" style="margin-top: 8px;">Back</button>
+            <button class="btn btn-primary" id="close-shop-btn" style="margin-top:8px;">Back</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         CONFIRM PURCHASE
-    ═══════════════════════════════════════ -->
     <div id="confirm-modal" class="screen-overlay">
         <div class="confirm-box">
             <h3>Confirm Purchase?</h3>
-            <p>Unlock <strong id="confirm-name">Skin</strong> for <span id="confirm-cost" style="color: var(--gold); font-weight: bold;">0</span> pts?</p>
+            <p>Unlock <strong id="confirm-name">Skin</strong> for <span id="confirm-cost" style="color:var(--gold);font-weight:bold;">0</span> pts?</p>
             <div class="btn-row">
                 <button class="btn btn-outline" id="cancel-buy-btn">Cancel</button>
                 <button class="btn btn-gold" id="confirm-buy-btn">Buy</button>
@@ -554,16 +370,11 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════
-         GAME OVER
-    ═══════════════════════════════════════ -->
     <div id="game-over-screen" class="screen-overlay">
         <div class="modal-content">
-            <h2 class="screen-title" style="font-size: clamp(26px, 5vw, 32px);">Voided</h2>
+            <h2 class="screen-title" style="font-size:clamp(26px,5vw,32px);">Voided</h2>
             <div class="screen-subtitle" id="go-desc">Sequence Failed</div>
-            <div class="btn-row">
-                <button class="btn btn-gold" id="continue-btn">Revive <span class="cost-label" id="revive-cost">100</span></button>
-            </div>
+            <div class="btn-row"><button class="btn btn-gold" id="continue-btn">Revive <span class="cost-label" id="revive-cost">100</span></button></div>
             <div class="btn-row">
                 <button class="btn btn-primary" id="restart-btn">Restart</button>
                 <button class="btn btn-outline" id="menu-return-btn">Menu</button>
@@ -571,299 +382,170 @@
         </div>
     </div>
 
-
     <script>
-        /* ═══════════════════════════════════════
-           BOOT SEQUENCE LOGIC
-        ═══════════════════════════════════════ */
-        const bootLines = [
-            'Initializing dimensional matrix...',
-            'Loading axiom protocols...',
-            'Calibrating inversion field...',
-            'Compiling maze topology...',
-            'Systems nominal.',
-        ];
-
-        let bootLineIndex = 0;
-        const terminalEl = document.getElementById('bootTerminal');
-
-        function typeBootLine() {
-            if (bootLineIndex >= bootLines.length) return;
-            const line = bootLines[bootLineIndex];
-            let charIndex = 0;
-            terminalEl.textContent = '';
-            const interval = setInterval(() => {
-                terminalEl.textContent = line.substring(0, charIndex + 1);
-                charIndex++;
-                if (charIndex >= line.length) {
-                    clearInterval(interval);
-                    bootLineIndex++;
-                    if (bootLineIndex < bootLines.length) {
-                        setTimeout(typeBootLine, 400);
-                    }
-                }
-            }, 30);
-        }
-
-        // Start boot sequence and reveal wallpaper
-        setTimeout(() => {
-            document.getElementById('bootWallpaper').classList.add('visible');
-        }, 500);
-        setTimeout(typeBootLine, 1800);
-
-        function dismissBoot() {
-            document.getElementById('boot-screen').classList.add('dismissed');
-            // Show main menu after boot fades
-            setTimeout(() => {
-                document.getElementById('main-menu').classList.add('visible');
-            }, 400);
-        }
+        const bootLines=['Initializing dimensional matrix...','Loading axiom protocols...','Calibrating inversion field...','Compiling maze topology...','Systems nominal.'];
+        let bootLineIndex=0;const terminalEl=document.getElementById('bootTerminal');
+        function typeBootLine(){if(bootLineIndex>=bootLines.length)return;const line=bootLines[bootLineIndex];let ci=0;terminalEl.textContent='';const iv=setInterval(()=>{terminalEl.textContent=line.substring(0,ci+1);ci++;if(ci>=line.length){clearInterval(iv);bootLineIndex++;if(bootLineIndex<bootLines.length)setTimeout(typeBootLine,400);}},30);}
+        setTimeout(()=>document.getElementById('bootWallpaper').classList.add('visible'),500);
+        setTimeout(typeBootLine,1800);
+        function dismissBoot(){document.getElementById('boot-screen').classList.add('dismissed');setTimeout(()=>document.getElementById('main-menu').classList.add('visible'),400);}
     </script>
 
     <script type="module">
-        /* ═══════════════════════════════════════
-           GAME ENGINE (preserved from maze.html)
-        ═══════════════════════════════════════ */
-        import * as THREE from 'three/webgpu';
+        import * as THREE from 'three';
 
-        const CONFIG = {
-            gridSize: 11, cellSize: 2, wallHeight: 1.2,
-            ballRadius: 0.42, wallHitboxSize: 1.85,
-            tiltSpeed: 0.0025, maxTilt: 0.35, restitution: 0.4,
-            pointsPerLevel: 100, pointsPerArtifact: 250, pointsPerBossShard: 50,
-            baseTime: 60, timeDecrement: 5, minTime: 10,
-            bossInterval: 5, bossRoundDuration: 15,
-            saveKey: 'axiomort_save_v2',
-            encryptionSalt: 'Axiomort_2026_Secret'
+        /* ═══ PERFORMANCE DETECTION ═══ */
+        function detectPerformanceTier(){
+            const mob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const cores=navigator.hardwareConcurrency||2;
+            const mem=navigator.deviceMemory||2;
+            if(mob&&(cores<=4||mem<=2))return'low';
+            if(mob)return'medium';
+            if(cores>=8&&mem>=8)return'high';
+            return'medium';
+        }
+        const PERF_TIER=detectPerformanceTier();
+        const PERF={
+            low:{pixelRatio:1.0,shadowMap:512,shadows:false,sphereDetail:16,fog:false},
+            medium:{pixelRatio:Math.min(window.devicePixelRatio,1.5),shadowMap:1024,shadows:true,sphereDetail:24,fog:true},
+            high:{pixelRatio:Math.min(window.devicePixelRatio,2.0),shadowMap:2048,shadows:true,sphereDetail:32,fog:true},
+        }[PERF_TIER];
+        document.getElementById('perf-indicator').textContent=PERF_TIER;
+
+        /* ═══ CONFIG ═══ */
+        const CONFIG={
+            gridSize:11, cellSize:2, wallHeight:1.2,
+            ballRadius:0.42, maxTilt:0.35, restitution:0.4,
+            pointsPerLevel:100, pointsPerArtifact:250, pointsPerBossShard:50,
+            baseTime:60, timeDecrement:5, minTime:10,
+            bossInterval:5, bossRoundDuration:15,
+            saveKey:'axiomort_save_v3', encryptionSalt:'Axiomort_2026_Secret',
         };
-
-        const SKINS = [
-            { id: 'default', name: 'Standard', color: 0xee4444, cost: 0 },
-            { id: 'blue',    name: 'Cobalt',   color: 0x2266cc, cost: 500 },
-            { id: 'gold',    name: 'Midas',    color: 0xffd700, cost: 2000 },
-            { id: 'void',    name: 'Void',     color: 0x111111, cost: 5000 },
-            { id: 'neon',    name: 'Cyber',    color: 0xff00ff, cost: 1000 },
-            { id: 'ghost',   name: 'Specter',  color: 0xffffff, cost: 3000 },
+        const SKINS=[
+            {id:'default',name:'Standard',color:0xee4444,cost:0},
+            {id:'blue',name:'Cobalt',color:0x2266cc,cost:500},
+            {id:'neon',name:'Cyber',color:0xff00ff,cost:1000},
+            {id:'gold',name:'Midas',color:0xffd700,cost:2000},
+            {id:'ghost',name:'Specter',color:0xffffff,cost:3000},
+            {id:'void',name:'Void',color:0x111111,cost:5000},
         ];
 
-        let playerData = { gold: 0, unlockedSkins: ['default'], equippedSkin: 'default', tutorialSeen: false };
-
-        let scene, camera, renderer;
-        let ball, mazeContainer, wallMaterial, ballMaterial;
-        let walls = [], artifacts = [];
-        let gameState = 'MENU';
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        let targetRotation = { x: 0, z: 0 };
-        let currentRotation = { x: 0, z: 0 };
-        let velocity = { x: 0, z: 0 };
+        /* ═══ STATE ═══ */
+        let playerData={gold:0,unlockedSkins:['default'],equippedSkin:'default',tutorialSeen:false};
+        let scene,camera,renderer;
+        let ball,mazeContainer,wallMaterial,wallTopMaterial,ballMaterial;
+        let walls=[],artifacts=[];
+        let gameState='MENU';
+        let isDragging=false;
+        let previousMousePosition={x:0,y:0};
+        let targetRotation={x:0,z:0};
+        let currentRotation={x:0,z:0};
+        let velocity={x:0,z:0};
         let goalArea;
-        let currentLevel = 1;
-        let isBossRound = false;
-        let levelStartTime = 0;
-        let currentLevelDuration = 0;
-        let pendingSkin = null;
-        let lastFrameTime = 0;
-        let wallInstancedMesh = null;
+        let currentLevel=1;
+        let isBossRound=false;
+        let levelStartTime=0;
+        let currentLevelDuration=0;
+        let pendingSkin=null;
+        let lastFrameTime=0;
+        let wallInstancedMesh=null;
+        let wallTopInstancedMesh=null;
 
-        /* ── Save / Load ── */
-        function obfuscateData(data) {
-            const str = JSON.stringify(data);
-            let encoded = '';
-            for (let i = 0; i < str.length; i++) {
-                encoded += String.fromCharCode(str.charCodeAt(i) ^ CONFIG.encryptionSalt.charCodeAt(i % CONFIG.encryptionSalt.length));
-            }
-            return btoa(encoded);
-        }
+        /* ═══ SAVE/LOAD ═══ */
+        function obfuscateData(d){const s=JSON.stringify(d);let e='';for(let i=0;i<s.length;i++)e+=String.fromCharCode(s.charCodeAt(i)^CONFIG.encryptionSalt.charCodeAt(i%CONFIG.encryptionSalt.length));return btoa(e);}
+        function deobfuscateData(h){try{const d=atob(h);let s='';for(let i=0;i<d.length;i++)s+=String.fromCharCode(d.charCodeAt(i)^CONFIG.encryptionSalt.charCodeAt(i%CONFIG.encryptionSalt.length));return JSON.parse(s);}catch(e){return null;}}
+        function loadData(){try{const s=localStorage.getItem(CONFIG.saveKey);if(s){const p=deobfuscateData(s);if(p)playerData={...playerData,...p};}}catch(e){}updateMenuUI();}
+        function saveData(){try{localStorage.setItem(CONFIG.saveKey,obfuscateData(playerData));}catch(e){}updateMenuUI();}
+        function updateMenuUI(){document.getElementById('menu-gold').innerText=playerData.gold;document.getElementById('shop-gold').innerText=playerData.gold;document.getElementById('points-display').innerText=playerData.gold;}
 
-        function deobfuscateData(hash) {
-            try {
-                const decoded = atob(hash);
-                let str = '';
-                for (let i = 0; i < decoded.length; i++) {
-                    str += String.fromCharCode(decoded.charCodeAt(i) ^ CONFIG.encryptionSalt.charCodeAt(i % CONFIG.encryptionSalt.length));
-                }
-                return JSON.parse(str);
-            } catch (e) {
-                console.warn('Save corrupted. Resetting.');
-                return null;
-            }
-        }
-
-        function loadData() {
-            const saved = localStorage.getItem(CONFIG.saveKey);
-            if (saved) {
-                const parsed = deobfuscateData(saved);
-                if (parsed) playerData = parsed;
-            }
-            updateMenuUI();
-        }
-
-        function saveData() {
-            localStorage.setItem(CONFIG.saveKey, obfuscateData(playerData));
-            updateMenuUI();
-        }
-
-        function updateMenuUI() {
-            document.getElementById('menu-gold').innerText = playerData.gold;
-            document.getElementById('shop-gold').innerText = playerData.gold;
-            document.getElementById('points-display').innerText = playerData.gold;
-        }
-
-        /* ── Shop ── */
-        function initShop() {
-            const grid = document.getElementById('shop-grid');
-            grid.innerHTML = '';
-            SKINS.forEach(skin => {
-                const isUnlocked = playerData.unlockedSkins.includes(skin.id);
-                const isEquipped = playerData.equippedSkin === skin.id;
-                const card = document.createElement('div');
-                card.className = `shop-item ${isEquipped ? 'active' : ''}`;
-                const colorHex = '#' + skin.color.toString(16).padStart(6, '0');
-                card.innerHTML = `
-                    <div class="color-preview" style="background-color: ${colorHex};"></div>
-                    <div class="item-name">${skin.name}</div>
-                    ${isUnlocked
-                        ? `<div class="item-owned">${isEquipped ? 'Equipped' : 'Owned'}</div>`
-                        : `<div class="item-price">${skin.cost} PTS</div>`
-                    }
-                `;
-                card.onclick = () => handleShopClick(skin);
+        /* ═══ SHOP ═══ */
+        function initShop(){
+            const grid=document.getElementById('shop-grid');grid.innerHTML='';
+            SKINS.forEach(skin=>{
+                const unlocked=playerData.unlockedSkins.includes(skin.id);
+                const equipped=playerData.equippedSkin===skin.id;
+                const card=document.createElement('div');
+                card.className=`shop-item ${equipped?'active':''}`;
+                const hex='#'+skin.color.toString(16).padStart(6,'0');
+                card.innerHTML=`<div class="color-preview" style="background-color:${hex};"></div><div class="item-name">${skin.name}</div>${unlocked?`<div class="item-owned">${equipped?'Equipped':'Owned'}</div>`:`<div class="item-price">${skin.cost} PTS</div>`}`;
+                card.onclick=()=>handleShopClick(skin);
                 grid.appendChild(card);
             });
         }
-
-        function handleShopClick(skin) {
-            if (playerData.unlockedSkins.includes(skin.id)) {
-                playerData.equippedSkin = skin.id;
-                updateBallSkin();
-                saveData();
-                initShop();
-            } else {
-                pendingSkin = skin;
-                document.getElementById('confirm-name').innerText = skin.name;
-                document.getElementById('confirm-cost').innerText = skin.cost;
-                document.getElementById('confirm-modal').classList.add('visible');
-            }
+        function handleShopClick(skin){
+            if(playerData.unlockedSkins.includes(skin.id)){playerData.equippedSkin=skin.id;updateBallSkin();saveData();initShop();}
+            else{pendingSkin=skin;document.getElementById('confirm-name').innerText=skin.name;document.getElementById('confirm-cost').innerText=skin.cost;document.getElementById('confirm-modal').classList.add('visible');}
         }
+        function confirmPurchase(){if(pendingSkin&&playerData.gold>=pendingSkin.cost){playerData.gold-=pendingSkin.cost;playerData.unlockedSkins.push(pendingSkin.id);playerData.equippedSkin=pendingSkin.id;updateBallSkin();saveData();initShop();}closeConfirmation();}
+        function closeConfirmation(){pendingSkin=null;document.getElementById('confirm-modal').classList.remove('visible');}
+        function updateBallSkin(){const skin=SKINS.find(s=>s.id===playerData.equippedSkin);if(skin&&ballMaterial){ballMaterial.color.setHex(skin.color);ballMaterial.emissive.setHex(skin.id==='void'?0x000000:0x222222);}}
 
-        function confirmPurchase() {
-            if (pendingSkin && playerData.gold >= pendingSkin.cost) {
-                playerData.gold -= pendingSkin.cost;
-                playerData.unlockedSkins.push(pendingSkin.id);
-                playerData.equippedSkin = pendingSkin.id;
-                updateBallSkin();
-                saveData();
-                initShop();
-            }
-            closeConfirmation();
-        }
-
-        function closeConfirmation() {
-            pendingSkin = null;
-            document.getElementById('confirm-modal').classList.remove('visible');
-        }
-
-        function updateBallSkin() {
-            const skin = SKINS.find(s => s.id === playerData.equippedSkin);
-            if (skin && ballMaterial) {
-                ballMaterial.color.setHex(skin.color);
-                ballMaterial.emissive.setHex(skin.id === 'void' ? 0x000000 : 0x222222);
-            }
-        }
-
-        /* ── Maze Generation ── */
-        function generateMaze(size) {
-            const grid = Array(size).fill().map(() => Array(size).fill(1));
-            const visited = Array(size).fill().map(() => Array(size).fill(false));
-            function carve(x, y) {
-                visited[y][x] = true;
-                grid[y][x] = 0;
-                const directions = [[0,-2],[0,2],[-2,0],[2,0]].sort(() => Math.random() - 0.5);
-                for (let [dx, dy] of directions) {
-                    const nx = x + dx, ny = y + dy;
-                    if (nx > 0 && nx < size-1 && ny > 0 && ny < size-1 && !visited[ny][nx]) {
-                        grid[y + dy/2][x + dx/2] = 0;
-                        carve(nx, ny);
-                    }
+        /* ═══ MAZE GENERATION ═══ */
+        function generateMaze(size){
+            const grid=Array(size).fill().map(()=>Array(size).fill(1));
+            const visited=Array(size).fill().map(()=>Array(size).fill(false));
+            function carve(x,y){
+                visited[y][x]=true;grid[y][x]=0;
+                const dirs=[[0,-2],[0,2],[-2,0],[2,0]].sort(()=>Math.random()-0.5);
+                for(const[dx,dy]of dirs){
+                    const nx=x+dx,ny=y+dy;
+                    if(nx>0&&nx<size-1&&ny>0&&ny<size-1&&!visited[ny][nx]){grid[y+dy/2][x+dx/2]=0;carve(nx,ny);}
                 }
             }
-            carve(1, 1);
-            return grid;
+            carve(1,1);return grid;
         }
 
-        function clearLevel() {
-            if (wallInstancedMesh) {
-                mazeContainer.remove(wallInstancedMesh);
-                if (wallInstancedMesh.geometry) wallInstancedMesh.geometry.dispose();
-                wallInstancedMesh.dispose();
-                wallInstancedMesh = null;
-            }
-            walls = [];
-            artifacts.forEach(a => {
-                mazeContainer.remove(a);
-                if (a.geometry) a.geometry.dispose();
-                if (a.material) a.material.dispose();
-            });
-            artifacts = [];
+        function clearLevel(){
+            if(wallInstancedMesh){mazeContainer.remove(wallInstancedMesh);wallInstancedMesh.geometry.dispose();wallInstancedMesh=null;}
+            if(wallTopInstancedMesh){mazeContainer.remove(wallTopInstancedMesh);wallTopInstancedMesh.geometry.dispose();wallTopInstancedMesh=null;}
+            walls=[];
+            artifacts.forEach(a=>{mazeContainer.remove(a);if(a.geometry)a.geometry.dispose();if(a.material)a.material.dispose();});
+            artifacts=[];
         }
 
-        function buildStandardLevel() {
-            clearLevel();
-            isBossRound = false;
-            goalArea.visible = true;
-            const size = CONFIG.gridSize;
-            const grid = generateMaze(size);
-            const offset = (size * CONFIG.cellSize) / 2 - CONFIG.cellSize / 2;
+        function buildStandardLevel(){
+            clearLevel();isBossRound=false;goalArea.visible=true;
+            const size=CONFIG.gridSize;const grid=generateMaze(size);
+            const offset=(size*CONFIG.cellSize)/2-CONFIG.cellSize/2;
 
-            let wallCount = 0;
-            for (let y = 0; y < size; y++)
-                for (let x = 0; x < size; x++)
-                    if (grid[y][x] === 1) wallCount++;
+            let wallCount=0;
+            for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(grid[y][x]===1)wallCount++;
 
-            const sharedGeo = new THREE.BoxGeometry(CONFIG.cellSize, CONFIG.wallHeight, CONFIG.cellSize);
-            wallInstancedMesh = new THREE.InstancedMesh(sharedGeo, wallMaterial, wallCount);
-            wallInstancedMesh.castShadow = true;
-            wallInstancedMesh.receiveShadow = true;
+            const wallGeo=new THREE.BoxGeometry(CONFIG.cellSize,CONFIG.wallHeight,CONFIG.cellSize);
+            wallInstancedMesh=new THREE.InstancedMesh(wallGeo,wallMaterial,wallCount);
+            wallInstancedMesh.castShadow=PERF.shadows;wallInstancedMesh.receiveShadow=PERF.shadows;
             mazeContainer.add(wallInstancedMesh);
 
-            const matrix = new THREE.Matrix4();
-            let idx = 0;
-            for (let y = 0; y < size; y++) {
-                for (let x = 0; x < size; x++) {
-                    if (grid[y][x] === 1) {
-                        const px = x * CONFIG.cellSize - offset;
-                        const py = CONFIG.wallHeight / 2;
-                        const pz = y * CONFIG.cellSize - offset;
-                        matrix.setPosition(px, py, pz);
-                        wallInstancedMesh.setMatrixAt(idx, matrix);
-                        walls.push({ x: px, z: pz });
-                        idx++;
+            const topGeo=new THREE.BoxGeometry(CONFIG.cellSize,0.06,CONFIG.cellSize);
+            wallTopInstancedMesh=new THREE.InstancedMesh(topGeo,wallTopMaterial,wallCount);
+            mazeContainer.add(wallTopInstancedMesh);
+
+            const matrix=new THREE.Matrix4();const topMatrix=new THREE.Matrix4();let idx=0;
+            for(let y=0;y<size;y++){
+                for(let x=0;x<size;x++){
+                    if(grid[y][x]===1){
+                        const px=x*CONFIG.cellSize-offset;const py=CONFIG.wallHeight/2;const pz=y*CONFIG.cellSize-offset;
+                        matrix.setPosition(px,py,pz);wallInstancedMesh.setMatrixAt(idx,matrix);
+                        topMatrix.setPosition(px,CONFIG.wallHeight+0.03,pz);wallTopInstancedMesh.setMatrixAt(idx,topMatrix);
+                        walls.push({x:px,z:pz});idx++;
                     }
                 }
             }
 
-            goalArea.position.set((size-2)*CONFIG.cellSize - offset, 0.1, (size-2)*CONFIG.cellSize - offset);
+            goalArea.position.set((size-2)*CONFIG.cellSize-offset,0.1,(size-2)*CONFIG.cellSize-offset);
 
-            let attempts = 0;
-            while (attempts < 50) {
-                const rx = Math.floor(Math.random() * (size-2)) + 1;
-                const ry = Math.floor(Math.random() * (size-2)) + 1;
-                if (grid[ry][rx] === 0) {
-                    const ax = rx * CONFIG.cellSize - offset;
-                    const az = ry * CONFIG.cellSize - offset;
-                    const distToGoal = Math.hypot(ax - goalArea.position.x, az - goalArea.position.z);
-                    const distToStart = Math.hypot(ax - (1*CONFIG.cellSize - offset), az - (1*CONFIG.cellSize - offset));
-                    if (distToGoal > 8 && distToStart > 4) {
-                        const artifact = new THREE.Mesh(
-                            new THREE.BoxGeometry(0.6, 0.6, 0.6),
-                            new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1, roughness: 0.2, emissive: 0x443300 })
-                        );
-                        artifact.position.set(ax, 0.5, az);
-                        artifact.userData = { type: 'artifact' };
-                        mazeContainer.add(artifact);
-                        artifacts.push(artifact);
-                        break;
+            let attempts=0;
+            while(attempts<50){
+                const rx=Math.floor(Math.random()*(size-2))+1;const ry=Math.floor(Math.random()*(size-2))+1;
+                if(grid[ry][rx]===0){
+                    const ax=rx*CONFIG.cellSize-offset;const az=ry*CONFIG.cellSize-offset;
+                    const dg=Math.hypot(ax-goalArea.position.x,az-goalArea.position.z);
+                    const ds=Math.hypot(ax-(CONFIG.cellSize-offset),az-(CONFIG.cellSize-offset));
+                    if(dg>6&&ds>3){
+                        const mat=new THREE.MeshStandardMaterial({color:0xffd700,metalness:0.9,roughness:0.2,emissive:0x554400});
+                        const artifact=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.55,0.55),mat);
+                        artifact.position.set(ax,0.45,az);artifact.userData={type:'artifact'};
+                        mazeContainer.add(artifact);artifacts.push(artifact);break;
                     }
                 }
                 attempts++;
@@ -871,363 +553,284 @@
             setupPhysicsAndTimer();
         }
 
-        function buildBossLevel() {
-            clearLevel();
-            isBossRound = true;
-            goalArea.visible = false;
-            const alert = document.getElementById('boss-alert');
-            alert.classList.add('visible');
-            setTimeout(() => alert.classList.remove('visible'), 3000);
-            setupPhysicsAndTimer();
-            currentLevelDuration = CONFIG.bossRoundDuration * 1000;
+        function buildBossLevel(){
+            clearLevel();isBossRound=true;goalArea.visible=false;
+            const alert=document.getElementById('boss-alert');alert.classList.add('visible');
+            setTimeout(()=>alert.classList.remove('visible'),3000);
+            setupPhysicsAndTimer();currentLevelDuration=CONFIG.bossRoundDuration*1000;
         }
 
-        function setupPhysicsAndTimer() {
-            const size = CONFIG.gridSize;
-            const offset = (size * CONFIG.cellSize) / 2 - CONFIG.cellSize / 2;
-            velocity = { x: 0, z: 0 };
-            if (isBossRound) ball.position.set(0, CONFIG.ballRadius, 0);
-            else ball.position.set(1*CONFIG.cellSize - offset, CONFIG.ballRadius, 1*CONFIG.cellSize - offset);
-
-            ball.rotation.set(0,0,0);
-            targetRotation = { x: 0, z: 0 };
-            currentRotation = { x: 0, z: 0 };
-            mazeContainer.rotation.set(0,0,0);
-
-            if (!isBossRound) {
-                if (currentLevel === 1) currentLevelDuration = Infinity;
-                else {
-                    let calc = CONFIG.baseTime - ((currentLevel - 2) * CONFIG.timeDecrement);
-                    currentLevelDuration = (calc < CONFIG.minTime ? CONFIG.minTime : calc) * 1000;
-                }
+        function setupPhysicsAndTimer(){
+            const offset=(CONFIG.gridSize*CONFIG.cellSize)/2-CONFIG.cellSize/2;
+            velocity={x:0,z:0};
+            if(isBossRound)ball.position.set(0,CONFIG.ballRadius,0);
+            else ball.position.set(CONFIG.cellSize-offset,CONFIG.ballRadius,CONFIG.cellSize-offset);
+            ball.rotation.set(0,0,0);targetRotation={x:0,z:0};currentRotation={x:0,z:0};mazeContainer.rotation.set(0,0,0);
+            if(!isBossRound){
+                if(currentLevel===1)currentLevelDuration=Infinity;
+                else{const c=CONFIG.baseTime-((currentLevel-2)*CONFIG.timeDecrement);currentLevelDuration=Math.max(c,CONFIG.minTime)*1000;}
             }
-            levelStartTime = Date.now();
-            updateGameUI();
+            levelStartTime=Date.now();updateGameUI();
         }
 
-        function spawnBossShard() {
-            const limit = (CONFIG.gridSize * CONFIG.cellSize) / 2 - 2;
-            const x = (Math.random() * limit * 2) - limit;
-            const z = (Math.random() * limit * 2) - limit;
-            const shard = new THREE.Mesh(
-                new THREE.BoxGeometry(0.8, 0.8, 0.8),
-                new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x0044aa, metalness: 0.8 })
-            );
-            shard.position.set(x, 0.5, z);
-            shard.rotation.set(Math.random(), Math.random(), Math.random());
-            shard.userData = { type: 'shard' };
-            mazeContainer.add(shard);
-            artifacts.push(shard);
+        function spawnBossShard(){
+            const limit=(CONFIG.gridSize*CONFIG.cellSize)/2-2;
+            const x=(Math.random()*2-1)*limit;const z=(Math.random()*2-1)*limit;
+            const mat=new THREE.MeshStandardMaterial({color:0x00ffff,emissive:0x005588,metalness:0.7,roughness:0.3});
+            const shard=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),mat);
+            shard.position.set(x,0.45,z);shard.rotation.set(Math.random(),Math.random(),Math.random());
+            shard.userData={type:'shard'};mazeContainer.add(shard);artifacts.push(shard);
         }
 
-        /* ── Physics ── */
-        function updatePhysics(dt) {
-            if (gameState !== 'PLAYING') return;
-            const g = 1.08 * dt;
-            velocity.x += Math.sin(currentRotation.z) * g;
-            velocity.z += -Math.sin(currentRotation.x) * g;
-            const friction = Math.pow(0.97, dt * 60);
-            velocity.x *= friction;
-            velocity.z *= friction;
+        /* ═══ PHYSICS — PROPER AABB COLLISION ═══ */
+        function updatePhysics(dt){
+            if(gameState!=='PLAYING')return;
 
-            let nextX = ball.position.x + (velocity.x * dt * 60);
-            let nextZ = ball.position.z + (velocity.z * dt * 60);
+            const g=1.08*dt;
+            velocity.x+=Math.sin(currentRotation.z)*g;
+            velocity.z+=-Math.sin(currentRotation.x)*g;
 
-            if (!isBossRound) {
-                for (let wall of walls) {
-                    const halfSize = CONFIG.wallHitboxSize / 2 + CONFIG.ballRadius;
-                    const minX = wall.x - halfSize, maxX = wall.x + halfSize;
-                    const minZ = wall.z - halfSize, maxZ = wall.z + halfSize;
-                    if (nextX > minX && nextX < maxX && nextZ > minZ && nextZ < maxZ) {
-                        const inX = ball.position.x > minX && ball.position.x < maxX;
-                        const inZ = ball.position.z > minZ && ball.position.z < maxZ;
-                        if (!inX) { velocity.x *= -CONFIG.restitution; nextX = ball.position.x; }
-                        if (!inZ) { velocity.z *= -CONFIG.restitution; nextZ = ball.position.z; }
+            const friction=Math.pow(0.97,dt*60);
+            velocity.x*=friction;velocity.z*=friction;
+
+            // Speed cap prevents tunneling through walls
+            const maxSpeed=CONFIG.cellSize*0.4;
+            const speed=Math.hypot(velocity.x,velocity.z);
+            if(speed>maxSpeed){velocity.x=(velocity.x/speed)*maxSpeed;velocity.z=(velocity.z/speed)*maxSpeed;}
+
+            let nextX=ball.position.x+velocity.x*dt*60;
+            let nextZ=ball.position.z+velocity.z*dt*60;
+
+            // FIX: Proper circle-vs-AABB collision
+            if(!isBossRound){
+                const halfWall=CONFIG.cellSize/2;
+                const r=CONFIG.ballRadius;
+
+                for(const wall of walls){
+                    const wMinX=wall.x-halfWall;const wMaxX=wall.x+halfWall;
+                    const wMinZ=wall.z-halfWall;const wMaxZ=wall.z+halfWall;
+
+                    // Closest point on AABB to ball center
+                    const closestX=Math.max(wMinX,Math.min(nextX,wMaxX));
+                    const closestZ=Math.max(wMinZ,Math.min(nextZ,wMaxZ));
+                    const distX=nextX-closestX;const distZ=nextZ-closestZ;
+                    const distSq=distX*distX+distZ*distZ;
+
+                    if(distSq<r*r&&distSq>0.0001){
+                        const dist=Math.sqrt(distSq);
+                        const nx=distX/dist;const nz=distZ/dist;
+                        const overlap=r-dist;
+
+                        // Push ball out of wall
+                        nextX+=nx*overlap;nextZ+=nz*overlap;
+
+                        // Reflect velocity along collision normal
+                        const dot=velocity.x*nx+velocity.z*nz;
+                        velocity.x-=(1+CONFIG.restitution)*dot*nx;
+                        velocity.z-=(1+CONFIG.restitution)*dot*nz;
                     }
                 }
             } else {
-                const limit = (CONFIG.gridSize * CONFIG.cellSize) / 2 - 1;
-                if (Math.abs(nextX) > limit) { nextX = ball.position.x; velocity.x *= -0.8; }
-                if (Math.abs(nextZ) > limit) { nextZ = ball.position.z; velocity.z *= -0.8; }
+                const limit=(CONFIG.gridSize*CONFIG.cellSize)/2-1;
+                if(Math.abs(nextX)>limit){nextX=Math.sign(nextX)*limit;velocity.x*=-0.8;}
+                if(Math.abs(nextZ)>limit){nextZ=Math.sign(nextZ)*limit;velocity.z*=-0.8;}
             }
 
-            const boundary = (CONFIG.gridSize * CONFIG.cellSize) / 2;
-            if (Math.abs(nextX) > boundary) { nextX = ball.position.x; velocity.x *= -0.5; }
-            if (Math.abs(nextZ) > boundary) { nextZ = ball.position.z; velocity.z *= -0.5; }
+            // Hard boundary clamp
+            const boundary=(CONFIG.gridSize*CONFIG.cellSize)/2;
+            nextX=Math.max(-boundary,Math.min(boundary,nextX));
+            nextZ=Math.max(-boundary,Math.min(boundary,nextZ));
 
-            ball.position.x = nextX;
-            ball.position.z = nextZ;
-            ball.rotation.x -= (velocity.z * dt * 60) * 0.5;
-            ball.rotation.z += (velocity.x * dt * 60) * 0.5;
+            ball.position.x=nextX;ball.position.z=nextZ;
+            ball.rotation.x-=velocity.z*dt*60*0.5;ball.rotation.z+=velocity.x*dt*60*0.5;
 
-            for (let i = artifacts.length - 1; i >= 0; i--) {
-                const a = artifacts[i];
-                if (Math.hypot(ball.position.x - a.position.x, ball.position.z - a.position.z) < 1.0) {
-                    playerData.gold += (a.userData.type === 'artifact' ? CONFIG.pointsPerArtifact : CONFIG.pointsPerBossShard);
-                    mazeContainer.remove(a);
-                    artifacts.splice(i, 1);
-                    saveData();
+            // Artifacts
+            for(let i=artifacts.length-1;i>=0;i--){
+                const a=artifacts[i];
+                if(Math.hypot(ball.position.x-a.position.x,ball.position.z-a.position.z)<0.9){
+                    playerData.gold+=(a.userData.type==='artifact'?CONFIG.pointsPerArtifact:CONFIG.pointsPerBossShard);
+                    mazeContainer.remove(a);if(a.geometry)a.geometry.dispose();if(a.material)a.material.dispose();
+                    artifacts.splice(i,1);saveData();
                 }
             }
 
-            if (!isBossRound && Math.hypot(ball.position.x - goalArea.position.x, ball.position.z - goalArea.position.z) < 0.8) {
-                completeLevel();
+            if(!isBossRound&&Math.hypot(ball.position.x-goalArea.position.x,ball.position.z-goalArea.position.z)<0.8)completeLevel();
+        }
+
+        function checkTimer(){
+            if(gameState!=='PLAYING'||currentLevelDuration===Infinity){if(currentLevelDuration===Infinity)document.getElementById('timer-display').innerText='\u221E';return;}
+            const remaining=currentLevelDuration-(Date.now()-levelStartTime);
+            if(remaining<=0){document.getElementById('timer-display').innerText='00:00';isBossRound?completeLevel():triggerGameOver();}
+            else{
+                const s=Math.ceil(remaining/1000);const el=document.getElementById('timer-display');
+                el.innerText=`${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+                s<=5?el.classList.add('critical'):el.classList.remove('critical');
+                if(isBossRound&&Math.random()<0.05&&artifacts.length<10)spawnBossShard();
             }
         }
 
-        function checkTimer() {
-            if (gameState !== 'PLAYING' || currentLevelDuration === Infinity) {
-                if (currentLevelDuration === Infinity) document.getElementById('timer-display').innerText = '\u221E';
-                return;
-            }
-            const remaining = currentLevelDuration - (Date.now() - levelStartTime);
-            if (remaining <= 0) {
-                document.getElementById('timer-display').innerText = '00:00';
-                isBossRound ? completeLevel() : triggerGameOver();
-            } else {
-                const s = Math.ceil(remaining / 1000);
-                const el = document.getElementById('timer-display');
-                el.innerText = `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
-                s <= 5 ? el.classList.add('critical') : el.classList.remove('critical');
-                if (isBossRound && Math.random() < 0.05 && artifacts.length < 10) spawnBossShard();
-            }
-        }
-
-        /* ── Game Flow ── */
-        function startNewGame() {
-            if (!playerData.tutorialSeen) {
-                document.getElementById('main-menu').classList.remove('visible');
-                document.getElementById('tutorial-screen').classList.add('visible');
-                return;
-            }
-            proceedToGame();
-        }
-
-        function proceedToGame() {
-            gameState = 'PLAYING';
-            currentLevel = 1;
+        /* ═══ GAME FLOW ═══ */
+        function startNewGame(){if(!playerData.tutorialSeen){document.getElementById('main-menu').classList.remove('visible');document.getElementById('tutorial-screen').classList.add('visible');return;}proceedToGame();}
+        function proceedToGame(){
+            gameState='PLAYING';currentLevel=1;
             document.getElementById('main-menu').classList.remove('visible');
             document.getElementById('tutorial-screen').classList.remove('visible');
             document.getElementById('game-over-screen').classList.remove('visible');
             document.getElementById('game-ui').classList.remove('hidden');
             buildStandardLevel();
         }
-
-        function completeLevel() {
-            if (!isBossRound) playerData.gold += CONFIG.pointsPerLevel;
-            saveData();
-            currentLevel++;
-            (currentLevel % CONFIG.bossInterval === 0) ? buildBossLevel() : buildStandardLevel();
+        function completeLevel(){if(!isBossRound)playerData.gold+=CONFIG.pointsPerLevel;saveData();currentLevel++;(currentLevel%CONFIG.bossInterval===0)?buildBossLevel():buildStandardLevel();}
+        function triggerGameOver(){
+            gameState='GAMEOVER';isDragging=false;const cost=currentLevel*50;
+            document.getElementById('go-desc').innerText=`Level ${currentLevel} Failed`;
+            document.getElementById('revive-cost').innerText=`${cost} pts`;
+            const btn=document.getElementById('continue-btn');btn.disabled=playerData.gold<cost;
+            btn.onclick=()=>{if(playerData.gold>=cost){playerData.gold-=cost;saveData();document.getElementById('game-over-screen').classList.remove('visible');document.getElementById('game-ui').classList.remove('hidden');gameState='PLAYING';setupPhysicsAndTimer();}};
+            document.getElementById('game-ui').classList.add('hidden');document.getElementById('game-over-screen').classList.add('visible');
         }
-
-        function triggerGameOver() {
-            gameState = 'GAMEOVER';
-            isDragging = false;
-            const cost = currentLevel * 50;
-            document.getElementById('go-desc').innerText = `Level ${currentLevel} Failed`;
-            document.getElementById('revive-cost').innerText = `${cost} pts`;
-            const btn = document.getElementById('continue-btn');
-            btn.disabled = playerData.gold < cost;
-            btn.onclick = () => {
-                if (playerData.gold >= cost) {
-                    playerData.gold -= cost;
-                    saveData();
-                    document.getElementById('game-over-screen').classList.remove('visible');
-                    gameState = 'PLAYING';
-                    setupPhysicsAndTimer();
-                }
-            };
-            document.getElementById('game-ui').classList.add('hidden');
-            document.getElementById('game-over-screen').classList.add('visible');
-        }
-
-        function returnToMenu() {
-            gameState = 'MENU';
+        function returnToMenu(){
+            gameState='MENU';
             document.getElementById('game-over-screen').classList.remove('visible');
             document.getElementById('shop-screen').classList.remove('visible');
             document.getElementById('credits-screen').classList.remove('visible');
             document.getElementById('game-ui').classList.add('hidden');
             document.getElementById('main-menu').classList.add('visible');
-            clearLevel();
-            buildStandardLevel();
-            ball.position.set(0, 0.5, 0);
-            mazeContainer.rotation.set(0,0,0);
-            targetRotation = { x: 0, z: 0 };
-            currentRotation = { x: 0, z: 0 };
-            updateMenuUI();
+            clearLevel();buildStandardLevel();
+            ball.position.set(0,CONFIG.ballRadius,0);mazeContainer.rotation.set(0,0,0);
+            targetRotation={x:0,z:0};currentRotation={x:0,z:0};updateMenuUI();
         }
+        function updateGameUI(){document.getElementById('level-display').innerText=currentLevel;document.getElementById('points-display').innerText=playerData.gold;}
 
-        function updateGameUI() {
-            document.getElementById('level-display').innerText = currentLevel;
-            document.getElementById('points-display').innerText = playerData.gold;
-        }
+        /* ═══ INIT — WebGL + FIXED LIGHTING ═══ */
+        function init(){
+            const container=document.getElementById('canvas-container');
 
-        /* ── Init ── */
-        async function init() {
-            const container = document.getElementById('canvas-container');
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xe8ebf2);
-            scene.fog = new THREE.FogExp2(0xe8ebf2, 0.02);
-            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+            scene=new THREE.Scene();
+            scene.background=new THREE.Color(0xe8ebf2);
+            if(PERF.fog)scene.fog=new THREE.FogExp2(0xe8ebf2,0.015);
 
-            renderer = new THREE.WebGPURenderer({ antialias: true, alpha: false });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            camera=new THREE.PerspectiveCamera(40,window.innerWidth/window.innerHeight,0.1,200);
+
+            // WebGL — universal compatibility (replaces WebGPU)
+            renderer=new THREE.WebGLRenderer({antialias:PERF_TIER!=='low',alpha:false});
+            renderer.setSize(window.innerWidth,window.innerHeight);
+            renderer.setPixelRatio(PERF.pixelRatio);
+            renderer.shadowMap.enabled=PERF.shadows;
+            if(PERF.shadows)renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+            renderer.outputColorSpace=THREE.SRGBColorSpace;
+            renderer.toneMapping=THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure=1.1;
             container.appendChild(renderer.domElement);
 
-            scene.add(new THREE.HemisphereLight(0xffffff, 0xffeedd, 1.2));
+            // FIX: Scene-level lighting (not camera-parented)
+            scene.add(new THREE.HemisphereLight(0xffffff,0xd4c9b0,1.5));
+            scene.add(new THREE.AmbientLight(0xffffff,0.3));
 
-            const dl = new THREE.DirectionalLight(0xffffff, 1.5);
-            dl.position.set(5, 10, 5);
-            dl.castShadow = true;
-            const shadowSize = 20;
-            dl.shadow.camera.left = -shadowSize;
-            dl.shadow.camera.right = shadowSize;
-            dl.shadow.camera.top = shadowSize;
-            dl.shadow.camera.bottom = -shadowSize;
-            dl.shadow.mapSize.width = 1024;
-            dl.shadow.mapSize.height = 1024;
-            camera.add(dl);
-            scene.add(camera);
+            const mainLight=new THREE.DirectionalLight(0xffffff,1.2);
+            mainLight.position.set(8,20,10);mainLight.castShadow=PERF.shadows;
+            if(PERF.shadows){
+                const s=18;mainLight.shadow.camera.left=-s;mainLight.shadow.camera.right=s;
+                mainLight.shadow.camera.top=s;mainLight.shadow.camera.bottom=-s;
+                mainLight.shadow.camera.near=1;mainLight.shadow.camera.far=60;
+                mainLight.shadow.mapSize.width=PERF.shadowMap;mainLight.shadow.mapSize.height=PERF.shadowMap;
+                mainLight.shadow.bias=-0.002;
+            }
+            scene.add(mainLight);
 
-            wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.1 });
-            ballMaterial = new THREE.MeshStandardMaterial({ color: 0xee4444, metalness: 0.4, roughness: 0.3 });
+            const fillLight=new THREE.DirectionalLight(0xddeeff,0.4);
+            fillLight.position.set(-6,12,-8);scene.add(fillLight);
 
-            mazeContainer = new THREE.Group();
-            scene.add(mazeContainer);
+            // Materials — walls lighter for mobile visibility
+            wallMaterial=new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:0.5,metalness:0.05});
+            wallTopMaterial=new THREE.MeshStandardMaterial({color:0x666666,roughness:0.3,metalness:0.1,emissive:0x111111});
+            ballMaterial=new THREE.MeshStandardMaterial({color:0xee4444,metalness:0.4,roughness:0.3,emissive:0x222222});
 
-            const floorSize = CONFIG.gridSize * CONFIG.cellSize;
-            const floor = new THREE.Mesh(
-                new THREE.BoxGeometry(floorSize, 0.5, floorSize),
-                new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.1, metalness: 0.2 })
-            );
-            floor.position.y = -0.5;
-            floor.receiveShadow = true;
-            mazeContainer.add(floor);
+            mazeContainer=new THREE.Group();scene.add(mazeContainer);
 
-            ball = new THREE.Mesh(new THREE.SphereGeometry(CONFIG.ballRadius, 32, 32), ballMaterial);
-            ball.castShadow = true;
-            mazeContainer.add(ball);
+            const floorSize=CONFIG.gridSize*CONFIG.cellSize+1;
+            const floor=new THREE.Mesh(new THREE.BoxGeometry(floorSize,0.5,floorSize),new THREE.MeshStandardMaterial({color:0xdddad0,roughness:0.4,metalness:0.05}));
+            floor.position.y=-0.25;floor.receiveShadow=PERF.shadows;mazeContainer.add(floor);
 
-            goalArea = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.8, 0.8, 0.1, 32),
-                new THREE.MeshBasicMaterial({ color: 0x00cc44, transparent: true, opacity: 0.6 })
-            );
+            ball=new THREE.Mesh(new THREE.SphereGeometry(CONFIG.ballRadius,PERF.sphereDetail,PERF.sphereDetail),ballMaterial);
+            ball.castShadow=PERF.shadows;mazeContainer.add(ball);
+
+            goalArea=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,0.08,24),new THREE.MeshStandardMaterial({color:0x00cc44,transparent:true,opacity:0.7,emissive:0x005500}));
             mazeContainer.add(goalArea);
 
-            loadData();
-            updateBallSkin();
-            buildStandardLevel();
+            loadData();updateBallSkin();buildStandardLevel();
 
-            /* ── Input ── */
-            document.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
-            document.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, { passive: false });
-            document.addEventListener('mouseup', () => isDragging = false);
-            document.addEventListener('touchend', () => isDragging = false);
-            document.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
-            document.addEventListener('touchmove', (e) => {
-                if (gameState === 'PLAYING') {
-                    e.preventDefault();
-                    handleMove(e.touches[0].clientX, e.touches[0].clientY);
-                }
-            }, { passive: false });
+            // Input
+            const down=(x,y)=>{isDragging=true;previousMousePosition={x,y};};
+            const up=()=>{isDragging=false;};
+            document.addEventListener('mousedown',e=>down(e.clientX,e.clientY));
+            document.addEventListener('touchstart',e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:false});
+            document.addEventListener('mouseup',up);document.addEventListener('touchend',up);document.addEventListener('touchcancel',up);
+            document.addEventListener('mousemove',e=>handleMove(e.clientX,e.clientY));
+            document.addEventListener('touchmove',e=>{if(gameState==='PLAYING'){e.preventDefault();handleMove(e.touches[0].clientX,e.touches[0].clientY);}},{passive:false});
 
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                updateCameraPos();
-            });
+            window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);updateCameraPos();});
 
-            /* ── UI Wiring ── */
-            document.getElementById('play-btn').onclick = startNewGame;
-            document.getElementById('restart-btn').onclick = startNewGame;
-            document.getElementById('menu-return-btn').onclick = returnToMenu;
+            // UI wiring
+            document.getElementById('play-btn').onclick=startNewGame;
+            document.getElementById('restart-btn').onclick=startNewGame;
+            document.getElementById('menu-return-btn').onclick=returnToMenu;
+            document.getElementById('shop-btn').onclick=()=>{document.getElementById('main-menu').classList.remove('visible');document.getElementById('shop-screen').classList.add('visible');initShop();gameState='SHOP';};
+            document.getElementById('credits-btn').onclick=()=>{document.getElementById('main-menu').classList.remove('visible');document.getElementById('credits-screen').classList.add('visible');gameState='CREDITS';};
+            document.getElementById('close-shop-btn').onclick=()=>{document.getElementById('shop-screen').classList.remove('visible');document.getElementById('main-menu').classList.add('visible');gameState='MENU';};
+            document.getElementById('close-credits-btn').onclick=()=>{document.getElementById('credits-screen').classList.remove('visible');document.getElementById('main-menu').classList.add('visible');gameState='MENU';};
+            document.getElementById('close-tutorial-btn').onclick=()=>{playerData.tutorialSeen=true;saveData();proceedToGame();};
+            document.getElementById('confirm-buy-btn').onclick=confirmPurchase;
+            document.getElementById('cancel-buy-btn').onclick=closeConfirmation;
 
-            document.getElementById('shop-btn').onclick = () => {
-                document.getElementById('main-menu').classList.remove('visible');
-                document.getElementById('shop-screen').classList.add('visible');
-                initShop();
-                gameState = 'SHOP';
-            };
-            document.getElementById('credits-btn').onclick = () => {
-                document.getElementById('main-menu').classList.remove('visible');
-                document.getElementById('credits-screen').classList.add('visible');
-                gameState = 'CREDITS';
-            };
-            document.getElementById('close-shop-btn').onclick = () => {
-                document.getElementById('shop-screen').classList.remove('visible');
-                document.getElementById('main-menu').classList.add('visible');
-                gameState = 'MENU';
-            };
-            document.getElementById('close-credits-btn').onclick = () => {
-                document.getElementById('credits-screen').classList.remove('visible');
-                document.getElementById('main-menu').classList.add('visible');
-                gameState = 'MENU';
-            };
-            document.getElementById('close-tutorial-btn').onclick = () => {
-                playerData.tutorialSeen = true;
-                saveData();
-                proceedToGame();
-            };
-            document.getElementById('confirm-buy-btn').onclick = confirmPurchase;
-            document.getElementById('cancel-buy-btn').onclick = closeConfirmation;
-
-            updateCameraPos();
-            await renderer.init();
-            lastFrameTime = performance.now();
-            animate();
+            updateCameraPos();lastFrameTime=performance.now();animate();
         }
 
-        function updateCameraPos() {
-            const aspect = window.innerWidth / window.innerHeight;
-            let targetY = 30, targetZ = 20;
-            if (aspect < 1.0) { targetY /= aspect; targetZ /= aspect; }
-            else if (aspect > 2.3) { targetY *= 0.85; targetZ *= 0.85; }
-            camera.position.set(0, targetY, targetZ);
-            camera.lookAt(0, 0, 0);
+        /* ═══ CAMERA — FIXED MOBILE PORTRAIT ═══ */
+        function updateCameraPos(){
+            const aspect=window.innerWidth/window.innerHeight;
+            let targetY,targetZ;
+            if(aspect<0.6){targetY=42;targetZ=28;}       // Very tall phones
+            else if(aspect<1.0){targetY=35;targetZ=24;}   // Standard portrait
+            else if(aspect>2.3){targetY=25;targetZ=17;}   // Ultra-wide
+            else{targetY=30;targetZ=20;}                   // Landscape/desktop
+            camera.position.set(0,targetY,targetZ);camera.lookAt(0,0,0);
         }
 
-        function handleMove(cx, cy) {
-            if (gameState === 'PLAYING' && isDragging) {
-                const dx = (cx - previousMousePosition.x) / window.innerWidth;
-                const dy = (cy - previousMousePosition.y) / window.innerHeight;
-                const sens = 3.5;
-                targetRotation.z -= dx * sens;
-                targetRotation.x -= dy * sens;
-                targetRotation.z = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.z));
-                targetRotation.x = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, targetRotation.x));
-                previousMousePosition = { x: cx, y: cy };
+        function handleMove(cx,cy){
+            if(gameState==='PLAYING'&&isDragging){
+                const dx=(cx-previousMousePosition.x)/window.innerWidth;
+                const dy=(cy-previousMousePosition.y)/window.innerHeight;
+                const sens=3.5;
+                targetRotation.z-=dx*sens;targetRotation.x-=dy*sens;
+                targetRotation.z=Math.max(-CONFIG.maxTilt,Math.min(CONFIG.maxTilt,targetRotation.z));
+                targetRotation.x=Math.max(-CONFIG.maxTilt,Math.min(CONFIG.maxTilt,targetRotation.x));
+                previousMousePosition={x:cx,y:cy};
             }
-            const ndcX = (cx / window.innerWidth) * 2 - 1;
-            camera.position.x += (ndcX * 2 - camera.position.x) * 0.05;
+            const ndcX=(cx/window.innerWidth)*2-1;
+            camera.position.x+=(ndcX*1.5-camera.position.x)*0.03;
         }
 
-        function animate() {
+        /* ═══ RENDER LOOP ═══ */
+        function animate(){
             requestAnimationFrame(animate);
-            const now = performance.now();
-            let dt = (now - lastFrameTime) / 1000;
-            lastFrameTime = now;
-            if (dt > 0.1) dt = 0.1;
+            const now=performance.now();let dt=(now-lastFrameTime)/1000;lastFrameTime=now;
+            if(dt>0.1)dt=0.1;
 
-            if (gameState === 'PLAYING') {
+            if(gameState==='PLAYING'){
                 checkTimer();
-                currentRotation.x += (targetRotation.x - currentRotation.x) * (10.0 * dt);
-                currentRotation.z += (targetRotation.z - currentRotation.z) * (10.0 * dt);
-                mazeContainer.rotation.x = currentRotation.x;
-                mazeContainer.rotation.z = currentRotation.z;
-                artifacts.forEach(a => { a.rotation.y += 1.2 * dt; a.rotation.x += 0.6 * dt; });
+                currentRotation.x+=(targetRotation.x-currentRotation.x)*10.0*dt;
+                currentRotation.z+=(targetRotation.z-currentRotation.z)*10.0*dt;
+                mazeContainer.rotation.x=currentRotation.x;mazeContainer.rotation.z=currentRotation.z;
+                artifacts.forEach(a=>{a.rotation.y+=1.2*dt;a.rotation.x+=0.6*dt;});
                 updatePhysics(dt);
-            } else if (['MENU', 'SHOP', 'CREDITS'].includes(gameState)) {
-                mazeContainer.rotation.y += 0.12 * dt;
-                mazeContainer.rotation.x = Math.sin(Date.now() * 0.0005) * 0.1;
+            } else if(['MENU','SHOP','CREDITS'].includes(gameState)){
+                mazeContainer.rotation.y+=0.12*dt;
+                mazeContainer.rotation.x=Math.sin(Date.now()*0.0005)*0.1;
             }
-            renderer.render(scene, camera);
+            renderer.render(scene,camera);
         }
 
-        await init();
+        init();
     </script>
 </body>
 </html>
