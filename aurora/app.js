@@ -930,15 +930,6 @@ for (let i = 0; i < TRACKS.length; i++) {
 // ----------------------------------------------------
 const audio = document.getElementById('audio-player');
 let audioCtx = null, analyser = null, freqData = null, sourceNode = null;
-const youtubePanel = document.createElement('div');
-youtubePanel.style.cssText = 'position:fixed;right:18px;bottom:150px;width:min(430px,42vw);aspect-ratio:16/9;z-index:35;border:1px solid rgba(86,194,230,.35);background:#02050b;box-shadow:0 18px 50px rgba(0,0,0,.5);display:none';
-const youtubeFrame = document.createElement('iframe');
-youtubeFrame.style.cssText = 'width:100%;height:100%;border:0;display:block';
-youtubeFrame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-youtubeFrame.allowFullscreen = true;
-youtubePanel.appendChild(youtubeFrame);
-document.body.appendChild(youtubePanel);
-let youtubePlaying = false;
 
 function initAnalyser() {
   if (audioCtx) return;
@@ -1094,21 +1085,7 @@ function loadTrack(idx, autoplay = false) {
   // Update the horizontal 2D HTML/CSS carousel view
   updateHTMLCarousel();
 
-  const youtubeSrc = window.AXYT ? AXYT.embedUrlForTrack(t, { autoplay: !!autoplay, mute: false, controls: true, loop: true }) : '';
-  if (youtubeSrc) {
-    audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
-    youtubeFrame.src = autoplay ? youtubeSrc : '';
-    youtubePanel.style.display = autoplay ? 'block' : 'none';
-    youtubePlaying = !!autoplay;
-    if (seekFillEl) seekFillEl.style.width = '0%';
-    if (timeCurrentEl) timeCurrentEl.textContent = 'YT';
-    if (timeDurationEl) timeDurationEl.textContent = 'LIVE';
-  } else if (t.audioURL) {
-    youtubeFrame.src = '';
-    youtubePanel.style.display = 'none';
-    youtubePlaying = false;
+  if (t.audioURL) {
     audio.src = t.audioURL;
     if (autoplay) {
       initAnalyser();
@@ -1116,9 +1093,6 @@ function loadTrack(idx, autoplay = false) {
       audio.play().catch(e => { showError('Playback blocked: ' + e.message); });
     }
   } else {
-    youtubeFrame.src = '';
-    youtubePanel.style.display = 'none';
-    youtubePlaying = false;
     audio.removeAttribute('src');
     audio.load();
   }
@@ -1133,7 +1107,7 @@ function showError(msg) {
 }
 
 function updatePlayButtonUI() {
-  const active = youtubePlaying || (!audio.paused && !audio.ended && audio.src);
+  const active = !audio.paused && !audio.ended && audio.src;
   isPlaying = active;
   if (playBtn) playBtn.textContent = active ? '⏸' : '▶';
   targetOpenPercent = active ? 1 : 0;
@@ -1144,20 +1118,6 @@ function updatePlayButtonUI() {
 }
 
 function togglePlayback() {
-  const t = TRACKS[currentTrackIdx];
-  const youtubeSrc = window.AXYT ? AXYT.embedUrlForTrack(t, { autoplay: true, mute: false, controls: true, loop: true }) : '';
-  if (youtubeSrc) {
-    if (youtubePlaying) {
-      youtubeFrame.src = '';
-      youtubePlaying = false;
-    } else {
-      youtubeFrame.src = youtubeSrc;
-      youtubePanel.style.display = 'block';
-      youtubePlaying = true;
-    }
-    updatePlayButtonUI();
-    return;
-  }
   if (!audio.src) return;
   initAnalyser();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -1181,8 +1141,6 @@ function prevTrack() {
 function resetPlayer() {
   audio.pause();
   audio.currentTime = 0;
-  youtubeFrame.src = '';
-  youtubePlaying = false;
   targetOpenPercent = 0;
   updatePlayButtonUI();
 }

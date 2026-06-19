@@ -11,11 +11,6 @@ todo.html
 # unused minified VRM build (the game imports the .module.js one)
 js/three-vrm.min.js
 
-# playback now streams from YouTube; keep local exports out of GitHub Pages
-media/tracks/**/video.mp4
-media/tracks/**/*.mp3
-media/album/*.mp3
-
 # dev-only preview config (Claude Code launch settings)
 .claude/
 

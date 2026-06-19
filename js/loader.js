@@ -21,10 +21,9 @@
   #ax-load.on{display:block;}
   #ax-load.fade{opacity:0;transition:opacity .6s ease;}
   #ax-load .vids{position:absolute;inset:0;}
-  #ax-load .vids video,#ax-load .vids iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;
+  #ax-load .vids video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
     opacity:0;transition:opacity 1s ease;filter:grayscale(.35) brightness(.62) contrast(1.05);}
-  #ax-load .vids iframe{width:120%;height:120%;left:-10%;top:-10%;pointer-events:none;}
-  #ax-load .vids video.show,#ax-load .vids iframe.show{opacity:1;}
+  #ax-load .vids video.show{opacity:1;}
   /* sleek dark wash so the bar + text always read */
   #ax-load .wash{position:absolute;inset:0;pointer-events:none;
     background:
@@ -86,67 +85,39 @@
   function startMontage(videos) {
     // tear down old
     if (vidTimer) clearInterval(vidTimer);
-    videoEls.forEach(v => { try { if (v.pause) v.pause(); v.src = ''; } catch (e) {} v.remove(); });
+    videoEls.forEach(v => { try { v.pause(); v.src = ''; } catch (e) {} v.remove(); });
     videoEls = []; vidIdx = 0;
     if (!videos || !videos.length) return;
     // shuffle
     const list = videos.slice();
     for (let i = list.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [list[i], list[j]] = [list[j], list[i]]; }
-    // two layers we ping-pong between for crossfade. Layers can be video tags
-    // or YouTube iframes; YouTube gets a fresh random start each swap.
-    const makeLayer = (item) => {
-      if (item && typeof item === 'object' && item.type === 'youtube') {
-        const f = document.createElement('iframe');
-        f.allow = 'autoplay; encrypted-media; picture-in-picture; web-share';
-        f.referrerPolicy = 'strict-origin-when-cross-origin';
-        return f;
-      }
+    // two layers we ping-pong between for crossfade
+    for (let k = 0; k < 2; k++) {
       const v = document.createElement('video');
       v.muted = true; v.playsInline = true; v.preload = 'auto'; v.loop = false;
-      return v;
-    };
-    for (let k = 0; k < 2; k++) {
-      const layer = makeLayer(list[k % list.length]);
-      vidsBox.appendChild(layer); videoEls.push(layer);
+      vidsBox.appendChild(v); videoEls.push(v);
     }
     let li = 0;
     const swap = () => {
       const front = videoEls[vidIdx % 2];
       const back = videoEls[(vidIdx + 1) % 2];
-      const item = list[li % list.length]; li++;
-      if ((item && typeof item === 'object' && item.type === 'youtube') !== (back.tagName === 'IFRAME')) {
-        const replacement = makeLayer(item);
-        back.replaceWith(replacement);
-        videoEls[(vidIdx + 1) % 2] = replacement;
-      }
-      const layer = videoEls[(vidIdx + 1) % 2];
-      if (item && typeof item === 'object' && item.type === 'youtube') {
-        layer.classList.remove('show');
-        layer.src = item.src;
-        requestAnimationFrame(() => {
-          layer.classList.add('show');
-          front.classList.remove('show');
-        });
-        vidIdx++;
-        return;
-      }
-      const url = item;
-      layer.classList.remove('show');
-      layer.pause();
-      layer.src = url;
-      layer.load();
+      const url = list[li % list.length]; li++;
+      back.classList.remove('show');
+      back.pause();
+      back.src = url;
+      back.load();
       const playFromRandomPoint = () => {
-        if (layer.duration && isFinite(layer.duration) && layer.duration > 3) {
-          const safeTail = Math.min(2.5, layer.duration * 0.18);
-          layer.currentTime = Math.random() * Math.max(0.1, layer.duration - safeTail);
+        if (back.duration && isFinite(back.duration) && back.duration > 3) {
+          const safeTail = Math.min(2.5, back.duration * 0.18);
+          back.currentTime = Math.random() * Math.max(0.1, back.duration - safeTail);
         }
-        const p = layer.play();
+        const p = back.play();
         if (p && p.catch) p.catch(() => {});
-        layer.classList.add('show');
+        back.classList.add('show');
         front.classList.remove('show');
       };
-      if (layer.readyState >= 1) playFromRandomPoint();
-      else layer.addEventListener('loadedmetadata', playFromRandomPoint, { once: true });
+      if (back.readyState >= 1) playFromRandomPoint();
+      else back.addEventListener('loadedmetadata', playFromRandomPoint, { once: true });
       vidIdx++;
     };
     swap();
@@ -205,7 +176,7 @@
           setTimeout(() => {
             root.classList.remove('on');
             if (vidTimer) { clearInterval(vidTimer); vidTimer = null; }
-            videoEls.forEach(v => { try { if (v.pause) v.pause(); v.src = ''; } catch (e) {} v.remove(); });
+            videoEls.forEach(v => { try { v.pause(); v.src = ''; } catch (e) {} v.remove(); });
             videoEls = [];
             if (window.__axLoadT) window.__axLoadT.hide = performance.now();
             res();

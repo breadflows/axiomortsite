@@ -163,7 +163,6 @@
 }
 </script>
 <script src="js/Engine.js"></script>
-<script src="js/youtube-tracks.js?v=1"></script>
 <script type="module">
 import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
@@ -212,9 +211,34 @@ TRACKS.forEach(function(t){
   t.audioURL = 'media/tracks/' + encodeURIComponent(t.folder) + '/' + encodeURIComponent(t.audio);
 });
 
+// folder -> YouTube id (videos downloaded as <folder>/video.mp4 by download_videos.ps1).
+// HTML will try local MP4 first, fall back to YT iframe overlay if MP4 missing.
+const VIDEO_IDS = {
+  "1 Machina Corpus": "h50MD9svoVg",
+  "2 Ink Of Infinity": "9B2-dywcJ_E",
+  "3 Rift's Bounty": "mp_B1G6mqfc",
+  "4 The Nexus Veil": "ylSL2EhBg80",
+  "5 The Nexus Veil (Galactic Chill)": "usqvuf_UDW0",
+  "6 The Nexus Veil (Anthem)": "FgJfZrImh1g",
+  "7 The Rose Petals Ressistance": "bhQzV6GyQRs",
+  "8 Ink Between Worlds (The Rift Soundtrack)": "DGlXjTk3IXI",
+  "9 106.5s Jul 1 432PM": "Zo3w9mKr5-E",
+  "10 Go Cry To Interpol": "JyJBHHXiT18",
+  "11 TrapStar": "k_W0Jf7xqj8",
+  "12 Glitch Rebirth": "B1tYBUGv1n4",
+  "13 Neon Hunters": "SnvruafYLtw",
+  "14 Event Horizon Lament": "oyZRvLjMAug",
+  "15 Ink Between Worlds (Rift Mix)": "CtPA2t7vZDo",
+  "16 Nobody": "as_KkIP0s6w",
+  "20 Theta Glyph Eclipse - Climax Divine": "uSZg3YSKZYQ",
+  "21 Pressure Seal": "bLUE7sG7KbU",
+  "22 Chronodrift": "7E4u3O3woZk",
+  "25 Phantom Glide": "gquEew9RZuc"
+  // Missing: 17, 18, 19 (Theta I-III), 23 (Creed's Oath), 24 (When the Grace Is Good), 26 (GOOD GRACE)
+};
 TRACKS.forEach(function(t){
-  t.ytId = window.AXYT ? AXYT.idFor(t) : null;
-  t.videoURL = '';
+  t.ytId = VIDEO_IDS[t.folder] || null;
+  t.videoURL = 'media/tracks/' + encodeURIComponent(t.folder) + '/video.mp4';
 });
 
 // ========== LEVEL DEFINITIONS ==========
@@ -459,15 +483,6 @@ videoEl.playsInline = true;
 videoEl.preload = 'auto';
 videoEl.style.display = 'none';
 document.body.appendChild(videoEl);
-const youtubeOverlay = document.createElement('div');
-youtubeOverlay.style.cssText = 'position:fixed;right:18px;bottom:72px;width:min(460px,42vw);aspect-ratio:16/9;z-index:25;border:1px solid rgba(42,255,214,.45);background:#020308;box-shadow:0 18px 50px rgba(0,0,0,.55);display:none';
-const youtubeFrame = document.createElement('iframe');
-youtubeFrame.style.cssText = 'width:100%;height:100%;border:0;display:block';
-youtubeFrame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-youtubeFrame.allowFullscreen = true;
-youtubeOverlay.appendChild(youtubeFrame);
-document.body.appendChild(youtubeOverlay);
-let youtubeActive = false;
 
 let audioCtx = null;
 let videoSrcNode = null;
@@ -1202,19 +1217,21 @@ function loadBillboardMedia(track){
   usingLocalVideo = false;
   billboardVideoReady = false;
   safeVideoPause();
-  youtubeFrame.src = '';
-  youtubeOverlay.style.display = 'none';
-  youtubeActive = false;
   videoEl.onloadeddata = null;
   videoEl.oncanplay = null;
   videoEl.onplaying = null;
   videoEl.onerror = null;
 
-  if (window.AXYT && track.ytId) {
-    billboardVideoReady = true;
-    youtubeActive = true;
-    youtubeFrame.src = AXYT.embedUrl(track.ytId, { autoplay: false, mute: false, controls: true, loop: true });
-    youtubeOverlay.style.display = 'block';
+  if (track.videoURL){
+    videoEl.onplaying = videoEl.oncanplay = videoEl.onloadeddata = function(){
+      usingLocalVideo = true;
+      billboardVideoReady = true;
+      if (headVideoTex) headVideoTex.needsUpdate = true;
+      playBillboardVideo();
+    };
+    videoEl.onerror = function(){ fallbackToLocalPlaceholder(); };
+    videoEl.src = track.videoURL;
+    videoEl.load();
   } else {
     fallbackToLocalPlaceholder();
   }
@@ -1235,10 +1252,6 @@ function fallbackToLocalPlaceholder(){
 let _videoPlayPromise = null;
 
 function safeVideoPause(){
-  if (youtubeActive) {
-    youtubeFrame.src = '';
-    youtubeActive = false;
-  }
   if (_videoPlayPromise){
     _videoPlayPromise.then(function(){
       videoEl.pause();
@@ -1250,13 +1263,6 @@ function safeVideoPause(){
 }
 
 function playBillboardVideo(){
-  const track = TRACKS[currentLevel];
-  if (window.AXYT && track && track.ytId) {
-    youtubeFrame.src = AXYT.embedUrl(track.ytId, { autoplay: true, mute: false, controls: true, loop: true });
-    youtubeOverlay.style.display = 'block';
-    youtubeActive = true;
-    return;
-  }
   if (!videoEl.src) return;
   if (_videoPlayPromise) return;  // play already in flight — don't stack another
   if (!videoEl.paused && videoEl.readyState >= 2) return;
@@ -1420,8 +1426,8 @@ function loadLevel(idx){
 
   // music / video — load the MP4 for this level (audio plays 3D from robot's position)
   safeVideoPause();
-  videoEl.removeAttribute('src');
-  videoEl.load();
+  videoEl.src = T.videoURL;
+  videoEl.currentTime = 0;
   billboardVideoReady = false;
   usingLocalVideo = false;
   loadBillboardMedia(T);
