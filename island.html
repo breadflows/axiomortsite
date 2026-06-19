@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AXIOMORT® | The Island</title>
+    <meta name="description" content="You wash ashore on the last stable landmass. 18 fragments of the soundtrack are scattered across the island. Recover the signal.">
+    <meta name="theme-color" content="#050507">
+    <meta property="og:title" content="AXIOMORT — The Island">
+    <meta property="og:description" content="Recover the 18 lost discs of the AXIOMORT soundtrack. A WebGL survival expedition by BreadFlows.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Ctext x='16' y='24' font-size='22' font-family='serif' fill='%23d4af37' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --void: #050507;
+            --bone: #e8e4dc;
+            --bone-dim: #a09a8e;
+            --gold: #d4af37;
+            --gold-dim: rgba(212, 175, 55, 0.15);
+            --font-display: 'Cinzel', serif;
+            --font-mono: 'Space Grotesk', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: var(--void); font-family: var(--font-body); color: var(--bone); }
+        canvas { display: block; }
+        ::selection { background: var(--gold); color: var(--void); }
+
+        /* ═══ INTRO ═══ */
+        #intro {
+            position: fixed; inset: 0; z-index: 100; background: var(--void);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 24px; transition: opacity 1.2s ease, visibility 1.2s;
+        }
+        #intro.ready { z-index: 410; background:
+            radial-gradient(ellipse 120% 90% at 50% 50%, rgba(5,5,7,.42), rgba(5,5,7,.86)); }
+        #intro.ready .noise { opacity: 0.02; }
+        #intro.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        #intro .noise {
+            position: absolute; inset: 0; opacity: 0.05; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 128px 128px;
+        }
+        #intro .tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 6px; color: var(--gold); text-transform: uppercase; margin-bottom: 20px; }
+        #intro h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(40px, 9vw, 96px); letter-spacing: 0.12em;
+            background: linear-gradient(178deg,#f7ead0,#e9cf7f 42%,#d4af37 70%,#b8922b); -webkit-background-clip: text; background-clip: text; color: transparent;
+            filter: drop-shadow(0 2px 30px rgba(212,175,55,.26)); }
+        #intro h1 span { color: inherit; }
+        #intro h1 span { color: var(--gold); }
+        #intro .story {
+            max-width: 560px; margin: 28px 0 8px; font-weight: 300; font-size: 15px; line-height: 1.9; color: var(--bone-dim);
+        }
+        #intro .objective { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--gold); margin-top: 18px; }
+        #begin {
+            margin-top: 44px; padding: 18px 56px; background: transparent; color: var(--gold);
+            border: 1px solid var(--gold); font-family: var(--font-display); font-size: 15px; letter-spacing: 5px;
+            cursor: pointer; transition: all 0.4s; text-transform: uppercase;
+        }
+        #begin:hover { background: var(--gold); color: var(--void); box-shadow: 0 0 40px rgba(212,175,55,0.4); }
+        #begin:disabled { opacity: 0.4; cursor: wait; }
+        #intro .lore { max-width: 540px; margin: 20px 0 4px; font-family: var(--font-body); font-weight: 300; font-size: 16px; line-height: 1.8; color: #c2bdb2; }
+        #intro .keys { display: flex; flex-wrap: wrap; gap: 16px 24px; justify-content: center; margin-top: 30px; max-width: 580px; }
+        #intro .kgroup { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+        #intro .krow { display: flex; gap: 5px; }
+        #intro .kc { min-width: 32px; height: 32px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center;
+            border: 1.5px solid rgba(232,228,220,0.28); border-bottom-width: 3px; border-radius: 8px;
+            font-family: var(--font-mono); font-weight: 700; font-size: 12px; color: #fff; background: rgba(255,255,255,0.05); }
+        #intro .kgroup label { font-family: var(--font-mono); font-weight: 600; font-size: 10px; letter-spacing: 1px; color: var(--bone-dim); text-transform: uppercase; }
+        #intro .enter-btn { margin-top: 42px; padding: 18px 60px; border: none; border-radius: 40px; cursor: pointer;
+            font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: 5px; text-transform: uppercase; color: var(--void);
+            background: linear-gradient(135deg, #f3d878, var(--gold)); box-shadow: 0 14px 44px rgba(212,175,55,0.4); transition: transform .25s, box-shadow .25s;
+            display: inline-flex; align-items: center; gap: 11px; }
+        #intro .enter-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 20px 56px rgba(212,175,55,0.55); }
+        #intro .clickhint { margin-top: 18px; font-family: var(--font-mono); font-weight: 600; font-size: 10px; letter-spacing: 2px; color: rgba(232,228,220,0.4); text-transform: uppercase; }
+        #intro .backlink { position: absolute; top: 22px; left: 26px; font-family: var(--font-mono); font-weight: 600; font-size: 12px; letter-spacing: .5px; color: var(--bone-dim); text-decoration: none; z-index: 2; }
+        #intro .backlink:hover { color: var(--gold); }
+
+        /* ═══ HUD ═══ */
+        #hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; opacity: 0; transition: opacity 1s; }
+        #hud.visible { opacity: 1; }
+        .hud-top-left { position: absolute; top: 18px; left: 22px; }
+        .hud-logo { font-family: var(--font-mono); font-weight: 700; font-size: 17px; letter-spacing: .5px; color: var(--bone); text-shadow: 0 1px 8px rgba(0,0,0,0.8); }
+        .hud-logo span { color: var(--gold); }
+        #disc-count { font-family: var(--font-mono); font-weight: 700; font-size: 16px; letter-spacing: .5px; color: #fff; margin-top: 8px; text-shadow: 0 1px 8px rgba(0,0,0,0.95); }
+        #disc-count::before { content: '◉ '; color: var(--gold); }
+        #clock { font-family: var(--font-mono); font-weight: 600; font-size: 13px; letter-spacing: .5px; color: #c2bdb2; margin-top: 4px; text-shadow: 0 1px 6px rgba(0,0,0,0.9); }
+
+        #compass { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); width: min(320px, 60vw); overflow: hidden; height: 26px;
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
+        #compass-strip { position: absolute; top: 0; left: 0; white-space: nowrap; font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--bone); line-height: 26px; text-shadow: 0 1px 6px #000; }
+        #compass-strip .beacon { color: var(--gold); }
+
+        #speed { position: absolute; bottom: 44px; left: 50%; transform: translateX(-50%); text-align: center; font-family: var(--font-mono); }
+        #speed b { font-weight: 700; font-size: 34px; color: #fff; text-shadow: 0 0 18px rgba(212,175,55,0.55), 0 2px 8px #000; letter-spacing: -1px; }
+        #speed span { font-weight: 600; font-size: 12px; letter-spacing: 1px; color: var(--bone-dim); margin-left: 4px; }
+        #stamina-wrap { position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); width: 240px; height: 4px; border-radius: 4px; background: rgba(232,228,220,0.14); overflow: hidden; }
+        #stamina { height: 100%; width: 0%; border-radius: 4px; background: linear-gradient(90deg, var(--gold), #fff); transition: width 0.08s linear; }
+
+        #prompt {
+            position: absolute; bottom: 88px; left: 50%; transform: translateX(-50%);
+            font-family: var(--font-mono); font-weight: 700; font-size: 15px; letter-spacing: .5px; color: var(--void);
+            background: var(--gold); padding: 11px 22px; border-radius: 30px;
+            box-shadow: 0 4px 24px rgba(212,175,55,0.45); opacity: 0; transition: opacity 0.3s; text-align: center;
+        }
+        #prompt.visible { opacity: 1; }
+
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: rgba(255,255,255,0.7); box-shadow: 0 0 6px rgba(0,0,0,0.6); }
+
+        #toast {
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+            font-family: var(--font-mono); font-weight: 600; font-size: 14px; letter-spacing: .5px; color: #fff;
+            background: rgba(8,8,12,0.82); border: 1.5px solid rgba(212,175,55,0.35); padding: 13px 26px; border-radius: 30px;
+            opacity: 0; transition: opacity 0.4s; text-align: center; max-width: 90vw; backdrop-filter: blur(8px);
+        }
+        #toast.visible { opacity: 1; }
+
+        /* ═══ DISC MODAL ═══ */
+        #disc-modal {
+            position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center;
+            background: rgba(5,5,7,0.88); backdrop-filter: blur(6px); padding: 20px;
+        }
+        #disc-modal.open { display: flex; }
+        .modal-card { width: min(680px, 94vw); border: 1.5px solid rgba(212,175,55,0.3); border-radius: 18px; background: linear-gradient(170deg,#101015,#0a0a0e); padding: 38px; position: relative; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+        .modal-card .found { font-family: var(--font-mono); font-weight: 700; font-size: 12px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; }
+        .modal-card h2 { font-family: var(--font-mono); font-weight: 700; font-size: clamp(28px, 5vw, 44px); letter-spacing: -.5px; color: #fff; margin: 12px 0 6px; }
+        .modal-card .meta { font-family: var(--font-mono); font-weight: 600; font-size: 12px; letter-spacing: .5px; color: var(--bone-dim); margin-bottom: 18px; }
+        .modal-card .lore { font-size: 15px; font-weight: 400; line-height: 1.75; color: #c2bdb2; border-left: 2px solid var(--gold); padding-left: 16px; margin-bottom: 24px; font-style: italic; }
+        .yt-wrap { position: relative; width: 100%; padding-top: 56.25%; background: #000; border: 1px solid rgba(232,228,220,0.07); }
+        .yt-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+        .modal-actions { display: flex; gap: 14px; margin-top: 24px; flex-wrap: wrap; }
+        .btn-a {
+            font-family: var(--font-mono); font-weight: 700; font-size: 13px; letter-spacing: .5px; text-decoration: none;
+            padding: 14px 28px; border: 1.5px solid var(--gold); border-radius: 30px; color: var(--gold); background: transparent; cursor: pointer; transition: all 0.25s;
+        }
+        .btn-a:hover { background: var(--gold); color: var(--void); box-shadow: 0 6px 24px rgba(212,175,55,0.4); transform: translateY(-1px); }
+        .btn-a.ghost { border-color: rgba(232,228,220,0.25); color: #c2bdb2; }
+        .btn-a.ghost:hover { background: rgba(232,228,220,0.12); color: #fff; box-shadow: none; transform: none; }
+
+        /* ═══ PAUSE / VAULT ═══ */
+        #pause {
+            position: fixed; inset: 0; z-index: 50; display: none; background: rgba(5,7,15,.92); backdrop-filter: blur(8px);
+            align-items: center; justify-content: center; padding: 24px;
+        }
+        #pause.open { display: flex; }
+        .pause-inner { text-align: center; }
+        .pause-inner h2 { font-family: var(--font-display); letter-spacing: 4px; font-size: 32px; margin-bottom: 8px; color: var(--bone); }
+        .pause-inner h2 span { color: var(--gold); }
+        .pause-sub { font-family: var(--font-mono); font-weight: 600; font-size: 14px; letter-spacing: .5px; color: #b6c0d8; margin-bottom: 34px; }
+        .vault { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 36px; }
+        .vault-item { border: 1px solid rgba(232,228,220,0.07); padding: 14px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px; color: rgba(232,228,220,0.25); }
+        .vault-item.owned { border-color: var(--gold-dim); color: var(--bone); cursor: pointer; transition: all 0.3s; }
+        .vault-item.owned:hover { border-color: var(--gold); background: var(--gold-dim); }
+        .vault-item .num { color: var(--gold); margin-right: 8px; }
+        .vault-item.owned .play-ic { float: right; color: var(--gold); }
+        .pause-links, .pause-actions { display: flex; flex-direction: column; gap: 14px; align-items: center; margin: 0; padding: 0; border: 0; }
+        .pause-actions { margin-top: 14px; }
+        .section-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 14px; }
+
+        /* ═══ WIN ═══ */
+        #win {
+            position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center; flex-direction: column;
+            background: radial-gradient(ellipse at center, rgba(42,26,58,0.95), rgba(5,5,7,0.98)); text-align: center; padding: 24px;
+        }
+        #win.open { display: flex; }
+        #win .tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: 8px; color: var(--gold); margin-bottom: 24px; animation: pulse 2s infinite; }
+        #win h1 { font-family: var(--font-display); font-size: clamp(34px, 7vw, 72px); letter-spacing: 6px; color: var(--bone); margin-bottom: 18px; }
+        #win p { max-width: 520px; color: var(--bone-dim); font-weight: 300; line-height: 1.9; margin-bottom: 34px; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* ═══ MOBILE TOUCH ═══ */
+        #joy { position: absolute; bottom: 56px; left: 36px; width: 110px; height: 110px; border-radius: 50%; border: 1px solid rgba(232,228,220,0.2); display: none; pointer-events: auto; touch-action: none; }
+        #joy-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px; border-radius: 50%; background: rgba(212,175,55,0.3); border: 1px solid var(--gold); }
+        #btn-act { position: absolute; bottom: 78px; right: 40px; width: 70px; height: 70px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(212,175,55,0.15); color: var(--gold); font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; display: none; pointer-events: auto; touch-action: manipulation; }
+        body.touch #joy, body.touch #btn-act { display: block; }
+        #btn-pause-m { position: absolute; top: 16px; right: 18px; padding: 8px 14px; border: 1px solid rgba(232,228,220,0.2); background: rgba(5,5,7,0.5); color: var(--bone-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; display: none; pointer-events: auto; }
+        body.touch #btn-pause-m { display: block; }
+
+        #loadbar { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px; color: var(--bone-dim); }
+    </style>
+</head>
+<body>
+
+<!-- ═══ INTRO ═══ -->
+<div id="intro">
+    <div class="noise"></div>
+    <a class="backlink" href="index.html">&larr; AXIOMORT.COM</a>
+    <div class="tag">Level 02 — The Last Landmass</div>
+    <h1>THE <span>ISLAND</span></h1>
+    <p class="lore">
+        The bridge is open. Eighteen fragments of the AXIOMORT score washed ashore on the last
+        stable land — each disc a piece of the cure. Recover them all and the Signal sings again;
+        somewhere beyond the water, the lion lifts its head.
+    </p>
+    <div class="keys">
+        <div class="kgroup"><div class="krow"><span class="kc">W</span><span class="kc">A</span><span class="kc">S</span><span class="kc">D</span></div><label>Move</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">SPACE</span></div><label>Jump · Bhop</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">SHIFT</span></div><label>Sprint</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">E</span></div><label>Collect</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">I</span></div><label>Discs</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">MOUSE</span></div><label>Look</label></div>
+    </div>
+    <button id="begin" class="enter-btn" disabled><span>&#9654;</span> WAKE UP</button>
+    <div class="clickhint">or click anywhere to wake</div>
+</div>
+
+<!-- ═══ HUD ═══ -->
+<div id="hud">
+    <div class="hud-top-left">
+        <div class="hud-logo">AXIO<span>MORT</span></div>
+        <div id="disc-count">DISCS 0 / 18</div>
+        <div id="clock">DAY — 06:00</div>
+        <div style="margin-top:4px;font-family:var(--font-mono),monospace;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(255,210,74,.75);">BETA v0.9</div>
+    </div>
+    <div id="compass"><div id="compass-strip"></div></div>
+    <div id="crosshair"></div>
+    <div id="prompt">[E] RECOVER DISC</div>
+    <div id="toast"></div>
+    <div id="speed"><b id="speed-num">0</b><span>SPD</span></div>
+    <div id="stamina-wrap"><div id="stamina"></div></div>
+    <div id="joy"><div id="joy-knob"></div></div>
+    <button id="btn-act">PICK UP</button>
+    <button id="btn-pause-m">MENU</button>
+</div>
+
+<!-- ═══ DISC MODAL ═══ -->
+<div id="disc-modal">
+    <div class="modal-card">
+        <div class="found" id="m-found">DISC RECOVERED — 01 / 18</div>
+        <h2 id="m-title">TECTONICS</h2>
+        <div class="meta" id="m-meta">AXIOMORT (ORIGINAL MOTION PICTURE SOUNDTRACK) — BREADFLOWS</div>
+        <div class="lore" id="m-lore"></div>
+        <div class="yt-wrap"><iframe id="m-yt" src="" title="AXIOMORT track" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+        <div class="modal-actions">
+            <button class="btn-a" id="m-continue">CONTINUE EXPEDITION</button>
+            <a class="btn-a ghost" href="https://www.youtube.com/playlist?list=OLAK5uy_kiKDg22GWozeichkwirezck_z8oc3fiq8" target="_blank" rel="noopener">FULL ALBUM &nearr;</a>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ PAUSE / VAULT ═══ -->
+<div id="pause">
+    <div class="pause-inner">
+        <h2>ISLAND <span>PAUSED</span></h2>
+        <div class="pause-sub" id="vault-sub">SIGNAL INTEGRITY: 0%</div>
+        <div class="vault" id="vault" hidden></div>
+        <div class="pause-links">
+            <button class="btn-a ghost" id="open-inv-isl">CD INVENTORY (I)</button>
+            <a class="btn-a ghost" href="tower.html">RETURN TO THE VAULT</a>
+        </div>
+
+        <div class="pause-actions">
+            <button class="btn-a" id="resume">RESUME</button>
+            <button class="btn-a ghost" id="reset-save">RESET EXPEDITION</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ WIN ═══ -->
+<div id="win">
+    <div class="tag">SIGNAL INTEGRITY 100%</div>
+    <h1>RECORD RESTORED</h1>
+    <p>All eighteen fragments hum in unison. Somewhere beyond the water, the lion lifts its head —
+       the ink recedes, and the mountain finally answers. The soundtrack of reality plays on.</p>
+    <div class="modal-actions" style="justify-content:center">
+        <a class="btn-a" id="win-vault" href="tower.html">RETURN TO THE VAULT</a>
+        <a class="btn-a ghost" href="https://www.youtube.com/playlist?list=OLAK5uy_kiKDg22GWozeichkwirezck_z8oc3fiq8" target="_blank" rel="noopener">PLAY THE ALBUM &nearr;</a>
+        <button class="btn-a ghost" id="win-stay">KEEP EXPLORING</button>
+    </div>
+    <div id="win-timer" style="font-size:12px;letter-spacing:2px;color:var(--bone-dim);margin-top:18px;opacity:.7">RETURNING TO VAULT IN <span id="win-cd">15</span>s</div>
+</div>
+
+<script src="js/loader.js?v=3"></script>
+<script src="js/inventory.js?v=4"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+
+<script src="js/Engine.js"></script>
+<script type="module">
+import * as THREE from 'three';
+
+window.AXEngine = window.AXEngine || {};
+window.AXEngine.ecs = new window.AXEngine.ECSManager(2000);
+window.AXEngine.physicsSys = new window.AXEngine.Systems.PhysicsSystem();
+window.AXEngine.syncSys = new window.AXEngine.Systems.TransformSyncSystem();
+window.AXEngine.stateBus = new window.AXEngine.StateBus();
+import { Water } from 'three/addons/objects/Water.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { SKINS } from './js/robot.js?v=3';
+import { MP, AXChat } from './js/mp.js?v=4';
+if (localStorage.getItem('ax_skin') == null) localStorage.setItem('ax_skin', String(Math.floor(Math.random() * SKINS.length)));
+const MY_SKIN = (parseInt(localStorage.getItem('ax_skin'), 10) || 0) % SKINS.length;
+
+/* ════════════════════════════════════════════
+   TRACK DATA — AXIOMORT (OST) by BreadFlows
+════════════════════════════════════════════ */
+const TRACKS = [
+    { t: 'TECTONICS',      yt: 'znDIllKd-bY', lore: 'The first fracture. The plates of the old world remember how to move.' },
+    { t: 'PAPER WORLDS',   yt: 'MrUhHyKSuvg', lore: 'Whole civilizations folded flat, waiting for someone to unfold them.' },
+    { t: 'INFINITUM',      yt: 'Qd1b_Bm6oMs', lore: 'The corridor with no end. Walk long enough and you meet yourself.' },
+    { t: 'CONTRABAND',     yt: '2RUM7hgt4xE', lore: 'Smuggled memories, traded in the dark between two heartbeats.' },
+    { t: 'FALSE IDOLS',    yt: 'VgmSbN-Rsfs', lore: 'They built statues of the parasite and called it a god.' },
+    { t: 'DEAD FREQUENCY', yt: 'Xps1yYlR-IU', lore: 'A broadcast from a station that was never built, on a wavelength that never existed.' },
+    { t: 'SYS_REBIRTH',    yt: 'Qu4hZSJrRV8', lore: 'The old source code compiling itself again, one shard at a time.' },
+    { t: 'SEVERANCE',      yt: 'Li03-J5ODcY', lore: 'The moment the lion was cut away from the sky it carried.' },
+    { t: 'THE VEIL',       yt: 'p9Cj_5M1RrE', lore: 'Thin as breath. Behind it, the universe is still alive.' },
+    { t: 'WIRE GARDEN',    yt: 'TNFBEo1e-Oc', lore: 'Where the machines learned to grow instead of being built.' },
+    { t: 'SINGULARITY',    yt: 'OrCHaDN2OWA', lore: 'Everything that ever mattered, compressed into a single point of light.' },
+    { t: 'REDACTED',       yt: 'GT3MheElskE', lore: 'The chapter they tore out. The ink remembers what the page forgot.' },
+    { t: 'DECOMPRESSION',  yt: 'px6bOBhnR1c', lore: 'Coming back up too fast from the deep code. Hold your breath.' },
+    { t: 'TIME SLIP',      yt: 'T85zxjo4AfU', lore: 'Yesterday arrived twice. Tomorrow never checked in.' },
+    { t: 'OBSCURA',        yt: 'OEG19Nm03Ak', lore: 'The room that can only be seen through a pinhole in reality.' },
+    { t: 'SCRIPTURE',      yt: 'hk9My28vFQU', lore: 'The pilgrimage hymn, carved into the mountain by those who never arrived.' },
+    { t: 'FERAL',          yt: '7ybkEaWIxlk', lore: 'What the lion became when the ink reached its heart.' },
+    { t: 'LUCID',          yt: 'ANug9y-XN7U', lore: 'The final dream — the one where you realize you are the dreamer.' }
+];
+
+/* ════════════════════════════════════════════
+   SEEDED NOISE (simplex-ish value noise + fbm)
+════════════════════════════════════════════ */
+function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rng = mulberry32(0xA110);
+const PERM = new Uint8Array(512);
+{ const p = [...Array(256).keys()]; for (let i = 255; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; } for (let i = 0; i < 512; i++) PERM[i] = p[i & 255]; }
+function grad(h, x, y) { switch (h & 7) { case 0: return x + y; case 1: return x - y; case 2: return -x + y; case 3: return -x - y; case 4: return x; case 5: return -x; case 6: return y; default: return -y; } }
+function noise2(x, y) {
+    const F = 0.366025403784, G = 0.211324865405;
+    const s = (x + y) * F, i = Math.floor(x + s), j = Math.floor(y + s);
+    const t = (i + j) * G, x0 = x - (i - t), y0 = y - (j - t);
+    const i1 = x0 > y0 ? 1 : 0, j1 = x0 > y0 ? 0 : 1;
+    const x1 = x0 - i1 + G, y1 = y0 - j1 + G, x2 = x0 - 1 + 2 * G, y2 = y0 - 1 + 2 * G;
+    const ii = i & 255, jj = j & 255;
+    let n = 0, t0 = 0.5 - x0 * x0 - y0 * y0, t1 = 0.5 - x1 * x1 - y1 * y1, t2 = 0.5 - x2 * x2 - y2 * y2;
+    if (t0 > 0) { t0 *= t0; n += t0 * t0 * grad(PERM[ii + PERM[jj]], x0, y0); }
+    if (t1 > 0) { t1 *= t1; n += t1 * t1 * grad(PERM[ii + i1 + PERM[jj + j1]], x1, y1); }
+    if (t2 > 0) { t2 *= t2; n += t2 * t2 * grad(PERM[ii + 1 + PERM[jj + 1]], x2, y2); }
+    return 70 * n;
+}
+function fbm(x, y, oct = 5, lac = 2.0, gain = 0.5) {
+    let a = 0, amp = 1, f = 1, norm = 0;
+    for (let i = 0; i < oct; i++) { a += amp * noise2(x * f, y * f); norm += amp; amp *= gain; f *= lac; }
+    return a / norm;
+}
+
+/* ════════════════════════════════════════════
+   TERRAIN
+════════════════════════════════════════════ */
+const ISLAND = 420;            // world size
+const SEG = 240;
+const SEA = 0;                 // sea level y
+
+function islandHeight(x, z) {
+    const nx = x / ISLAND, nz = z / ISLAND;
+    const d = Math.sqrt(nx * nx + nz * nz) * 2;            // 0 center → 1 edge
+    const falloff = Math.max(0, 1 - Math.pow(d, 2.6));
+    let h = fbm(nx * 3 + 7.3, nz * 3 - 2.1, 6) * 0.5 + 0.5; // 0..1
+    h = Math.pow(h, 1.35);
+    let y = (h * 46) * falloff - 3.5;
+    // central mountain — the pilgrimage peak
+    const md = Math.sqrt((nx - 0.06) ** 2 + (nz + 0.09) ** 2);
+    y += Math.max(0, 1 - md * 5.2) ** 2.2 * 34 * falloff;
+    // beach shelf
+    if (y > -2 && y < 2.2) y *= 0.55;
+    return y;
+}
+
+/* ════════════════════════════════════════════
+   PROCEDURAL DETAIL TEXTURES (photoreal-ish)
+════════════════════════════════════════════ */
+function makeTexture(size, painter, { repeat = 1 } = {}) {
+    const c = document.createElement('canvas'); c.width = c.height = size;
+    const g = c.getContext('2d'); painter(g, size);
+    const tx = new THREE.CanvasTexture(c);
+    tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+    tx.repeat.set(repeat, repeat);
+    tx.colorSpace = THREE.SRGBColorSpace;
+    tx.anisotropy = 8;
+    return tx;
+}
+function speckle(g, size, base, tones, count, rMin, rMax, alpha) {
+    g.fillStyle = base; g.fillRect(0, 0, size, size);
+    for (let i = 0; i < count; i++) {
+        g.fillStyle = tones[Math.floor(rng() * tones.length)];
+        g.globalAlpha = alpha * (0.4 + rng() * 0.6);
+        const r = rMin + rng() * (rMax - rMin);
+        g.beginPath(); g.arc(rng() * size, rng() * size, r, 0, 7); g.fill();
+    }
+    g.globalAlpha = 1;
+}
+const texSand = makeTexture(512, (g, s) => {
+    speckle(g, s, '#cbb98f', ['#dccfa6', '#b8a47a', '#e8dcb8', '#a3906a', '#d6c599'], 14000, 0.6, 2.2, 0.5);
+    // ripples
+    g.globalAlpha = 0.07; g.strokeStyle = '#8d7c5a';
+    for (let i = 0; i < 40; i++) { g.beginPath(); const y = rng() * s; g.moveTo(0, y); for (let x = 0; x <= s; x += 16) g.lineTo(x, y + Math.sin(x * 0.05 + i) * 4); g.stroke(); }
+    g.globalAlpha = 1;
+});
+const texGrass = makeTexture(512, (g, s) => {
+    speckle(g, s, '#4a6c33', ['#598040', '#3c5c2a', '#669249', '#33501f', '#74a455', '#527238'], 16000, 0.5, 2.0, 0.55);
+    // blade strokes
+    g.globalAlpha = 0.25;
+    for (let i = 0; i < 2600; i++) {
+        g.strokeStyle = ['#5d8440', '#33501f', '#6f9b4e'][Math.floor(rng() * 3)];
+        const x = rng() * s, y = rng() * s, l = 3 + rng() * 7;
+        g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rng() - 0.5) * 3, y - l); g.stroke();
+    }
+    g.globalAlpha = 1;
+});
+const texRock = makeTexture(512, (g, s) => {
+    speckle(g, s, '#6b6760', ['#7d796f', '#57534c', '#8c887d', '#4a463f', '#75716a'], 11000, 0.8, 3.2, 0.5);
+    // cracks
+    g.globalAlpha = 0.3; g.strokeStyle = '#3a372f';
+    for (let i = 0; i < 70; i++) {
+        let x = rng() * s, y = rng() * s; g.beginPath(); g.moveTo(x, y);
+        for (let k = 0; k < 8; k++) { x += (rng() - 0.5) * 40; y += (rng() - 0.5) * 40; g.lineTo(x, y); }
+        g.stroke();
+    }
+    g.globalAlpha = 1;
+});
+const texBark = makeTexture(256, (g, s) => {
+    speckle(g, s, '#5a4632', ['#6b563e', '#473627', '#7a6347', '#3a2c1e'], 5000, 0.6, 2.5, 0.5);
+    g.globalAlpha = 0.35; g.strokeStyle = '#33271a';
+    for (let i = 0; i < 30; i++) { const x = rng() * s; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + (rng() - 0.5) * 20, s); g.stroke(); }
+    g.globalAlpha = 1;
+});
+const texLeaf = makeTexture(256, (g, s) => {
+    g.clearRect(0, 0, s, s);
+    // single tapered palm frond: smooth leaf body, then notch the edges out
+    const grad = g.createLinearGradient(0, s, 0, 0);
+    grad.addColorStop(0, '#4f8038'); grad.addColorStop(0.6, '#5d9342'); grad.addColorStop(1, '#6fa850');
+    g.fillStyle = grad;
+    g.beginPath();
+    g.moveTo(s / 2, s);
+    for (let i = 0; i <= 24; i++) {
+        const t = i / 24;
+        const w = Math.sin(Math.PI * Math.min(1, 0.18 + t * 0.95)) * s * 0.36 * (1 - t * 0.25);
+        g.lineTo(s / 2 - w, s - t * s * 0.97);
+    }
+    for (let i = 24; i >= 0; i--) {
+        const t = i / 24;
+        const w = Math.sin(Math.PI * Math.min(1, 0.18 + t * 0.95)) * s * 0.36 * (1 - t * 0.25);
+        g.lineTo(s / 2 + w, s - t * s * 0.97);
+    }
+    g.closePath(); g.fill();
+    // leaflet separation notches
+    g.globalCompositeOperation = 'destination-out';
+    g.lineWidth = 3.5; g.strokeStyle = '#000';
+    for (let side = -1; side <= 1; side += 2) {
+        for (let i = 0; i < 16; i++) {
+            const t = 0.06 + (i / 16) * 0.88;
+            const y = s - t * s * 0.97;
+            g.beginPath();
+            g.moveTo(s / 2 + side * s * 0.42, y - 14);
+            g.lineTo(s / 2 + side * 3, y + 6);
+            g.stroke();
+        }
+    }
+    g.globalCompositeOperation = 'source-over';
+    // spine
+    g.strokeStyle = '#3a5c28'; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(s / 2, s); g.lineTo(s / 2, s * 0.04); g.stroke();
+    
+    // Apply procedural FBM noise for highly detailed cellular leaf structure
+    const imgData = g.getImageData(0, 0, s, s);
+    const data = imgData.data;
+    for (let py = 0; py < s; py++) {
+        for (let px = 0; px < s; px++) {
+            const i = (py * s + px) * 4;
+            if (data[i + 3] > 0) {
+                // Procedural cellular/noise perturbation
+                const nv = fbm(px * 0.08, py * 0.08, 3) * 35;
+                data[i] = Math.max(0, Math.min(255, data[i] + nv - 15));
+                data[i+1] = Math.max(0, Math.min(255, data[i+1] + nv - 15));
+                data[i+2] = Math.max(0, Math.min(255, data[i+2] + nv - 15));
+            }
+        }
+    }
+    g.putImageData(imgData, 0, 0);
+});
+texLeaf.wrapS = texLeaf.wrapT = THREE.ClampToEdgeWrapping;
+
+/* ════════════════════════════════════════════
+   RENDERER / SCENE
+════════════════════════════════════════════ */
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.55;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0xbfd4e0, 0.0028);
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 2200);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.28, 0.6, 0.92);
+composer.addPass(bloomPass);
+
+/* ─── lights ─── */
+const sun = new THREE.DirectionalLight(0xfff2dc, 2.6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 10; sun.shadow.camera.far = 700;
+sun.shadow.camera.left = -220; sun.shadow.camera.right = 220;
+sun.shadow.camera.top = 220; sun.shadow.camera.bottom = -220;
+sun.shadow.bias = -0.0004;
+scene.add(sun); scene.add(sun.target);
+const hemi = new THREE.HemisphereLight(0xbcd8ee, 0x4a5c3a, 1.15);
+scene.add(hemi);
+const moon = new THREE.DirectionalLight(0x8aa6cc, 0);
+scene.add(moon);
+
+/* ─── sky ─── */
+const sky = new Sky();
+sky.scale.setScalar(10000);
+scene.add(sky);
+const skyU = sky.material.uniforms;
+skyU.turbidity.value = 6; skyU.rayleigh.value = 1.8;
+skyU.mieCoefficient.value = 0.004; skyU.mieDirectionalG.value = 0.85;
+
+const stars = (() => {
+    const n = 900, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+        const v = new THREE.Vector3().randomDirection();
+        v.y = Math.abs(v.y) * 0.9 + 0.08;
+        v.normalize().multiplyScalar(1800);
+        pos.set([v.x, v.y, v.z], i * 3);
+    }
+    const ge = new THREE.BufferGeometry();
+    ge.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const pts = new THREE.Points(ge, new THREE.PointsMaterial({ color: 0xcfdcec, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false }));
+    scene.add(pts);
+    return pts;
+})();
+
+/* ─── terrain mesh ─── */
+let terrGeo, terrMat, terrain, water;
+function buildTerrain() {
+terrGeo = new THREE.PlaneGeometry(ISLAND, ISLAND, SEG, SEG);
+terrGeo.rotateX(-Math.PI / 2);
+{
+    const p = terrGeo.attributes.position;
+    for (let i = 0; i < p.count; i++) p.setY(i, islandHeight(p.getX(i), p.getZ(i)));
+    terrGeo.computeVertexNormals();
+}
+terrMat = new THREE.MeshStandardMaterial({ roughness: 0.94, metalness: 0.0 });
+terrMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uSand = { value: texSand };
+    sh.uniforms.uGrass = { value: texGrass };
+    sh.uniforms.uRock = { value: texRock };
+    sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNorm;')
+        .replace('#include <fog_vertex>', '#include <fog_vertex>\nvWPos = (modelMatrix * vec4(transformed,1.0)).xyz;\nvWNorm = normalize(mat3(modelMatrix) * objectNormal);');
+    sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', `#include <common>
+varying vec3 vWPos; varying vec3 vWNorm;
+uniform sampler2D uSand; uniform sampler2D uGrass; uniform sampler2D uRock;`)
+        .replace('#include <map_fragment>', `
+vec2 tuv = vWPos.xz * 0.045;
+vec3 cSand  = texture2D(uSand,  tuv).rgb;
+vec3 cGrass = texture2D(uGrass, tuv).rgb;
+vec3 cRock  = texture2D(uRock,  tuv * 0.7).rgb;
+float h = vWPos.y;
+float slope = 1.0 - clamp(vWNorm.y, 0.0, 1.0);
+float gMix = smoothstep(1.4, 3.8, h);             // sand → grass by height
+float rMix = smoothstep(0.32, 0.55, slope);        // steep → rock
+rMix = max(rMix, smoothstep(26.0, 38.0, h));       // high → rock
+vec3 terr = mix(mix(cSand, cGrass, gMix), cRock, rMix);
+// wet sand band at the waterline
+float wet = smoothstep(2.0, 0.55, h) * (1.0 - rMix);
+terr = mix(terr, terr * vec3(0.6, 0.65, 0.74), wet * 0.55);
+// subtle large-scale variation
+float macro = texture2D(uGrass, vWPos.xz * 0.0035).g;
+terr *= 0.92 + macro * 0.22;
+diffuseColor.rgb *= terr;`);
+};
+terrain = new THREE.Mesh(terrGeo, terrMat);
+terrain.receiveShadow = true;
+terrain.castShadow = false;
+scene.add(terrain);
+
+/* underwater sea floor skirt */
+{
+    const floor = new THREE.Mesh(
+        new THREE.CircleGeometry(1600, 48).rotateX(-Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: 0x16314a, roughness: 1 })
+    );
+    floor.position.y = -14;
+    scene.add(floor);
+}
+}
+
+/* ─── water ─── */
+function buildWater() {
+water = new Water(new THREE.PlaneGeometry(4000, 4000), {
+    textureWidth: 512, textureHeight: 512,
+    waterNormals: new THREE.TextureLoader().load(
+        'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/waternormals.jpg',
+        (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+    ),
+    sunDirection: new THREE.Vector3(),
+    sunColor: 0xffffff,
+    waterColor: 0x06283d,
+    distortionScale: 2.6,
+    fog: true
+});
+water.rotation.x = -Math.PI / 2;
+water.position.y = SEA;
+scene.add(water);
+}
+
+/* ════════════════════════════════════════════
+   VEGETATION & PROPS
+════════════════════════════════════════════ */
+function landSpot(minH, maxH, maxSlope = 0.45, tries = 60) {
+    for (let i = 0; i < tries; i++) {
+        const x = (rng() * 2 - 1) * ISLAND * 0.48, z = (rng() * 2 - 1) * ISLAND * 0.48;
+        const y = islandHeight(x, z);
+        if (y < minH || y > maxH) continue;
+        const e = 1.6;
+        const sl = Math.abs(islandHeight(x + e, z) - islandHeight(x - e, z)) / (2 * e) +
+                   Math.abs(islandHeight(x, z + e) - islandHeight(x, z - e)) / (2 * e);
+        if (sl > maxSlope) continue;
+        return { x, y, z };
+    }
+    return null;
+}
+
+/* palms: bent trunk + frond cross-planes — MERGED into 3 mega-meshes */
+function buildVegetation() {
+{
+    const frondMat = new THREE.MeshStandardMaterial({ map: texLeaf, transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.8, emissive: 0x1e3413, emissiveIntensity: 0.5 });
+    const barkMat = new THREE.MeshStandardMaterial({ map: texBark, roughness: 0.95 });
+    const cocoMat = new THREE.MeshStandardMaterial({ color: 0x5a4326, roughness: 0.85 });
+
+    const allTrunkGeos = [];
+    const allFrondGeos = [];
+    const allCocoGeos = [];
+
+    const _m4 = new THREE.Matrix4();
+    const _pos = new THREE.Vector3();
+    const _quat = new THREE.Quaternion();
+    const _scale = new THREE.Vector3();
+
+    for (let i = 0; i < 130; i++) {
+        const s = landSpot(0.8, 18, 0.5); if (!s) continue;
+        const treeRotY = rng() * Math.PI * 2;
+        const sc = 0.8 + rng() * 0.7;
+
+        // Build world-space transform for this tree
+        const treeMat4 = new THREE.Matrix4();
+        treeMat4.compose(
+            new THREE.Vector3(s.x, s.y - 0.15, s.z),
+            new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), treeRotY),
+            new THREE.Vector3(sc, sc, sc)
+        );
+
+        const h = 6 + rng() * 5, bend = (rng() - 0.5) * 0.34;
+        const seg = 5; let px = 0, py = 0, ang = 0;
+        for (let k = 0; k < seg; k++) {
+            const r0 = 0.34 * (1 - k / (seg + 2)), r1 = 0.34 * (1 - (k + 1) / (seg + 2));
+            const partGeo = new THREE.CylinderGeometry(r1, r0, h / seg, 7);
+            ang += bend / seg;
+            px += Math.sin(ang) * (h / seg) / 2; py += Math.cos(ang) * (h / seg) / 2;
+            // Bake local transform into geometry
+            const partMat4 = new THREE.Matrix4();
+            _pos.set(px, py, 0);
+            _quat.setFromEuler(new THREE.Euler(0, 0, -ang));
+            _scale.set(1, 1, 1);
+            partMat4.compose(_pos, _quat, _scale);
+            partMat4.premultiply(treeMat4);
+            partGeo.applyMatrix4(partMat4);
+            allTrunkGeos.push(partGeo);
+            px += Math.sin(ang) * (h / seg) / 2; py += Math.cos(ang) * (h / seg) / 2;
+        }
+
+        // Crown position in tree-local space
+        const crownLocal = new THREE.Vector3(px, py, 0);
+
+        const fronds = 9 + Math.floor(rng() * 4);
+        for (let f = 0; f < fronds; f++) {
+            const frondGeo = new THREE.PlaneGeometry(2.8, 4.6);
+            frondGeo.translate(0, 2.0, 0); // pre-translate like the original
+            // Build frond local transform: position.y = 0.2, rotation.y, rotation.x
+            const ry = (f / fronds) * Math.PI * 2 + rng();
+            const rx = -(0.8 + rng() * 0.65);
+            const frondMat4 = new THREE.Matrix4();
+            _pos.set(crownLocal.x, crownLocal.y + 0.2, crownLocal.z);
+            _quat.setFromEuler(new THREE.Euler(rx, ry, 0, 'YXZ'));
+            _scale.set(1, 1, 1);
+            frondMat4.compose(_pos, _quat, _scale);
+            frondMat4.premultiply(treeMat4);
+            frondGeo.applyMatrix4(frondMat4);
+            allFrondGeos.push(frondGeo);
+        }
+
+        // Coconuts
+        for (let c = 0; c < 3; c++) {
+            const cocoGeo = new THREE.SphereGeometry(0.22, 10, 8);
+            const ca = rng() * Math.PI * 2;
+            const cocoMat4 = new THREE.Matrix4();
+            _pos.set(crownLocal.x + Math.cos(ca) * 0.35, crownLocal.y - 0.05, crownLocal.z + Math.sin(ca) * 0.35);
+            _quat.identity();
+            _scale.set(1, 1, 1);
+            cocoMat4.compose(_pos, _quat, _scale);
+            cocoMat4.premultiply(treeMat4);
+            cocoGeo.applyMatrix4(cocoMat4);
+            allCocoGeos.push(cocoGeo);
+        }
+    }
+
+    // Merge all geometries into 3 mega-meshes
+    if (allTrunkGeos.length) {
+        const trunkMesh = new THREE.Mesh(mergeGeometries(allTrunkGeos), barkMat);
+        trunkMesh.castShadow = true;
+        scene.add(trunkMesh);
+    }
+    if (allFrondGeos.length) {
+        const frondMesh = new THREE.Mesh(mergeGeometries(allFrondGeos), frondMat);
+        frondMesh.castShadow = true;
+        scene.add(frondMesh);
+    }
+    if (allCocoGeos.length) {
+        const cocoMesh = new THREE.Mesh(mergeGeometries(allCocoGeos), cocoMat);
+        cocoMesh.castShadow = true;
+        scene.add(cocoMesh);
+    }
+}
+
+/* rocks — MERGED into 1 mega-mesh */
+{
+    const rockMat = new THREE.MeshStandardMaterial({ map: texRock, roughness: 0.95 });
+    if (window.AXEngine && window.AXEngine.ProceduralFactory) {
+        window.AXEngine.ProceduralFactory.injectPremiumMaterial(rockMat, { color: 0xff00ff, scale: 0.5 });
+    }
+    const baseGeo = new THREE.IcosahedronGeometry(1, 1);
+    const allRockGeos = [];
+    for (let i = 0; i < 90; i++) {
+        const s = landSpot(-0.5, 40, 0.9); if (!s) continue;
+        const geo = baseGeo.clone();
+        const p = geo.attributes.position;
+        for (let v = 0; v < p.count; v++) {
+            const m = 1 + (rng() - 0.5) * 0.55;
+            p.setXYZ(v, p.getX(v) * m, p.getY(v) * m * (0.55 + rng() * 0.3), p.getZ(v) * m);
+        }
+        geo.computeVertexNormals();
+        const rockScale = 0.5 + rng() * 2.4;
+        const rockRotY = rng() * 7;
+        const rockMat4 = new THREE.Matrix4();
+        rockMat4.compose(
+            new THREE.Vector3(s.x, s.y - 0.2, s.z),
+            new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rockRotY),
+            new THREE.Vector3(rockScale, rockScale, rockScale)
+        );
+        geo.applyMatrix4(rockMat4);
+        allRockGeos.push(geo);
+    }
+    if (allRockGeos.length) {
+        const rockMesh = new THREE.Mesh(mergeGeometries(allRockGeos), rockMat);
+        rockMesh.castShadow = rockMesh.receiveShadow = true;
+        scene.add(rockMesh);
+    }
+}
+
+/* grass tufts — camera-facing billboards via instancing */
+const grassTufts = (() => {
+    const tuftTex = makeTexture(128, (g, s) => {
+        g.clearRect(0, 0, s, s);
+        for (let i = 0; i < 48; i++) {
+            g.strokeStyle = ['#6fa050', '#82b65f', '#5d8440', '#94c46e'][i % 4];
+            g.lineWidth = 3.6;
+            const x0 = s * 0.5 + (rng() - 0.5) * s * 0.5;
+            g.beginPath(); g.moveTo(x0, s);
+            g.quadraticCurveTo(x0 + (rng() - 0.5) * 26, s * 0.5, x0 + (rng() - 0.5) * 44, rng() * s * 0.45);
+            g.stroke();
+        }
+    });
+    tuftTex.wrapS = tuftTex.wrapT = THREE.ClampToEdgeWrapping;
+    const mat = new THREE.MeshStandardMaterial({ map: tuftTex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.9 });
+    const geo = new THREE.PlaneGeometry(1.7, 1.4);
+    geo.translate(0, 0.6, 0);
+    const inst = new THREE.InstancedMesh(geo, mat, 700);
+    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), SC = new THREE.Vector3();
+    let placed = 0;
+    for (let i = 0; i < 700; i++) {
+        const s = landSpot(2.2, 24, 0.5, 25); if (!s) continue;
+        Q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rng() * Math.PI);
+        const k = 0.7 + rng() * 1.1;
+        M.compose(V.set(s.x, s.y - 0.05, s.z), Q, SC.set(k, k, k));
+        inst.setMatrixAt(placed++, M);
+    }
+    inst.count = placed;
+    scene.add(inst);
+    return inst;
+})();
+}
+
+/* ════════════════════════════════════════════
+   ATMOSPHERE — clouds, birds, fireflies
+════════════════════════════════════════════ */
+let dayAmtNow = 1;
+let clouds, birds, fireflies;
+function buildAtmosphere() {
+clouds = (() => {
+    const tex = makeTexture(256, (g, s) => {
+        g.clearRect(0, 0, s, s);
+        for (let i = 0; i < 16; i++) {
+            const x = s * 0.5 + (rng() - 0.5) * s * 0.55, y = s * 0.55 + (rng() - 0.5) * s * 0.3;
+            const r = s * (0.1 + rng() * 0.16);
+            const gr = g.createRadialGradient(x, y, 1, x, y, r);
+            gr.addColorStop(0, 'rgba(255,255,255,0.75)');
+            gr.addColorStop(1, 'rgba(255,255,255,0)');
+            g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+        }
+    });
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    const group = new THREE.Group();
+    const items = [];
+    for (let i = 0; i < 14; i++) {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.5 + rng() * 0.3, depthWrite: false }));
+        const sc = 90 + rng() * 160;
+        sp.scale.set(sc, sc * 0.42, 1);
+        const a = rng() * Math.PI * 2, r = 150 + rng() * 600;
+        sp.position.set(Math.cos(a) * r, 110 + rng() * 90, Math.sin(a) * r);
+        group.add(sp);
+        items.push({ sp, speed: 1.2 + rng() * 2 });
+    }
+    scene.add(group);
+    return { update(dt) { for (const c of items) { c.sp.position.x += c.speed * dt; if (c.sp.position.x > 800) c.sp.position.x = -800; } } };
+})();
+
+birds = (() => {
+    const flocks = [];
+    const mat = new THREE.MeshBasicMaterial({ color: 0x1c1c22 });
+    for (let f = 0; f < 2; f++) {
+        const g = new THREE.Group();
+        for (let b = 0; b < 5; b++) {
+            const bird = new THREE.Group();
+            const wingGeo = new THREE.PlaneGeometry(1.6, 0.45);
+            const w1 = new THREE.Mesh(wingGeo, mat); w1.position.x = -0.8;
+            const w2 = new THREE.Mesh(wingGeo, mat); w2.position.x = 0.8;
+            bird.add(w1, w2);
+            bird.position.set((rng() - 0.5) * 18, (rng() - 0.5) * 6, (rng() - 0.5) * 18);
+            bird.userData = { w1, w2, ph: rng() * 7 };
+            g.add(bird);
+        }
+        g.position.y = 55 + f * 25;
+        scene.add(g);
+        flocks.push({ g, r: 90 + f * 70, sp: 0.07 + f * 0.03, a: rng() * 7 });
+    }
+    return { update(dt) {
+        const t = performance.now() * 0.001;
+        for (const f of flocks) {
+            f.a += f.sp * dt;
+            f.g.position.x = Math.cos(f.a) * f.r;
+            f.g.position.z = Math.sin(f.a) * f.r;
+            f.g.rotation.y = -f.a - Math.PI / 2;
+            for (const b of f.g.children) {
+                const fl = Math.sin(t * 7 + b.userData.ph) * 0.6;
+                b.userData.w1.rotation.z = fl; b.userData.w2.rotation.z = -fl;
+            }
+        }
+    } };
+})();
+
+fireflies = (() => {
+    const n = 130, pos = new Float32Array(n * 3), seeds = [];
+    for (let i = 0; i < n; i++) {
+        const s = landSpot(2.5, 20, 0.6, 30) || { x: 0, y: 5, z: 0 };
+        pos.set([s.x, s.y + 0.8 + rng() * 2.2, s.z], i * 3);
+        seeds.push(rng() * 10);
+    }
+    const ge = new THREE.BufferGeometry();
+    ge.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({ color: 0xffd76a, size: 0.28, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const pts = new THREE.Points(ge, mat);
+    scene.add(pts);
+    return { update() {
+        mat.opacity = (1 - dayAmtNow) * 0.95;
+        if (mat.opacity < 0.03) return;
+        const t = performance.now() * 0.001, p = ge.attributes.position;
+        for (let i = 0; i < n; i++) {
+            p.setY(i, p.getY(i) + Math.sin(t * 1.4 + seeds[i]) * 0.004);
+            p.setX(i, p.getX(i) + Math.cos(t * 0.9 + seeds[i] * 2) * 0.004);
+        }
+        p.needsUpdate = true;
+    } };
+})();
+}
+
+/* ════════════════════════════════════════════
+   MUSIC DISCS
+════════════════════════════════════════════ */
+const discs = [];
+const discGroup = new THREE.Group();
+scene.add(discGroup);
+function buildDiscs() {
+    const discGeo = new THREE.CylinderGeometry(0.55, 0.55, 0.07, 36);
+    const ringGeo = new THREE.TorusGeometry(0.56, 0.045, 10, 40);
+    const discMat = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.25, metalness: 0.8, emissive: 0xd4af37, emissiveIntensity: 0.12 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.2, metalness: 1.0, emissive: 0xd4af37, emissiveIntensity: 0.55 });
+    const beamGeo = new THREE.CylinderGeometry(0.32, 0.85, 60, 12, 1, true);
+    const beamMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false, fog: false });
+
+    // deterministic ring placement, mountain track gets the peak
+    for (let i = 0; i < 18; i++) {
+        let spot;
+        if (TRACKS[i].t === 'SCRIPTURE') {
+            // near the mountain peak
+            const mx = 0.06 * ISLAND, mz = -0.09 * ISLAND;
+            spot = { x: mx, z: mz, y: islandHeight(mx, mz) };
+        } else {
+            const baseAng = (i / 18) * Math.PI * 2;
+            for (let t = 0; t < 80; t++) {
+                const ang = baseAng + (rng() - 0.5) * 0.5;
+                const rad = ISLAND * (0.12 + rng() * 0.33);
+                const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+                const y = islandHeight(x, z);
+                if (y > 1.2 && y < 42) { spot = { x, y, z }; break; }
+            }
+            if (!spot) { spot = { x: 0, z: 0, y: islandHeight(0, 0) }; }
+        }
+        const g = new THREE.Group();
+        const disc = new THREE.Mesh(discGeo, discMat);
+        disc.rotation.x = Math.PI / 2;
+        const ring = new THREE.Mesh(ringGeo, goldMat);
+        const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.09, 18).rotateX(Math.PI / 2), goldMat);
+        g.add(disc, ring, hub);
+        g.position.set(spot.x, spot.y + 1.5, spot.z);
+        const beam = new THREE.Mesh(beamGeo, beamMat);
+        beam.position.set(spot.x, spot.y + 30, spot.z);
+        const glow = new THREE.PointLight(0xd4af37, 2.2, 14, 2);
+        glow.position.copy(g.position);
+        discGroup.add(g, beam, glow);
+        discs.push({ idx: i, group: g, beam, glow, base: spot.y + 1.5, collected: false });
+    }
+}
+
+/* ════════════════════════════════════════════
+   PLAYER / CONTROLS
+════════════════════════════════════════════ */
+const controls = new PointerLockControls(camera, renderer.domElement);
+const player = {
+    pos: new THREE.Vector3(),
+    vel: new THREE.Vector3(),
+    onGround: false,
+    stamina: 1,
+    h: 1.75
+};
+const speedNum = document.getElementById('speed-num');
+// spawn on a beach, west side
+{
+    let sx = -ISLAND * 0.4, sz = 0;
+    for (let r = ISLAND * 0.48; r > 0; r -= 4) {
+        const y = islandHeight(-r, 0);
+        if (y > 1.0) { sx = -r - 6; sz = 0; break; }
+    }
+    player.pos.set(sx, islandHeight(sx, sz) + player.h, sz);
+    camera.position.copy(player.pos);
+    camera.lookAt(0, player.pos.y + 2, 0);
+}
+
+const keys = {};
+addEventListener('keydown', (e) => {
+    if (e.code === 'Tab') { e.preventDefault(); return; }
+    if ((e.code === 'Enter' || e.code === 'KeyY') && started && !AXChat.isTyping()) { e.preventDefault(); AXChat.open(); return; }
+    if (e.code === 'KeyI') { if ($('pause').classList.contains('open')) togglePause(); AXInventory.toggle(); return; }
+    keys[e.code] = true;
+    if (e.code === 'KeyE') tryCollect();
+});
+// networked power-punch on the island too
+addEventListener('mousedown', (e) => {
+    if (!started || !controls.isLocked || AXInventory.isOpen() || $('pause').classList.contains('open') || AXChat.isTyping()) return;
+    MP.tryPunch(camera);
+});
+addEventListener('contextmenu', (e) => { if (controls.isLocked) e.preventDefault(); });
+addEventListener('keyup', (e) => keys[e.code] = false);
+
+/* touch */
+const isTouch = matchMedia('(pointer: coarse)').matches;
+let joyVec = { x: 0, y: 0 };
+let lookTouch = null, lookPrev = { x: 0, y: 0 };
+let yaw = Math.PI / 2, pitch = 0; // touch-look state
+if (isTouch) {
+    document.body.classList.add('touch');
+    const joy = document.getElementById('joy'), knob = document.getElementById('joy-knob');
+    let jid = null, cx = 0, cy = 0;
+    joy.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; jid = t.identifier; const r = joy.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; }, { passive: true });
+    addEventListener('touchmove', (e) => {
+        for (const t of e.changedTouches) {
+            if (t.identifier === jid) {
+                const dx = (t.clientX - cx) / 55, dy = (t.clientY - cy) / 55;
+                const m = Math.min(1, Math.hypot(dx, dy));
+                const a = Math.atan2(dy, dx);
+                joyVec.x = Math.cos(a) * m; joyVec.y = Math.sin(a) * m;
+                knob.style.transform = `translate(${joyVec.x * 33}px, ${joyVec.y * 33}px)`;
+            } else if (lookTouch === t.identifier) {
+                yaw -= (t.clientX - lookPrev.x) * 0.0042;
+                pitch -= (t.clientY - lookPrev.y) * 0.0042;
+                pitch = Math.max(-1.45, Math.min(1.45, pitch));
+                lookPrev = { x: t.clientX, y: t.clientY };
+            }
+        }
+    }, { passive: true });
+    addEventListener('touchstart', (e) => {
+        for (const t of e.changedTouches) {
+            if (t.identifier !== jid && t.clientX > innerWidth * 0.4 && lookTouch === null && !document.getElementById('pause').classList.contains('open')) {
+                lookTouch = t.identifier; lookPrev = { x: t.clientX, y: t.clientY };
+            }
+        }
+    }, { passive: true });
+    addEventListener('touchend', (e) => {
+        for (const t of e.changedTouches) {
+            if (t.identifier === jid) { jid = null; joyVec.x = joyVec.y = 0; knob.style.transform = ''; }
+            if (t.identifier === lookTouch) lookTouch = null;
+        }
+    }, { passive: true });
+    document.getElementById('btn-act').addEventListener('click', tryCollect);
+    document.getElementById('btn-pause-m').addEventListener('click', togglePause);
+}
+
+/* ════════════════════════════════════════════
+   GAME STATE / SAVE
+════════════════════════════════════════════ */
+const SAVE_KEY = 'axiomort_island_v1';
+let collected = new Set();
+try { (JSON.parse(localStorage.getItem(SAVE_KEY)) || []).forEach(i => collected.add(i)); } catch (e) {}
+function applySave(){ discs.forEach(d => { if (collected.has(d.idx)) hideDisc(d, true); }); }
+
+function save() { localStorage.setItem(SAVE_KEY, JSON.stringify([...collected])); }
+function hideDisc(d, silent) {
+    d.collected = true;
+    d.group.visible = false; d.beam.visible = false; d.glow.intensity = 0;
+}
+
+const $ = (id) => document.getElementById(id);
+function updateHUD() {
+    $('disc-count').textContent = `DISCS ${collected.size} / 18`;
+    buildVault();
+}
+function toast(msg, ms = 3200) {
+    const el = $('toast'); el.textContent = msg; el.classList.add('visible');
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('visible'), ms);
+}
+
+/* vault */
+function buildVault() {
+    const v = $('vault'); v.innerHTML = '';
+    TRACKS.forEach((tr, i) => {
+        const div = document.createElement('div');
+        const own = collected.has(i);
+        div.className = 'vault-item' + (own ? ' owned' : '');
+        div.innerHTML = `<span class="num">${String(i + 1).padStart(2, '0')}</span>${own ? tr.t : '??????'}${own ? '<span class="play-ic">&#9654;</span>' : ''}`;
+        if (own) div.addEventListener('click', () => { openDiscModal(i, false); $('pause').classList.remove('open'); });
+        v.appendChild(div);
+    });
+    $('vault-sub').textContent = `SIGNAL INTEGRITY: ${Math.round(collected.size / 18 * 100)}%`;
+}
+
+/* modal */
+let modalOpen = false;
+function openDiscModal(i, fresh) {
+    const tr = TRACKS[i];
+    modalOpen = true;
+    $('m-found').textContent = (fresh ? 'DISC RECOVERED — ' : 'VAULT PLAYBACK — ') + `${String(collected.size).padStart(2, '0')} / 18`;
+    $('m-title').textContent = tr.t;
+    $('m-lore').textContent = '"' + tr.lore + '"';
+    $('m-yt').src = `https://www.youtube.com/embed/${tr.yt}?autoplay=1&rel=0`;
+    $('disc-modal').classList.add('open');
+    controls.unlock();
+}
+$('m-continue').addEventListener('click', () => {
+    $('disc-modal').classList.remove('open');
+    $('m-yt').src = '';
+    modalOpen = false;
+    if (collected.size >= 18) { showWin(); }
+    else if (!isTouch) controls.lock();
+});
+
+let winTimer = null;
+function showWin() {
+    $('win').classList.add('open');
+    let cd = 15;
+    $('win-cd').textContent = cd;
+    $('win-timer').style.display = '';
+    if (winTimer) clearInterval(winTimer);
+    winTimer = setInterval(() => {
+        cd--;
+        $('win-cd').textContent = cd;
+        if (cd <= 0) { clearInterval(winTimer); window.location.href = 'tower.html'; }
+    }, 1000);
+}
+$('win-stay').addEventListener('click', () => {
+    $('win').classList.remove('open');
+    if (winTimer) { clearInterval(winTimer); winTimer = null; }
+    $('win-timer').style.display = 'none';
+    if (!isTouch) controls.lock();
+});
+
+/* pause */
+function togglePause() {
+    if (modalOpen) return;
+    const p = $('pause');
+    if (p.classList.contains('open')) { p.classList.remove('open'); if (!isTouch) controls.lock(); }
+    else { p.classList.add('open'); buildVault(); controls.unlock(); }
+}
+$('resume').addEventListener('click', togglePause);
+$('reset-save').addEventListener('click', () => {
+    if (!confirm('Reset expedition? All recovered discs will be scattered again.')) return;
+    collected.clear(); save();
+    discs.forEach(d => { d.collected = false; d.group.visible = true; d.beam.visible = true; d.glow.intensity = 2.2; });
+    updateHUD(); togglePause();
+});
+
+/* collection */
+let nearDisc = null;
+function tryCollect() {
+    if (!nearDisc || nearDisc.collected) return;
+    const d = nearDisc;
+    collected.add(d.idx); save();
+    hideDisc(d);
+    updateHUD();
+    toast(`DISC RECOVERED - ${TRACKS[d.idx].t}. OPEN I > AXIOMORT TO PLAY.`);
+    AXChat.add('', `You picked up ${TRACKS[d.idx].t}`, 'sys');   // your own action in the shared feed
+    if (typeof MP !== 'undefined' && MP.connected()) MP.event('pickup', TRACKS[d.idx].t);   // tell everyone else
+    if (collected.size >= 18) setTimeout(showWin, 900);
+}
+
+/* ════════════════════════════════════════════
+   DAY / NIGHT
+════════════════════════════════════════════ */
+const DAY_LEN = 480; // seconds per full cycle
+let dayT = 0.28;     // start mid-morning
+const sunPos = new THREE.Vector3();
+function updateSky(dt) {
+    dayT = (dayT + dt / DAY_LEN) % 1;
+    const ang = dayT * Math.PI * 2 - Math.PI / 2; // -90° at t=0 (06:00 sunrise)
+    const elev = Math.sin(ang) * 0.9;
+    const azim = dayT * Math.PI * 2;
+    sunPos.set(Math.cos(azim) * Math.cos(elev * Math.PI / 2), Math.sin(elev * Math.PI / 2), Math.sin(azim) * Math.cos(elev * Math.PI / 2));
+    skyU.sunPosition.value.copy(sunPos);
+    water.material.uniforms.sunDirection.value.copy(sunPos).normalize();
+
+    const dayAmt = THREE.MathUtils.smoothstep(sunPos.y, -0.08, 0.22);
+    dayAmtNow = dayAmt;
+    sun.position.copy(sunPos).multiplyScalar(400).add(camera.position);
+    sun.target.position.copy(camera.position);
+    sun.intensity = 3.4 * dayAmt;
+    sun.color.setHSL(0.09 + 0.04 * dayAmt, 0.5, 0.5 + 0.25 * dayAmt);
+    hemi.intensity = 0.16 + 1.05 * dayAmt;
+    moon.intensity = 0.22 * (1 - dayAmt);
+    moon.position.copy(sunPos).multiplyScalar(-400).add(camera.position);
+    renderer.toneMappingExposure = 0.18 + 0.4 * dayAmt;
+    scene.fog.color.setHSL(0.58, 0.25, 0.08 + 0.72 * dayAmt);
+    scene.fog.density = 0.0028 + 0.0012 * (1 - dayAmt);
+    stars.material.opacity = (1 - dayAmt) * 0.9;
+    skyU.rayleigh.value = 1.2 + 2.2 * (1 - Math.abs(sunPos.y));
+
+    const hour = (dayT * 24 + 6) % 24;
+    $('clock').textContent = `${sunPos.y > -0.05 ? 'DAY' : 'NIGHT'} — ${String(Math.floor(hour)).padStart(2, '0')}:${String(Math.floor(hour % 1 * 60)).padStart(2, '0')}`;
+}
+
+/* ════════════════════════════════════════════
+   COMPASS
+════════════════════════════════════════════ */
+const compassStrip = $('compass-strip');
+const _compassDir = new THREE.Vector3();
+function updateCompass() {
+    const dir = _compassDir;
+    camera.getWorldDirection(dir);
+    const heading = Math.atan2(dir.x, -dir.z); // 0 = north(-z)
+    // nearest uncollected disc bearing
+    let best = null, bd = 1e9;
+    for (const d of discs) {
+        if (d.collected) continue;
+        const dx = d.group.position.x - camera.position.x, dz = d.group.position.z - camera.position.z;
+        const dist = dx * dx + dz * dz;
+        if (dist < bd) { bd = dist; best = Math.atan2(dx, -dz); }
+    }
+    const marks = [];
+    for (let i = 0; i < 8; i++) {
+        let delta = (i * Math.PI / 4) - heading;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        if (Math.abs(delta) < Math.PI / 2.2) marks.push({ x: 160 + delta * 140, txt: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][i], gold: false });
+    }
+    if (best !== null) {
+        let delta = best - heading;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        if (Math.abs(delta) < Math.PI / 2.2) marks.push({ x: 160 + delta * 140, txt: '◆', gold: true });
+        else marks.push({ x: delta > 0 ? 305 : 15, txt: '›', gold: true });
+    }
+    compassStrip.innerHTML = marks.map(m => `<span class="${m.gold ? 'beacon' : ''}" style="position:absolute;left:${m.x.toFixed(0)}px">${m.txt}</span>`).join('');
+}
+
+/* ════════════════════════════════════════════
+   MAIN LOOP
+════════════════════════════════════════════ */
+const clock = new THREE.Clock();
+let worldReady = false;
+const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3();
+const UP = new THREE.Vector3(0, 1, 0);
+let started = false;
+
+function step(dt) {
+    /* ── GMod-style movement: ground accel + air-strafe + bunny hop ── */
+    const sprinting = keys['ShiftLeft'] || keys['ShiftRight'];
+    camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+    right.crossVectors(fwd, UP);
+    wish.set(0, 0, 0);
+    if (keys['KeyW'] || keys['ArrowUp']) wish.add(fwd);
+    if (keys['KeyS'] || keys['ArrowDown']) wish.sub(fwd);
+    if (keys['KeyD'] || keys['ArrowRight']) wish.add(right);
+    if (keys['KeyA'] || keys['ArrowLeft']) wish.sub(right);
+    if (isTouch) { wish.addScaledVector(fwd, -joyVec.y); wish.addScaledVector(right, joyVec.x); }
+    const moving = wish.lengthSq() > 0;
+    if (moving) wish.normalize();
+
+    const wishSpeed = sprinting ? 12.5 : 7.5;
+    const wantJump = keys['Space'];
+    const inWater = islandHeight(player.pos.x, player.pos.z) <= SEA + 0.05;
+
+    if (player.onGround) {
+        if (!wantJump) {  // friction skipped on the jump frame so chained hops keep their speed (no snap/reset)
+            const sp = Math.hypot(player.vel.x, player.vel.z);
+            if (sp > 0.1) { const drop = sp * (inWater ? 8 : 7) * dt; const k = Math.max(0, sp - drop) / sp; player.vel.x *= k; player.vel.z *= k; }
+            else { player.vel.x = 0; player.vel.z = 0; }
+        }
+        if (moving) {
+            const cur = player.vel.x*wish.x + player.vel.z*wish.z;
+            const add = wishSpeed - cur;
+            if (add > 0) { let acc = 12 * wishSpeed * dt; if (acc > add) acc = add; player.vel.x += acc*wish.x; player.vel.z += acc*wish.z; }
+        }
+    } else if (moving) {
+        const cur = player.vel.x*wish.x + player.vel.z*wish.z;
+        const add = 1.4 - cur;
+        if (add > 0) { let acc = 90 * dt; if (acc > add) acc = add; player.vel.x += acc*wish.x; player.vel.z += acc*wish.z; }
+    }
+
+    player.vel.y -= 26 * dt;
+    if (wantJump && player.onGround) { player.vel.y = inWater ? 7.0 : 8.8; player.onGround = false; }   // bhop carries over water too
+
+    const hspeed = Math.hypot(player.vel.x, player.vel.z);
+    if (speedNum) speedNum.textContent = Math.round(hspeed * 8);
+    $('stamina').style.width = Math.min(100, hspeed / 22 * 100) + '%';
+
+    player.pos.addScaledVector(player.vel, dt);
+
+    // terrain collision
+    const limit = ISLAND * 0.49 + 40;
+    player.pos.x = THREE.MathUtils.clamp(player.pos.x, -limit, limit);
+    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -limit, limit);
+    let ground = islandHeight(player.pos.x, player.pos.z);
+    if (ground < SEA - 1.1) ground = SEA - 1.1;   // wade, don't sink
+    if (player.pos.y < ground + player.h) {
+        player.pos.y = ground + player.h;
+        player.vel.y = 0;
+        player.onGround = true;
+    } else player.onGround = false;
+
+    // water slow
+    if (ground <= SEA + 0.05) {
+        player.vel.x *= 0.94; player.vel.z *= 0.94;
+    }
+
+    camera.position.copy(player.pos);
+    // gentle head bob
+    if (moving && player.onGround) camera.position.y += Math.sin(performance.now() * 0.012) * 0.05;
+
+    if (isTouch) {
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y = yaw; camera.rotation.x = pitch; camera.rotation.z = 0;
+    }
+
+    /* discs — with light culling: only nearest 3 PointLights active */
+    nearDisc = null;
+    const t = performance.now() * 0.001;
+    const discDists = [];
+    for (const d of discs) {
+        if (d.collected) continue;
+        d.group.rotation.y = t * 1.4 + d.idx;
+        d.group.position.y = d.base + Math.sin(t * 1.8 + d.idx * 1.3) * 0.25;
+        d.glow.intensity = 1.8 + Math.sin(t * 3 + d.idx) * 0.5;
+        const dist = d.group.position.distanceTo(player.pos);
+        if (dist < 3.2) nearDisc = d;
+        discDists.push({ d, dist });
+    }
+    // Sort by distance and only keep nearest 3 lights visible
+    discDists.sort((a, b) => a.dist - b.dist);
+    for (let i = 0; i < discDists.length; i++) {
+        discDists[i].d.glow.visible = i < 3;
+    }
+    $('prompt').classList.toggle('visible', !!nearDisc);
+    if (nearDisc && isTouch) $('btn-act').style.borderColor = 'var(--gold)';
+
+    /* water time */
+    water.material.uniforms.time.value += dt * 0.6;
+}
+
+let frame = 0;
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    
+    if (window.AXEngine && window.AXEngine.ecs) {
+        window.AXEngine.physicsSys.update(dt, window.AXEngine.ecs);
+        window.AXEngine.syncSys.update(window.AXEngine.ecs);
+    }
+    if (!worldReady) return;
+    if (started && !modalOpen && !$('pause').classList.contains('open') && !AXInventory.isOpen()) step(dt);
+    if (started) MP.update(dt);
+    updateSky(started ? dt : 0.0001);
+    clouds.update(dt); birds.update(dt); fireflies.update();
+    if ((frame++ & 3) === 0) updateCompass();
+    composer.render();
+    if (frame % 300 === 0) console.log('[AXIOMORT Island] Draw calls:', renderer.info.render.calls);
+}
+animate();
+
+/* resize */
+addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    composer.setSize(innerWidth, innerHeight);
+});
+
+/* ════════════════════════════════════════════
+   BOOT
+════════════════════════════════════════════ */
+const beginBtn = $('begin');
+beginBtn.disabled = false;
+beginBtn.textContent = 'WAKE UP';
+
+// By island-time the tower archive is complete — montage from available STUDIO SOUNDS clips.
+const ISLAND_VIDEO_FOLDERS = ['1 Machina Corpus','2 Ink Of Infinity','4 The Nexus Veil','6 The Nexus Veil (Anthem)','12 Glitch Rebirth','13 Neon Hunters','14 Event Horizon Lament','22 Chronodrift','25 Phantom Glide'];
+function islandVideos(){ return ISLAND_VIDEO_FOLDERS.map(f => 'media/tracks/' + encodeURIComponent(f) + '/video.mp4'); }
+
+async function boot(){
+    await AXLoader.runPhases([
+        ['Raising the island',     buildTerrain],
+        ['Flooding the shoreline',  buildWater],
+        ['Planting the canopy',     buildVegetation],
+        ['Summoning the night',     buildAtmosphere],
+        ['Scattering the discs',    buildDiscs],
+    ], { videos: islandVideos(), label: 'Reaching the Island', sub: 'Booting environment', minMs: 2800 });
+    applySave();
+    worldReady = true;
+    updateHUD();
+    AXLoader.hold();        // keep the montage playing behind the wake-gate
+    $('intro').classList.add('ready');
+}
+
+function enterGame(){
+    if (!worldReady || started) return;
+    $('intro').classList.add('hidden');
+    AXLoader.hide();
+    $('hud').classList.add('visible');
+    started = true;
+    updateHUD();
+    if (!isTouch) controls.lock();
+    if (collected.size > 0) toast(`EXPEDITION RESUMED — ${collected.size} / 18 DISCS SECURED`);
+    else toast('FOLLOW THE GOLD LIGHT COLUMNS · [ENTER] CHAT · [TAB] PILOTS', 5000);
+    // multiplayer — join the island
+    MP.init({
+        scene, level: 'island', skin: MY_SKIN, name: localStorage.getItem('ax_pilot') || 'PILOT',
+        getSelf: () => {
+            const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize();
+            const anim = !player.onGround ? 'air' : (Math.hypot(player.vel.x, player.vel.z) > 1.5 ? 'walk' : 'idle');
+            return { pos: [player.pos.x, player.pos.y - player.h, player.pos.z], rot: Math.atan2(f.x, f.z), anim };
+        },
+        onPunched: (kx, kz) => { player.vel.x += kx; player.vel.z += kz; player.vel.y += 4; toast('💥 KNOCKED BACK'); },
+        onTyping: (typing) => { if (typing) { for (const k in keys) keys[k] = false; } }
+    });
+}
+beginBtn.addEventListener('click', (e) => { e.stopPropagation(); enterGame(); });
+$('intro').addEventListener('click', (e) => { if (e.target.closest('.backlink')) return; enterGame(); });
+controls.addEventListener('unlock', () => {
+    if (started && !modalOpen && !AXInventory.isOpen() && !$('pause').classList.contains('open') && !$('win').classList.contains('open')) {
+        $('pause').classList.add('open'); buildVault();
+    }
+});
+updateHUD();
+
+/* ── PS2 CD inventory — the AXIOMORT album, real audio ── */
+function renderIslandAxiomortTab(){
+    const owned = TRACKS.map((tr, i) => ({ tr, i })).filter(x => collected.has(x.i));
+    return `<div class="ax-extra-wrap">
+        <div class="ax-extra-head"><div><div class="ax-extra-title">AXIOMORT</div><div class="ax-extra-sub">Island disc playback</div></div><div class="ax-extra-sub">${owned.length} / ${TRACKS.length} RECOVERED</div></div>
+        <div class="ax-list">${TRACKS.map((tr, i) => {
+            const own = collected.has(i);
+            return `<button class="ax-row ${own ? '' : 'locked'}" data-island-disc="${i}" ${own ? '' : 'disabled'}><b>${String(i + 1).padStart(2,'0')} ${own ? tr.t : 'SEALED'}</b><span>${own ? 'Play AXIOMORT video' : 'Recover this fragment'}</span></button>`;
+        }).join('')}</div>
+        <div class="ax-watch" id="island-watch"><iframe id="island-watch-frame" src="" title="AXIOMORT island playback" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+    </div>`;
+}
+function refreshIslandAxiomortTab(root){
+    const pane = root.querySelector('[data-pane="axiomort"]');
+    if (pane) pane.innerHTML = renderIslandAxiomortTab();
+}
+AXInventory.init({
+    title: 'AXIOMORT',
+    subtitle: 'MEMORY CARD 2 — ORIGINAL MOTION PICTURE SOUNDTRACK',
+    tracks: TRACKS.map((tr, i) => ({
+        t: tr.t,
+        src: 'media/album/' + String(i + 1).padStart(2, '0') + '.mp3',
+        img: 'media/album/cover.jpg',
+        meta: 'AXIOMORT (OST) — BREADFLOWS'
+    })),
+    isOwned: i => collected.has(i),
+    extraTabs: [{ id: 'axiomort', label: 'AXIOMORT', html: renderIslandAxiomortTab(), onShow: refreshIslandAxiomortTab }],
+    onOpen: () => { controls.unlock(); },
+    onClose: () => { if (started && !isTouch) controls.lock(); }
+});
+document.getElementById('open-inv-isl').addEventListener('click', () => { togglePause(); AXInventory.open(); });
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-island-disc]');
+    if (!btn || btn.disabled) return;
+    const tr = TRACKS[Number(btn.dataset.islandDisc)];
+    const watch = document.getElementById('island-watch');
+    const frame = document.getElementById('island-watch-frame');
+    if (!watch || !frame) return;
+    frame.src = `https://www.youtube.com/embed/${tr.yt}?autoplay=1&rel=0`;
+    watch.classList.add('open');
+});
+
+/* ── unlock gate: the island opens after the tower archive ── */
+let islandLocked = false;
+(() => {
+    let towerDone = false;
+    try { towerDone = (JSON.parse(localStorage.getItem('ax_tower_v1')) || []).length >= 26; } catch (e) {}
+    if (localStorage.getItem('ax_admin') === '1') towerDone = true;
+    if (!towerDone && !location.search.includes('dev')) {
+        islandLocked = true;
+        const gate = document.createElement('div');
+        gate.style.cssText = 'position:fixed;inset:0;z-index:300;background:#050507;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;';
+        gate.innerHTML = `
+            <div style="font-family:var(--font-mono);font-weight:700;font-size:12px;letter-spacing:2px;color:#d4af37;margin-bottom:22px;">SIGNAL SEALED</div>
+            <div style="font-family:var(--font-display);font-size:clamp(26px,5vw,48px);letter-spacing:4px;color:#e8e4dc;margin-bottom:18px;">THE ISLAND IS LOCKED</div>
+            <p style="max-width:480px;font-weight:300;line-height:1.9;color:#c2bdb2;margin-bottom:34px;">
+                Eighteen fragments wait offshore — but the way only opens to pilots who completed
+                the Vault's archive. Recover all twenty-six masters first.</p>
+            <a href="tower.html" style="font-family:var(--font-mono);font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase;text-decoration:none;padding:14px 30px;border-radius:30px;border:1.5px solid #d4af37;color:#d4af37;">RETURN TO THE TOWER</a>`;
+        document.body.appendChild(gate);
+    }
+})();
+
+/* kick off the cinematic chunked load (skip if the island is sealed) */
+if (!islandLocked) boot();
+
+/* debug handle (harmless in production) */
+window.__AX = { player, discs, camera, get collected() { return [...collected]; }, tryCollect, teleport(x, z) { player.pos.set(x, islandHeight(x, z) + 2, z); } };
+</script>
+</body>
+</html>

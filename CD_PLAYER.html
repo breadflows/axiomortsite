@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>STUDIO SOUNDS 2025 — 3D CD</title>
+<style>
+  :root {
+    --cyan:#00f0ff; --magenta:#ff2bd6; --lime:#b6ff3c; --amber:#ffd34a;
+    --ink:#020308; --chrome:#cfd7e6;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--chrome);
+    font-family: "Bahnschrift", "Trebuchet MS", "Eurostile", Tahoma, sans-serif;
+    font-stretch: condensed; letter-spacing: 1px;
+  }
+  #c { position: fixed; inset: 0; display: block; }
+
+  /* CRT scanlines + vignette overlay */
+  #crt {
+    position: fixed; inset: 0; pointer-events: none; z-index: 30; mix-blend-mode: overlay;
+    background:
+      repeating-linear-gradient(to bottom, rgba(255,255,255,0.04) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.85) 100%);
+  }
+  /* subtle chromatic aberration tint */
+  #chroma { position: fixed; inset: 0; pointer-events:none; z-index: 29;
+    background: radial-gradient(ellipse at 30% 40%, rgba(0,240,255,0.06), transparent 60%),
+                radial-gradient(ellipse at 70% 60%, rgba(255,43,214,0.08), transparent 60%);
+    mix-blend-mode: screen;
+  }
+
+  #ui {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 14px 22px 18px; box-sizing: border-box;
+    background: linear-gradient(to top, rgba(0,0,8,0.92), rgba(0,0,8,0));
+    pointer-events: none; z-index: 5;
+    border-top: 1px solid rgba(0,240,255,0.25);
+    box-shadow: 0 -10px 40px rgba(0,240,255,0.08) inset;
+  }
+  #ui > * { pointer-events: auto; }
+  #title {
+    font-size: 28px; letter-spacing: 5px; text-transform: uppercase; font-weight: 700;
+    color: #fff;
+    text-shadow:
+      -1px 0 0 var(--magenta),
+       1px 0 0 var(--cyan),
+       0 0 12px rgba(0,240,255,0.7),
+       0 0 28px rgba(255,43,214,0.5);
+    margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #meta { font-size: 10px; opacity: 0.85; letter-spacing: 2px; margin-bottom: 12px;
+    text-transform: uppercase; }
+  #meta span { margin-right: 14px; color: #9ad4e0; }
+  #meta b { color: var(--lime); font-weight: normal; text-shadow: 0 0 6px rgba(182,255,60,0.5); }
+
+  #bar {
+    height: 10px;
+    background: linear-gradient(to bottom, #04060e, #0b1226);
+    border: 1px solid rgba(0,240,255,0.3);
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 1px 0 rgba(0,240,255,0.2),
+      inset 0 -1px 0 rgba(255,43,214,0.15),
+      0 0 14px rgba(0,240,255,0.15);
+    cursor: pointer; position: relative;
+  }
+  #fill { height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta) 60%, var(--amber));
+    box-shadow: 0 0 14px var(--magenta); }
+  #bar::after {
+    content:""; position:absolute; inset:0;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 6px);
+    pointer-events: none;
+  }
+  #times { display: flex; justify-content: space-between; font-size: 10px; opacity: 0.6; margin-top: 6px; letter-spacing: 2px; }
+  #times span { color: var(--cyan); text-shadow: 0 0 6px rgba(0,240,255,0.5); }
+
+  #ctrls { margin-top: 14px; display: flex; gap: 18px; align-items: center; justify-content: center; }
+  .btn {
+    width: 54px; height: 54px; border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 25%, #f6f9ff 0%, #b6c3da 12%, #4d5876 38%, #1a2034 70%, #04060e 100%);
+    border: 1px solid #9aa6c0;
+    color: #04060e; cursor: pointer; font-size: 20px; font-weight: bold;
+    display: grid; place-items: center;
+    box-shadow:
+      0 2px 0 #00000088,
+      inset 0 2px 1px #ffffffcc,
+      inset 0 -3px 4px #00000088,
+      0 0 18px rgba(0,240,255,0.35);
+    transition: transform .08s, box-shadow .2s, filter .2s;
+    text-shadow: 0 1px 0 #ffffff80;
+  }
+  .btn:hover { filter: brightness(1.15); box-shadow:
+      0 2px 0 #00000088, inset 0 2px 1px #ffffffcc, inset 0 -3px 4px #00000088,
+      0 0 26px var(--magenta); }
+  .btn:active { transform: translateY(2px) scale(0.95); box-shadow:
+      0 0 0 #00000088, inset 0 2px 6px #00000099, inset 0 0 4px #00000099,
+      0 0 18px var(--cyan); }
+  #play { width: 72px; height: 72px; font-size: 26px; }
+
+  #header { position: fixed; top: 18px; left: 0; right: 0; text-align: center; z-index: 5; pointer-events: none; }
+  #brand {
+    font-size: 18px; letter-spacing: 14px; font-weight: 700;
+    background: linear-gradient(to bottom, #fff 0%, #6cd9ff 45%, #2178a8 50%, #fff 55%, #ff8ae4 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 8px rgba(0,240,255,0.4));
+  }
+  #year { font-size: 11px; letter-spacing: 6px; opacity: 0.65; color: var(--cyan); margin-top: 2px;
+    text-shadow: 0 0 6px rgba(0,240,255,0.6); }
+
+  #idx { position: fixed; left: 22px; top: 22px; z-index: 5;
+    font-size: 12px; letter-spacing: 3px; color: var(--lime);
+    text-shadow: 0 0 8px rgba(182,255,60,0.5);
+    padding: 4px 10px; border: 1px solid rgba(182,255,60,0.4); border-radius: 2px;
+    background: rgba(0,8,4,0.55);
+  }
+  #hint { position: fixed; right: 22px; top: 22px; z-index: 5;
+    font-size: 11px; letter-spacing: 2px; opacity: 0.65; text-align: right; line-height: 1.6;
+    color: var(--cyan); text-shadow: 0 0 6px rgba(0,240,255,0.3); }
+
+  /* PS2-style boot screen */
+  #boot { position: fixed; inset: 0; background: #000; z-index: 50;
+    display: grid; place-items: center; cursor: pointer; color: #fff; text-align: center; }
+  #boot canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #boot .inner { position: relative; z-index: 2; }
+  #boot h1 {
+    font-size: 36px; letter-spacing: 14px; margin: 0 0 16px; font-weight: 700;
+    background: linear-gradient(to bottom, #fff, #6cd9ff 50%, #2178a8 51%, #fff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 18px rgba(0,240,255,0.6));
+  }
+  #boot p { font-size: 12px; letter-spacing: 5px; opacity: 0.7; margin: 0; color: var(--cyan);
+    animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:0.85} 50%{opacity:0.25} }
+
+  #err { position: fixed; left: 22px; bottom: 230px; right: 22px; z-index: 6;
+    background: #2a0010; border: 1px solid var(--magenta); color: #ffd6e0;
+    padding: 10px 14px; font-size: 12px; line-height: 1.5; display: none; border-radius: 2px;
+    box-shadow: 0 0 18px rgba(255,43,214,0.4); }
+</style>
+</head>
+<body>
+<div id="boot"><canvas id="bootcv"></canvas><div class="inner"><h1>INSERT DISC</h1><p>press start</p></div></div>
+<canvas id="c"></canvas>
+<div id="chroma"></div>
+<div id="crt"></div>
+<div id="header"><div id="brand">STUDIO SOUNDS</div><div id="year">MMXXV</div></div>
+<div id="idx">TRACK 00 / 00</div>
+<div id="hint">scroll / arrows: browse<br>click cover: load · space: play</div>
+<div id="err"></div>
+<div id="ui">
+  <div id="title">—</div>
+  <div id="meta">—</div>
+  <div id="bar"><div id="fill"></div></div>
+  <div id="times"><span id="cur">0:00</span><span id="dur">0:00</span></div>
+  <div id="ctrls">
+    <button class="btn" id="prev" title="Previous">⏮</button>
+    <button class="btn" id="play" title="Play / Pause">▶</button>
+    <button class="btn" id="next" title="Next">⏭</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="js/covers.js"></script>
+<script>
+(function(){
+'use strict';
+
+const TRACKS = [
+  {title:"Machina Corpus",folder:"1 Machina Corpus",audio:"MixeaMediumNeutralhdMachinaCorpusRemaster-mastered.mp3",img:"800x800-9505173--C0B19EC7-5227-482C-817DCFE0055D6E4C--0--79710--imagelarge31db43c5af5c4ff8b9913f345351dc9f.jpg",isrc:"QZNWX2585565",release:"9 May 2025",upc:"199331125480"},
+  {title:"Ink Of Infinity",folder:"2 Ink Of Infinity",audio:"LANDRInkOfInfinityBalancedMedium.mp3",img:"800x800-9505173--B75D4CEA-02D5-410C-AC950AA9DF5D6BE0--0--100291--imagelarge43b3c8433e324a10af4a4e457f932ea3.jpg",isrc:"QZTAS2572650",release:"25 May 2025",upc:"199524648765"},
+  {title:"Rift's Bounty",folder:"3 Rift's Bounty",audio:"RiftsBountyMalikCreed-mastered.mp3",img:"800x800-9505173--9FE1D9EB-7BF6-4118-99A8A0B93088F070--0--1599132--driftsbountycover.jpg",isrc:"QZTAU2584933",release:"6 June 2025",upc:"199523503393"},
+  {title:"The Nexus Veil",folder:"4 The Nexus Veil",audio:"TheNexusVeil.mp3",img:"800x800-9505173--CE0018D0-50BA-4021-90F9E03E696CF281--mod-1749445658.jpg",isrc:"QZTB22535368",release:"9 June 2025",upc:"199521237788"},
+  {title:"The Nexus Veil (Galactic Chill)",folder:"5 The Nexus Veil (Galactic Chill)",audio:"TheNexusVeil (1).mp3",img:"800x800-9505173--11E05B6C-B27F-44C4-BF840D30A4889B43--0--81744--1000032453.jpg",isrc:"QZTB22537703",release:"9 June 2025",upc:"199521223361"},
+  {title:"The Nexus Veil (Anthem)",folder:"6 The Nexus Veil (Anthem)",audio:"TheNEXUSVeilLessoverstimulatedvibesRemastered.mp3",img:"800x800-9505173--17F3D509-A665-448E-B9DB7B2CE8A52AD7--0--153455--imagelarge7a4eecb7723a47d8bb0edb1679bffb71.jpg",isrc:"QZTB82517271",release:"22 June 2025",upc:"199518309870"},
+  {title:"The Rose Petals Resistance",folder:"7 The Rose Petals Ressistance",audio:"TheRosePetalsResistanceMayasNeonHuntv4style50weird50nopersonaextraelectro.mp3",img:"800x800-9505173--B85A943A-1F3E-42A1-ADCC197DC2899983--0--349490--03.jpg",isrc:"QZTB92557213",release:"25 June 2025",upc:"199517623885"},
+  {title:"Ink Between Worlds (Rift Soundtrack)",folder:"8 Ink Between Worlds (The Rift Soundtrack)",audio:"ThroughtheInk.mp3",img:"800x800-9505173--D8232C15-0932-4C31-97F3DEFB411C7A33--0--88537--imagelarge9ca5c366c91f4797a9166f59963bbdda.jpg",isrc:"QZTB92583036",release:"25 June 2025",upc:"199517504771"},
+  {title:"106.5s — Jul 1 4:32PM",folder:"9 106.5s Jul 1 432PM",audio:"106-mastered.mp3",img:"800x800-9505173--3D538CC9-2C15-44B9-8DED613E0D579BAA--0--3665304--f8916ddfda464653bf8fe9ca8fce36e7.jpg",isrc:"QZTBC2548360",release:"1 July 2025",upc:"199516141120"},
+  {title:"Go Cry To Interpol",folder:"10 Go Cry To Interpol",audio:"GoCrytoInterpol.mp3",img:"800x800-9505173--5561940C-E202-4273-83C54CEC4D9D2375--0--1542355--0db03a51b6064a69920851a818f4c413.jpg",isrc:"QZTBD2550115",release:"3 July 2025",upc:"199515634296"},
+  {title:"TrapStar",folder:"11 TrapStar",audio:"Trapstar.mp3",img:"800x800-9505173--2E6AC500-6191-449E-998B78A538B0EF21--0--61681--imagelarged18b89fcfde74845bffa63c56ebecbde.jpg",isrc:"QZTBC2558191",release:"28 June 2025",upc:"199514973303"},
+  {title:"Glitch Rebirth",folder:"12 Glitch Rebirth",audio:"GlitchRebirthv0.2.mp3",img:"800x800-9505173--EF41E9B6-8A2E-49DA-A845A7C13520A74E--0--2260545--0c719f0d598f45e48650bbcb0ab8bc2b.jpg",isrc:"QZTBE2578978",release:"5 July 2025",upc:"199514970661"},
+  {title:"Neon Hunters",folder:"13 Neon Hunters",audio:"RosePetalsRessistancehook.mp3",img:"800x800-9505173--D217436A-7E94-4DD0-A1F35DA9487143BA--0--1884888--ChatGPTImageJul102025022902AM.jpg",isrc:"QZWFE2543122",release:"10 July 2025",upc:"199514125245"},
+  {title:"Event Horizon Lament",folder:"14 Event Horizon Lament",audio:"EventHorizonLament.mp3",img:"800x800-9505173--B52047B5-9B8C-45AD-89CC66335D4C7361--0--73648--1000034474.jpg",isrc:"QZWFJ2522862",release:"18 July 2025",upc:"199512214613"},
+  {title:"Ink Between Worlds (Rift Mix)",folder:"15 Ink Between Worlds (Rift Mix)",audio:"InkBetweenWorldsRemasteredRemixnew100SIstyleimprovedv2.mp3",img:"800x800-9505173--BEC87121-EF7B-423C-9A59DED3366AC6D9--0--118580--1000035148.jpg",isrc:"QZWFL2599021",release:"24 July 2025",upc:"199510824005"},
+  {title:"Nobody",folder:"16 Nobody",audio:"Timeline100086400.mp3",img:"800x800-9505173--70827A2E-B79D-4BDF-A56B7F0417343F2D--0--227840--01.jpg",isrc:"QZWFR2523595",release:"1 August 2025",upc:"199508715032"},
+  {title:"Theta Glyph Eclipse — Inception Haze",folder:"17 Theta Glyph Eclipse -  Inception Haze",audio:"ThetaGlyphEclipseInstrumental.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c54.jpg",isrc:"QZWFW2525744",release:"11 August 2025",upc:"199506249676"},
+  {title:"Theta Glyph Eclipse — Recursive Bridge",folder:"18 Theta Glyph Eclipse - Recursive Bridge",audio:"ThetaGlyphEclipseInstrumental1.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c54.jpg",isrc:"QZWFW2525745",release:"11 August 2025",upc:"199506249676"},
+  {title:"Theta Glyph Eclipse — Awakening Hijack",folder:"19 Theta Glyph Eclipse - Awakening Hijack",audio:"ThetaGlyphEclipse.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c54643.jpg",isrc:"QZWFW2525746",release:"11 August 2025",upc:"199506249676"},
+  {title:"Theta Glyph Eclipse — Climax Divine",folder:"20 Theta Glyph Eclipse - Climax Divine",audio:"ThetaGlyphEclipse1.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c5 (1).jpg",isrc:"QZWFW2525747",release:"11 August 2025",upc:"199506249676"},
+  {title:"Pressure Seal",folder:"21 Pressure Seal",audio:"PressureSeal.mp3",img:"800x800-9505173--8C19305D-2798-47BF-A93DEF3BE3D337D0--0--85553--imagelarge1b0599a712d74ef4ac30b1be334d5044.jpg",isrc:"QZZ772542961",release:"18 August 2025",upc:"199326582861"},
+  {title:"Chronodrift",folder:"22 Chronodrift",audio:"Chronodrift.mp3",img:"800x800-9505173--398DC3FC-6CD5-4E33-A0F24B0FB58C846E--0--1518526--gemini2.5flashimagepreviewEpiccinematicindustrialalbumcoverdarkmetalliccityscapeatduskasymme.jpg",isrc:"QT3EY2543171",release:"20 September 2025",upc:"199739552116"},
+  {title:"Rift's Bounty — Creed's Oath",folder:"23 Rift's Bounty Creeds Oath",audio:"RiftsBountyv0.4.mp3",img:"800x800-9505173--78CBAF13-D1BE-45CD-89B657982A6B606E--0--93603--imagelarge69d5d43c1c4b43eb9cdaf3c7dc1c8bf1.jpg",isrc:"QT3FB2599805",release:"10 October 2025",upc:"199744063485"},
+  {title:"When the Grace Is Good",folder:"24 When the Grace Is Good",audio:"WHENTHEGRACEISGOODMatrixCrackingVersionv0.2.mp3",img:"800x800-9505173--54264C4D-3ADB-4197-A2D935E8EAA154FD--0--40625--imagelargea282191724ca4b2e8721ac3251828592.jpg",isrc:"QT3FB2599808",release:"20 October 2025",upc:"199744063461"},
+  {title:"Phantom Glide",folder:"25 Phantom Glide",audio:"PhantomGlide.mp3",img:"800x800-9505173--7DD6AA13-A2A1-4B74-98BA9BD85C58CD56--0--27597--imagelargea367396fdbc943eabbbd716798585956.jpg",isrc:"QT3FB2599840",release:"28 October 2025",upc:"199744063447"},
+  {title:"GOOD GRACE",folder:"26 GOOD GRACE",audio:"TheSecondWaveWhentheGraceisGood2008Trance-mastered.mp3",img:"800x800-9505173--424BF13E-9019-483C-89F765392644ED7D--0--5464302--1000042374.jpg",isrc:"QT6EF2525636",release:"6 November 2025",upc:"199956805873"},
+];
+
+// Build URLs — encode each path segment so spaces/parens/apostrophes/brackets work.
+TRACKS.forEach(function(t,i){
+  t.num = i+1;
+  t.audioURL = t.audio ? ('media/tracks/' + encodeURIComponent(t.folder) + '/' + encodeURIComponent(t.audio)) : '';
+  t.imgURL   = t.img   ? ('media/tracks/' + encodeURIComponent(t.folder) + '/' + encodeURIComponent(t.img))   : '';
+});
+
+if (typeof THREE === 'undefined') {
+  document.getElementById('err').style.display='block';
+  document.getElementById('err').innerHTML = 'Three.js failed to load from unpkg. You need an internet connection the first time you open this page. If offline, download <code>three.min.js</code> next to this file and change the script src.';
+  return;
+}
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x02030a);
+scene.fog = new THREE.Fog(0x02030a, 12, 42);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 200);
+camera.position.set(0, 2.2, 8);
+camera.lookAt(0, 1.2, 0);
+
+// stars
+(function(){
+  const g = new THREE.BufferGeometry();
+  const N = 1400; const pos = new Float32Array(N*3);
+  for (let i=0;i<N;i++){
+    const r = 30 + Math.random()*45;
+    const t = Math.random()*Math.PI*2;
+    const p = Math.acos(2*Math.random()-1);
+    pos[i*3]   = r*Math.sin(p)*Math.cos(t);
+    pos[i*3+1] = r*Math.cos(p);
+    pos[i*3+2] = r*Math.sin(p)*Math.sin(t);
+  }
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 0.08, color: 0xaad7ff, transparent: true, opacity: 0.85 })));
+})();
+
+// grid floor
+(function(){
+  const grid = new THREE.GridHelper(60, 60, 0xff3df7, 0x1f8bff);
+  grid.position.y = -2.2; grid.material.transparent = true; grid.material.opacity = 0.35;
+  scene.add(grid);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(30,64), new THREE.MeshBasicMaterial({ color: 0x02030a, transparent:true, opacity:0.85 }));
+  disc.rotation.x = -Math.PI/2; disc.position.y = -2.19; scene.add(disc);
+})();
+
+// lights
+scene.add(new THREE.AmbientLight(0x8899ff, 0.6));
+const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(4,8,5); scene.add(key);
+const rim  = new THREE.PointLight(0xff3df7, 1.6, 22); rim.position.set(-4,3,-3); scene.add(rim);
+const rim2 = new THREE.PointLight(0x1f8bff, 1.4, 22); rim2.position.set(4,2,-2); scene.add(rim2);
+
+// Iridescent CD label/stripe texture
+function makeCDStripeTex(){
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 1024;
+  const x = c.getContext('2d');
+  const cx=512, cy=512;
+  for (let r=505; r>0; r-=1){
+    const hue = (r*1.2 + 180) % 360;
+    x.beginPath(); x.arc(cx,cy,r,0,Math.PI*2);
+    x.strokeStyle = 'hsla(' + hue + ', 80%, ' + (50 + Math.sin(r*0.4)*15) + '%, 0.55)';
+    x.lineWidth = 1.2; x.stroke();
+  }
+  x.globalCompositeOperation = 'lighter';
+  for (let a=0; a<Math.PI*2; a+=Math.PI/180*2){
+    const grd = x.createLinearGradient(cx,cy, cx+Math.cos(a)*510, cy+Math.sin(a)*510);
+    grd.addColorStop(0,'rgba(255,255,255,0)');
+    grd.addColorStop(0.5,'rgba(255,255,255,0.06)');
+    grd.addColorStop(1,'rgba(255,255,255,0)');
+    x.strokeStyle = grd; x.lineWidth=2;
+    x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(a)*512, cy+Math.sin(a)*512); x.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  if ('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const stripeTex = makeCDStripeTex();
+
+function makePlaceholderTex(text){
+  const c = document.createElement('canvas'); c.width=c.height=512;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(256,256,30,256,256,300);
+  g.addColorStop(0,'#1f8bff'); g.addColorStop(1,'#0a0420');
+  x.fillStyle = g; x.fillRect(0,0,512,512);
+  x.fillStyle='#cfe8ff'; x.font='bold 28px sans-serif'; x.textAlign='center';
+  x.fillText(text || 'STUDIO SOUNDS', 256, 260);
+  const t = new THREE.CanvasTexture(c);
+  if ('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// CD group
+const cdGroup = new THREE.Group();
+scene.add(cdGroup);
+
+const cdRadius = 2.4, cdThickness = 0.06;
+const disc = new THREE.Mesh(
+  new THREE.CylinderGeometry(cdRadius, cdRadius, cdThickness, 96, 1, false),
+  new THREE.MeshStandardMaterial({ map: stripeTex, metalness: 0.95, roughness: 0.25 })
+);
+cdGroup.add(disc);
+
+// Cover label as a flat disc on TOP face of the CD, slightly raised to avoid z-fighting.
+// MeshBasicMaterial so the cover image always shows brightly regardless of lighting.
+const labelMat = new THREE.MeshBasicMaterial({ map: makePlaceholderTex(), side: THREE.DoubleSide });
+const label = new THREE.Mesh(new THREE.CircleGeometry(cdRadius*0.62, 64), labelMat);
+label.rotation.x = -Math.PI/2;          // lay flat, face up
+label.position.y = cdThickness/2 + 0.005;
+cdGroup.add(label);
+
+// underside label (just iridescent stripes, no cover) — slightly below disc face
+const underside = new THREE.Mesh(
+  new THREE.CircleGeometry(cdRadius*0.62, 64),
+  new THREE.MeshBasicMaterial({ map: stripeTex, side: THREE.DoubleSide })
+);
+underside.rotation.x = Math.PI/2;
+underside.position.y = -cdThickness/2 - 0.005;
+cdGroup.add(underside);
+
+const hole = new THREE.Mesh(
+  new THREE.CylinderGeometry(cdRadius*0.11, cdRadius*0.11, cdThickness*1.4, 32),
+  new THREE.MeshBasicMaterial({ color: 0x000000 })
+);
+cdGroup.add(hole);
+
+// Tilt the top face TOWARD the camera (positive X rotation tilts +Y toward +Z)
+cdGroup.rotation.x = 0.7;
+cdGroup.position.y = 0.4;
+cdGroup.position.z = 0;
+
+// === PS2-style mirror floor + reflected CD ===
+const floorY = -1.6;
+(function(){
+  const fl = new THREE.Mesh(
+    new THREE.CircleGeometry(14, 64),
+    new THREE.MeshBasicMaterial({ color: 0x040814, transparent:true, opacity:0.92 })
+  );
+  fl.rotation.x = -Math.PI/2; fl.position.y = floorY - 0.001; scene.add(fl);
+
+  // soft cyan/magenta glow halo on the floor under the CD
+  const halo = new THREE.Mesh(
+    new THREE.CircleGeometry(4.2, 64),
+    new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent:true, opacity:0.18 })
+  );
+  halo.rotation.x = -Math.PI/2; halo.position.y = floorY + 0.005; scene.add(halo);
+
+  const halo2 = new THREE.Mesh(
+    new THREE.CircleGeometry(2.6, 64),
+    new THREE.MeshBasicMaterial({ color: 0xff2bd6, transparent:true, opacity:0.22 })
+  );
+  halo2.rotation.x = -Math.PI/2; halo2.position.y = floorY + 0.006; scene.add(halo2);
+})();
+
+// mirrored CD beneath floor for reflection
+const cdMirror = cdGroup.clone(true);
+cdMirror.traverse(function(o){
+  if (o.material){
+    o.material = o.material.clone();
+    o.material.transparent = true;
+    o.material.opacity = (o.material.opacity || 1) * 0.35;
+    o.material.depthWrite = false;
+  }
+});
+cdMirror.scale.y *= -1;
+scene.add(cdMirror);
+
+// glow ring under CD (at floor level)
+(function(){
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(cdRadius*1.02, cdRadius*1.45, 64),
+    new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent:true, opacity:0.4, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI/2; ring.position.y = floorY + 0.012; scene.add(ring);
+})();
+
+// === Audio-reactive visualizer ring (sticks of light around the CD) ===
+const VIZ_COUNT = 64;
+const vizGroup = new THREE.Group();
+cdGroup.add(vizGroup);
+const vizBars = [];
+for (let i=0; i<VIZ_COUNT; i++){
+  const angle = (i / VIZ_COUNT) * Math.PI * 2;
+  const bar = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 1, 0.05),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color().setHSL(i/VIZ_COUNT, 1.0, 0.6) })
+  );
+  bar.position.set(Math.cos(angle) * (cdRadius + 0.18), 0, Math.sin(angle) * (cdRadius + 0.18));
+  bar.userData.angle = angle;
+  bar.scale.y = 0.001;
+  vizGroup.add(bar);
+  vizBars.push(bar);
+}
+
+// Cover carousel
+const loader = new THREE.TextureLoader();
+loader.setCrossOrigin('');     // critical for file:// — default 'anonymous' makes local images fail
+const covers = [];
+
+// Robust image -> texture loader that works over file://
+function loadCoverTexture(url, onLoad, onError){
+  const img = new Image();
+  img.onload = function(){
+    const tex = new THREE.Texture(img);
+    if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    onLoad(tex);
+  };
+  img.onerror = function(e){ onError && onError(e); };
+  img.src = url;
+}
+const coverGroup = new THREE.Group();
+scene.add(coverGroup);
+
+const coverTextures = new Array(TRACKS.length).fill(null);
+
+for (let i=0; i<TRACKS.length; i++){
+  const t = TRACKS[i];
+  const ph = makePlaceholderTex(String(t.num));
+  const mat = new THREE.MeshBasicMaterial({ map: ph, transparent:true, opacity:0.95, side: THREE.DoubleSide });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.25), mat);
+  m.userData.index = i;
+  coverGroup.add(m);
+  covers.push(m);
+
+  // Prefer the embedded base64 data URI from covers.js, fall back to file path.
+  const embedded = (window.COVER_DATA && window.COVER_DATA[t.folder]) || '';
+  const tryURLs = [embedded, t.imgURL, 'media/tracks/' + t.folder + '/' + t.img].filter(Boolean);
+  (function(idx, urls){
+    let attempt = 0;
+    function tryNext(){
+      if (attempt >= urls.length) { console.warn('cover failed for', TRACKS[idx].folder); return; }
+      const u = urls[attempt++];
+      loadCoverTexture(u,
+        function(tex){
+          coverTextures[idx] = tex;
+          covers[idx].material.map = tex;
+          covers[idx].material.needsUpdate = true;
+          if (idx === current){ labelMat.map = tex; labelMat.needsUpdate = true; }
+        },
+        tryNext
+      );
+    }
+    tryNext();
+  })(i, tryURLs);
+}
+
+let current = 0;
+
+// Smooth carousel offset for nice glide animations
+let carouselPos = 0;
+function layoutCovers(dt){
+  carouselPos += (current - carouselPos) * Math.min(1, (dt||0.016)*7);
+
+  const N = covers.length;
+  const spacing = 1.9;       // gap between covers
+  const yRow = 3.6;          // row floats clearly above the CD
+  const zBase = 1.5;         // selected cover sits in front, others recede
+  for (let i=0; i<N; i++){
+    const rel = i - carouselPos;
+    const aRel = Math.abs(rel);
+
+    // X compresses for far-away covers
+    const sign = rel < 0 ? -1 : 1;
+    const x = sign * (Math.min(aRel, 1) * spacing + Math.max(0, aRel - 1) * spacing * 0.7);
+
+    // selected pops forward in Z; siblings step back
+    const z = zBase - Math.min(aRel, 6) * 0.6;
+    const y = yRow;
+
+    const m = covers[i];
+    m.position.set(x, y, z);
+
+    // CoverFlow tilt — neighbors angle inward toward the center
+    const tilt = Math.max(-1.4, Math.min(1.4, rel)) * -0.7;
+    m.rotation.set(0, tilt, 0);
+
+    const s = Math.max(0.55, 1.6 - aRel*0.15);
+    m.scale.setScalar(s);
+    m.material.opacity = aRel > 6 ? 0 : Math.max(0.25, 1 - aRel*0.12);
+    m.visible = aRel <= 6;
+  }
+}
+
+// audio + WebAudio analyser for visualizer
+const audio = new Audio();
+audio.preload = 'metadata';
+
+let audioCtx = null, analyser = null, freqData = null, sourceNode = null;
+function ensureAnalyser(){
+  if (audioCtx) return;
+  // On file://, createMediaElementSource taints the audio and routes silence through the graph.
+  // Skip the analyser entirely there — the visualizer falls back to a synthetic animation in tick().
+  if (location.protocol === 'file:') return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    audioCtx = new Ctx();
+    sourceNode = audioCtx.createMediaElementSource(audio);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.78;
+    freqData = new Uint8Array(analyser.frequencyBinCount);
+    sourceNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  } catch(e){ console.warn('analyser init failed', e); }
+}
+
+const titleEl = document.getElementById('title');
+const metaEl  = document.getElementById('meta');
+const idxEl   = document.getElementById('idx');
+const fillEl  = document.getElementById('fill');
+const barEl   = document.getElementById('bar');
+const playBtn = document.getElementById('play');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const curEl   = document.getElementById('cur');
+const durEl   = document.getElementById('dur');
+const errEl   = document.getElementById('err');
+
+function fmt(s){
+  if (!isFinite(s) || s<0) return '0:00';
+  const m = Math.floor(s/60); const ss = Math.floor(s%60);
+  return m + ':' + (ss<10?'0':'') + ss;
+}
+
+function loadTrack(i, autoplay){
+  current = ((i % TRACKS.length) + TRACKS.length) % TRACKS.length;
+  const t = TRACKS[current];
+  titleEl.textContent = t.title;
+  metaEl.innerHTML =
+    '<span>ISRC <b>' + t.isrc + '</b></span>' +
+    '<span>Released <b>' + t.release + '</b></span>' +
+    '<span>UPC <b>' + t.upc + '</b></span>' +
+    (t.audio ? '' : '<span style="color:#ff8aa0">[no audio file]</span>');
+  idxEl.textContent = 'TRACK ' + String(t.num).padStart(2,'0') + ' / ' + String(TRACKS.length).padStart(2,'0');
+  errEl.style.display = 'none';
+
+  if (coverTextures[current]){
+    labelMat.map = coverTextures[current]; labelMat.needsUpdate = true;
+  } else {
+    labelMat.map = covers[current].material.map; labelMat.needsUpdate = true;
+  }
+
+  if (t.audioURL){
+    audio.src = t.audioURL;
+    if (autoplay) audio.play().catch(function(e){ showErr('Playback blocked: ' + e.message); });
+  } else {
+    audio.removeAttribute('src'); audio.load();
+  }
+  updatePlayBtn();
+}
+
+function showErr(msg){
+  errEl.textContent = msg; errEl.style.display = 'block';
+}
+
+function updatePlayBtn(){
+  playBtn.textContent = (!audio.paused && !audio.ended && audio.src) ? '⏸' : '▶';
+}
+function next(){ loadTrack(current+1, !audio.paused && !!audio.src); }
+function prev(){ loadTrack(current-1, !audio.paused && !!audio.src); }
+
+playBtn.addEventListener('click', function(){
+  if (!audio.src) return;
+  ensureAnalyser();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  if (audio.paused) audio.play().catch(function(e){ showErr('Playback blocked: ' + e.message); });
+  else audio.pause();
+});
+audio.addEventListener('play', function(){ ensureAnalyser(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
+nextBtn.addEventListener('click', next);
+prevBtn.addEventListener('click', prev);
+audio.addEventListener('play', updatePlayBtn);
+audio.addEventListener('pause', updatePlayBtn);
+audio.addEventListener('ended', next);
+audio.addEventListener('error', function(){
+  showErr('Could not play "' + TRACKS[current].audio + '". If you opened this file by double-clicking, your browser may be blocking local file:// audio — try Firefox, or run a small local server in this folder (e.g. "python -m http.server" then open http://localhost:8000/CD_PLAYER.html).');
+});
+audio.addEventListener('timeupdate', function(){
+  if (audio.duration){
+    fillEl.style.width = (100*audio.currentTime/audio.duration) + '%';
+    curEl.textContent = fmt(audio.currentTime);
+    durEl.textContent = fmt(audio.duration);
+  }
+});
+audio.addEventListener('loadedmetadata', function(){
+  durEl.textContent = fmt(audio.duration);
+});
+barEl.addEventListener('click', function(e){
+  if (!audio.duration) return;
+  const r = barEl.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - r.left)/r.width)*audio.duration;
+});
+
+window.addEventListener('wheel', function(e){
+  const dir = Math.sign(e.deltaY);
+  if (dir !== 0) loadTrack(current + dir, false);
+}, { passive: true });
+
+window.addEventListener('keydown', function(e){
+  if (e.code === 'ArrowRight') next();
+  else if (e.code === 'ArrowLeft') prev();
+  else if (e.code === 'Space'){ e.preventDefault(); playBtn.click(); }
+});
+
+const ray = new THREE.Raycaster();
+const mouseV = new THREE.Vector2();
+renderer.domElement.addEventListener('click', function(e){
+  mouseV.x = (e.clientX/window.innerWidth)*2 - 1;
+  mouseV.y = -(e.clientY/window.innerHeight)*2 + 1;
+  ray.setFromCamera(mouseV, camera);
+  const hits = ray.intersectObjects(covers, false);
+  if (hits.length){
+    loadTrack(hits[0].object.userData.index, true);
+  } else {
+    const cdHits = ray.intersectObject(disc, false);
+    if (cdHits.length && audio.src){
+      if (audio.paused) audio.play().catch(function(err){ showErr('Playback blocked: ' + err.message); });
+      else audio.pause();
+    }
+  }
+});
+
+document.getElementById('boot').addEventListener('click', function(){
+  document.getElementById('boot').style.display='none';
+  loadTrack(0, true);
+}, { once: true });
+
+window.addEventListener('resize', function(){
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+const clock = new THREE.Clock();
+let bassPulse = 0;
+function tick(){
+  const dt = clock.getDelta();
+  const t = clock.elapsedTime;
+
+  // Audio analyser -> visualizer + bass pulse
+  let avg = 0, bass = 0;
+  if (analyser){
+    analyser.getByteFrequencyData(freqData);
+    const N = freqData.length;
+    for (let i=0; i<N; i++){ avg += freqData[i]; }
+    avg /= (N*255);
+    for (let i=0; i<8; i++){ bass += freqData[i]; }
+    bass /= (8*255);
+    for (let i=0; i<vizBars.length; i++){
+      const bin = Math.floor((i / vizBars.length) * (N*0.8));
+      const v = freqData[bin] / 255;
+      const h = 0.05 + v * 2.6;
+      vizBars[i].scale.y = vizBars[i].scale.y * 0.6 + h * 0.4;
+      vizBars[i].position.y = vizBars[i].scale.y * 0.5;
+      const hue = ((i / vizBars.length) + t*0.05) % 1;
+      vizBars[i].material.color.setHSL(hue, 1.0, 0.5 + v*0.3);
+    }
+  } else {
+    for (let i=0; i<vizBars.length; i++){
+      const v = 0.04 + Math.abs(Math.sin(t*1.3 + i*0.5))*0.06;
+      vizBars[i].scale.y = v; vizBars[i].position.y = v*0.5;
+    }
+  }
+  bassPulse = bassPulse * 0.85 + bass * 0.15;
+
+  const spinSpeed = (audio.src && !audio.paused) ? (1.8 + bass*2.5) : 0.35;
+  cdGroup.rotation.y += dt * spinSpeed;
+  cdGroup.position.y = 0.4 + Math.sin(t*0.8)*0.05 + bassPulse*0.18;
+
+  // sync mirror
+  cdMirror.rotation.x = cdGroup.rotation.x;
+  cdMirror.rotation.y = cdGroup.rotation.y;
+  cdMirror.rotation.z = cdGroup.rotation.z;
+  cdMirror.position.x = cdGroup.position.x;
+  cdMirror.position.z = cdGroup.position.z;
+  cdMirror.position.y = floorY * 2 - cdGroup.position.y;
+
+  // Light orbits + bass-react intensity
+  rim.position.x  = Math.cos(t*0.7)*5;
+  rim.position.z  = Math.sin(t*0.7)*5;
+  rim.intensity = 1.6 + bass*3.0;
+  rim2.position.x = Math.cos(t*0.5 + 2)*5;
+  rim2.position.z = Math.sin(t*0.5 + 2)*5;
+  rim2.intensity = 1.4 + avg*2.0;
+
+  layoutCovers(dt);
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+carouselPos = current;
+layoutCovers(1);
+loadTrack(0, false);
+tick();
+
+// === PS2-style boot tower animation ===
+(function(){
+  const bcv = document.getElementById('bootcv');
+  const bx = bcv.getContext('2d');
+  function size(){ bcv.width = innerWidth; bcv.height = innerHeight; }
+  size(); window.addEventListener('resize', size);
+
+  const particles = [];
+  for (let i=0;i<140;i++){
+    particles.push({
+      a: Math.random()*Math.PI*2,
+      r: 20 + Math.random()*180,
+      s: 0.2 + Math.random()*0.8,
+      y: Math.random()*1000,
+      vy: 0.4 + Math.random()*1.6,
+      hue: 180 + Math.random()*60
+    });
+  }
+  let running = true;
+  function loop(){
+    if (!running) return;
+    const w = bcv.width, h = bcv.height;
+    bx.fillStyle = 'rgba(0,0,4,0.22)';
+    bx.fillRect(0,0,w,h);
+
+    // central light tower
+    const cx = w/2, cy = h/2;
+    const grad = bx.createLinearGradient(cx, cy-220, cx, cy+220);
+    grad.addColorStop(0,'rgba(0,240,255,0)');
+    grad.addColorStop(0.5,'rgba(0,240,255,0.5)');
+    grad.addColorStop(1,'rgba(255,43,214,0)');
+    bx.fillStyle = grad;
+    bx.fillRect(cx-1.5, cy-220, 3, 440);
+
+    // rising particles around the tower
+    bx.globalCompositeOperation = 'lighter';
+    for (let i=0;i<particles.length;i++){
+      const p = particles[i];
+      p.y -= p.vy; p.a += 0.01*p.s;
+      if (p.y < -200) { p.y = 300 + Math.random()*200; p.r = 20 + Math.random()*180; }
+      const x = cx + Math.cos(p.a) * p.r;
+      const y = cy + p.y;
+      bx.fillStyle = 'hsla(' + p.hue + ',100%,70%,0.85)';
+      bx.beginPath(); bx.arc(x, y, p.s*1.6, 0, Math.PI*2); bx.fill();
+    }
+    bx.globalCompositeOperation = 'source-over';
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+  document.getElementById('boot').addEventListener('click', function(){
+    running = false;
+  }, { once: true });
+})();
+})();
+</script>
+</body>
+</html>

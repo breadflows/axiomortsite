@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Zephyr - A Cozy Endless Journey</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+        }
+        
+        body {
+            background: #0a0a1a;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* UI Overlay Layer */
+        #uiLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .ui-element {
+            pointer-events: auto;
+        }
+        
+        /* Starlight Counter */
+        #starlightCounter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffd700;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px #ffd700, 0 0 20px #ffaa00;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #starlightCounter::before {
+            content: "✦";
+            font-size: 1.5rem;
+        }
+        
+        /* Menu Buttons */
+        #menuButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        #menuButton:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        /* Menu Modal */
+        #menuModal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            min-width: 300px;
+            display: none;
+            backdrop-filter: blur(20px);
+        }
+        
+        #menuModal.visible {
+            display: block;
+        }
+        
+        .menu-title {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+        
+        .menu-section {
+            margin-bottom: 20px;
+        }
+        
+        .menu-section-title {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .shop-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .shop-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .shop-item.purchased {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+        
+        .shop-item-name {
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        
+        .shop-item-price {
+            color: #ffd700;
+            font-size: 0.85rem;
+        }
+        
+        .shop-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Monetization Buttons */
+        .monetization-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        
+        .glowing-shrine-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+        
+        .glowing-shrine-btn:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(59, 130, 246, 0.5));
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+        
+        .tip-jar-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2));
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            border-radius: 10px;
+            color: #fbbf24;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        
+        .tip-jar-btn:hover {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.3));
+        }
+        
+        .tip-jar-btn.purchased {
+            border-color: #4ade80;
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+        
+        /* Close Button */
+        .close-menu {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+        
+        .close-menu:hover {
+            opacity: 1;
+        }
+        
+        /* Start Screen */
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 30, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        #startScreen.hidden {
+            display: none;
+        }
+        
+        .game-title {
+            font-size: 4rem;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(139, 92, 246, 0.3);
+            margin-bottom: 10px;
+            letter-spacing: 0.2em;
+        }
+        
+        .game-subtitle {
+            color: #aaa;
+            font-size: 1rem;
+            margin-bottom: 40px;
+            letter-spacing: 0.1em;
+        }
+        
+        .start-btn {
+            padding: 20px 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .start-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        /* Tutorial hint */
+        #tutorialHint {
+            position: absolute;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 1s;
+            pointer-events: none;
+        }
+        
+        #tutorialHint.visible {
+            opacity: 1;
+        }
+        
+        #distanceCounter {
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            color: #a78bfa;
+            font-size: 1rem;
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+            font-weight: 600;
+        }
+
+        #levelBanner {
+            position: absolute;
+            left: 50%;
+            top: 35%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 1;
+            transition: opacity 1s ease-in-out;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #levelBanner .num {
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: #fbbf24;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        #levelBanner .name {
+            font-size: 38px;
+            letter-spacing: 8px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+            margin-bottom: 8px;
+        }
+        #levelBanner .track {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #a78bfa;
+            text-transform: uppercase;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .game-title {
+                font-size: 2.5rem;
+            }
+            #menuModal {
+                min-width: 280px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="uiLayer">
+        <div id="starlightCounter" class="ui-element">0</div>
+        <div id="distanceCounter" class="ui-element">DRIFT: 0m / 45m</div>
+        <button id="menuButton" class="ui-element">☰ Menu</button>
+        
+        <div id="tutorialHint">Click / Tap / Space to Flap</div>
+
+        <div id="levelBanner">
+            <div class="num">DIMENSION CHALLENGE</div>
+            <div class="name">PHANTOM DRIFT</div>
+            <div class="track">♪ Phantom Glide — Drift 45m to Claim</div>
+        </div>
+        
+        <div id="startScreen">
+            <h1 class="game-title">ZEPHYR</h1>
+            <p class="game-subtitle">A Cozy Endless Journey</p>
+            <button class="start-btn ui-element" id="startBtn">Begin Journey</button>
+        </div>
+        
+        <div id="menuModal">
+            <button class="close-menu ui-element" id="closeMenu">×</button>
+            <h2 class="menu-title">✦ Starlight Shop ✦</h2>
+            
+            <div class="menu-section">
+                <div class="menu-section-title">Ambience</div>
+                <div class="shop-item purchased" data-item="sunset" data-cost="0">
+                    <span class="shop-item-name">Twilight Sunset</span>
+                    <span class="shop-item-price">✓</span>
+                </div>
+                <div class="shop-item" data-item="aurora" data-cost="50">
+                    <span class="shop-item-name">Aurora Borealis</span>
+                    <span class="shop-item-price">50 ✦</span>
+                </div>
+                <div class="shop-item" data-item="midnight" data-cost="100">
+                    <span class="shop-item-name">Midnight Garden</span>
+                    <span class="shop-item-price">100 ✦</span>
+                </div>
+                <div class="shop-item" data-item="dawn" data-cost="150">
+                    <span class="shop-item-name">Ethereal Dawn</span>
+                    <span class="shop-item-price">150 ✦</span>
+                </div>
+            </div>
+            
+            <div class="monetization-section">
+                <div class="glowing-shrine-btn ui-element" id="shrineBtn">
+                    ✨ Visit the Glowing Shrine<br>
+                    <small>Double your Starlight (Simulated Ad)</small>
+                </div>
+                <button class="tip-jar-btn ui-element" id="tipJarBtn">
+                    ☕ Support the Developer<br>
+                    <small>Unlock Exclusive Wisp Trail</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================
+    // ZEPHYR - Cozy Endless Flyer Game
+    // ============================================
+    
+    // --- AUDIO HOOKUP COMMENTS ---
+    // TODO: Hook up your lo-fi ambient audio files here
+    // Recommended: Add background music in these locations:
+    // 1. On game start - gentle ambient loop
+    // 2. On wisp collection - soft chime sound
+    // 3. On collision - musical dissipation sound
+    // 4. On reform - gentle reformation tone
+    // Use: const bgm = new Audio('your-audio-file.mp3'); bgm.loop = true;
+    
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Game State
+    const gameState = {
+        isPlaying: false,
+        isPaused: false,
+        starlight: 0,
+        distance: 0,
+        selectedPalette: 'sunset',
+        hasPremiumTrail: false,
+        inputActive: false,
+        wispReforming: false,
+        wispReformProgress: 0,
+        wispReformTimer: 0,
+        flowInterrupted: false,
+        flowPauseTimer: 0,
+        blackout: false,
+        blackoutProgress: 1, // 1 = fully black, 0 = clear
+        blackoutPulse: 0, // heartbeat phase
+        wispGlowLevel: 0.3, // current glow level 0-1
+        blackoutFailed: false
+    };
+    
+    // Color Palettes
+    const palettes = {
+        sunset: {
+            name: 'Twilight Sunset',
+            skyTop: '#1a0a2e',
+            skyBottom: '#4a1a4e',
+            mountainFar: '#2d1b4e',
+            mountainNear: '#1a0a2e',
+            starlight: '#ffd700',
+            wisp: '#a78bfa',
+            wispCore: '#ffffff',
+            obstacle: '#3d2b4f'
+        },
+        aurora: {
+            name: 'Aurora Borealis',
+            skyTop: '#0a1a1a',
+            skyBottom: '#1a4a3a',
+            mountainFar: '#0d2b2a',
+            mountainNear: '#061a1a',
+            starlight: '#4ade80',
+            wisp: '#34d399',
+            wispCore: '#a7f3d0',
+            obstacle: '#1a3a3a'
+        },
+        midnight: {
+            name: 'Midnight Garden',
+            skyTop: '#0a0a1a',
+            skyBottom: '#1a1a3e',
+            mountainFar: '#0f0f2e',
+            mountainNear: '#0a0a1a',
+            starlight: '#c084fc',
+            wisp: '#e879f9',
+            wispCore: '#f5d0fe',
+            obstacle: '#1a1a2e'
+        },
+        dawn: {
+            name: 'Ethereal Dawn',
+            skyTop: '#1a0a1a',
+            skyBottom: '#4a1a3a',
+            mountainFar: '#2e1a2e',
+            mountainNear: '#1a0a1a',
+            starlight: '#f472b6',
+            wisp: '#fb7185',
+            wispCore: '#fecdd3',
+            obstacle: '#2e1a2e'
+        }
+    };
+    
+    // Wisp (Player)
+    const wisp = {
+        x: 150,
+        y: 0,
+        radius: 12,
+        velocityY: 0,
+        targetVelocityY: 0,
+        trail: [],
+        maxTrailLength: 20,
+        glowPhase: 0,
+        // Snappy physics constants for Flappy Bird gameplay
+        gravity: 0.28,
+        jumpForce: -5.4,
+        maxVelocity: 8,
+        minVelocity: -8
+    };
+    
+    // Camera / World
+    const world = {
+        scrollSpeed: 3.5, // Snappier scrolling speed
+        parallaxLayers: [],
+        obstacles: [],
+        starlights: [],
+        particles: [],
+        spawnTimer: 0,
+        starlightSpawnTimer: 0
+    };
+    
+    // Resize canvas
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        wisp.y = canvas.height / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    
+    function flap() {
+        if (!gameState.isPlaying || gameState.isPaused || gameState.blackout) return;
+        wisp.velocityY = wisp.jumpForce; // Instant upward velocity boost
+        createParticles(wisp.x, wisp.y, '#ffffff', 4);
+    }
+
+    // Input handling
+    function handleInputStart(e) {
+        if (e.target && e.target.closest && e.target.closest('.ui-element')) return;
+        flap();
+    }
+    
+    canvas.addEventListener('mousedown', handleInputStart);
+    canvas.addEventListener('touchstart', (e) => {
+        handleInputStart(e.changedTouches[0]);
+    }, { passive: true });
+    
+    // Keyboard support
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+            e.preventDefault();
+            flap();
+        }
+    });
+    
+    // Initialize parallax layers
+    function initParallax() {
+        world.parallaxLayers = [
+            { speed: 0.2, offset: 0, color: 'mountainFar', height: 0.4 },
+            { speed: 0.5, offset: 0, color: 'mountainNear', height: 0.3 }
+        ];
+    }
+    
+    // Generate obstacle (mossy archway or willow tree shape)
+    function spawnObstacle() {
+        const type = Math.random() > 0.5 ? 'archway' : 'willow';
+        // Much larger gaps for forgiving, cozy gameplay
+        const gapSize = 220 + Math.random() * 120;
+        // Keep obstacles away from extreme edges
+        const centerY = 150 + Math.random() * (canvas.height - 300);
+        
+        world.obstacles.push({
+            x: canvas.width + 100,
+            type: type,
+            gapCenter: centerY,
+            gapSize: gapSize,
+            width: type === 'archway' ? 80 : 120,
+            passed: false,
+            glowPhase: Math.random() * Math.PI * 2
+        });
+    }
+    
+    // Spawn starlight ember
+    function spawnStarlight() {
+        world.starlights.push({
+            x: canvas.width + 50,
+            y: 50 + Math.random() * (canvas.height - 100),
+            radius: 4 + Math.random() * 4,
+            collected: false,
+            glowPhase: Math.random() * Math.PI * 2,
+            floatOffset: Math.random() * Math.PI * 2
+        });
+    }
+    
+    // Create particle effect
+    function createParticles(x, y, color, count = 8) {
+        for (let i = 0; i < count; i++) {
+            world.particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 3,
+                vy: (Math.random() - 0.5) * 3,
+                life: 1,
+                color: color,
+                size: 2 + Math.random() * 3
+            });
+        }
+    }
+    
+    // Update physics
+    function updatePhysics() {
+        if (gameState.wispReforming) {
+            gameState.wispReformTimer++;
+            gameState.wispReformProgress = gameState.wispReformTimer / 60;
+            
+            if (gameState.wispReformTimer >= 60) {
+                gameState.wispReforming = false;
+                gameState.wispReformTimer = 0;
+                wisp.velocityY = 0;
+            }
+            return;
+        }
+        
+        // Snappy physics - apply gravity constantly
+        wisp.velocityY += wisp.gravity;
+        
+        // Clamp velocity
+        wisp.velocityY = Math.max(wisp.minVelocity, Math.min(wisp.maxVelocity, wisp.velocityY));
+        
+        wisp.y += wisp.velocityY;
+        
+        // Bounds check
+        if (wisp.y < wisp.radius) {
+            wisp.y = wisp.radius;
+            wisp.velocityY = 0;
+        }
+        if (wisp.y > canvas.height - wisp.radius) {
+            wisp.y = canvas.height - wisp.radius;
+            wisp.velocityY = 0;
+            
+            // Hit ground: trigger blackout
+            if (!gameState.blackout) {
+                const palette = palettes[gameState.selectedPalette];
+                createParticles(wisp.x, wisp.y, palette.wisp, 20);
+                gameState.blackout = true;
+                gameState.blackoutProgress = 0;
+                gameState.blackoutDirection = 1;
+            }
+        }
+        
+        // Update trail
+        wisp.trail.push({ x: wisp.x, y: wisp.y, age: 0 });
+        if (wisp.trail.length > wisp.maxTrailLength) {
+            wisp.trail.shift();
+        }
+        for (let point of wisp.trail) {
+            point.age++;
+        }
+        
+        // Glow animation
+        wisp.glowPhase += 0.05;
+    }
+    
+    // Update world
+    function updateWorld() {
+        const palette = palettes[gameState.selectedPalette];
+        
+        // Handle flow interruption - the world holds its breath
+        let scrollMultiplier = 1;
+        if (gameState.flowInterrupted) {
+            gameState.flowPauseTimer++;
+            if (gameState.flowPauseTimer < 60) {
+                // Full pause - 1 second of stillness
+                scrollMultiplier = 0;
+            } else if (gameState.flowPauseTimer < 120) {
+                // Gradual wake up - smoothly return to normal
+                scrollMultiplier = (gameState.flowPauseTimer - 60) / 60;
+            } else {
+                // Flow restored
+                gameState.flowInterrupted = false;
+                gameState.flowPauseTimer = 0;
+            }
+        }
+        
+        // Update parallax
+        for (let layer of world.parallaxLayers) {
+            layer.offset -= world.scrollSpeed * layer.speed * scrollMultiplier;
+            if (layer.offset <= -canvas.width) {
+                layer.offset += canvas.width;
+            }
+        }
+        
+        // Spawn obstacles - much less frequent for cozy experience
+        if (scrollMultiplier > 0) {
+            world.spawnTimer++;
+            if (world.spawnTimer > 350 + Math.random() * 200) {
+                spawnObstacle();
+                world.spawnTimer = 0;
+            }
+        }
+        
+        // Spawn starlights
+        if (scrollMultiplier > 0) {
+            world.starlightSpawnTimer++;
+            if (world.starlightSpawnTimer > 60 + Math.random() * 90) {
+                spawnStarlight();
+                world.starlightSpawnTimer = 0;
+            }
+        }
+        
+        // Update obstacles
+        for (let i = world.obstacles.length - 1; i >= 0; i--) {
+            let obs = world.obstacles[i];
+            obs.x -= world.scrollSpeed * scrollMultiplier;
+            obs.glowPhase += 0.02 * scrollMultiplier;
+            
+            // Generous collision detection - use full radius for visible collision
+            if (!gameState.wispReforming) {
+                const wispLeft = wisp.x - wisp.radius * 0.8;
+                const wispRight = wisp.x + wisp.radius * 0.8;
+                const wispTop = wisp.y - wisp.radius * 0.8;
+                const wispBottom = wisp.y + wisp.radius * 0.8;
+                
+                const obsLeft = obs.x - obs.width / 2;
+                const obsRight = obs.x + obs.width / 2;
+                
+                // Check collision with obstacle solid parts
+                if (wispRight > obsLeft && wispLeft < obsRight) {
+                    const gapTop = obs.gapCenter - obs.gapSize / 2;
+                    const gapBottom = obs.gapCenter + obs.gapSize / 2;
+                    
+                    if (wispTop < gapTop || wispBottom > gapBottom) {
+                        // Collision - enter blackout respawn
+                        createParticles(wisp.x, wisp.y, palette.wisp, 20);
+                        
+                        gameState.blackout = true;
+                        gameState.blackoutProgress = 0;
+                        gameState.blackoutDirection = 1;
+                    }
+                }
+            }
+            
+            if (obs.x < -200) {
+                world.obstacles.splice(i, 1);
+            }
+        }
+        
+        // Update starlights
+        for (let i = world.starlights.length - 1; i >= 0; i--) {
+            let star = world.starlights[i];
+            star.x -= world.scrollSpeed * scrollMultiplier;
+            star.glowPhase += 0.08 * scrollMultiplier;
+            star.floatOffset += 0.03;
+            
+            // Float animation
+            star.y += Math.sin(star.floatOffset) * 0.3;
+            
+            // Collection detection
+            const dx = wisp.x - star.x;
+            const dy = wisp.y - star.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < wisp.radius + star.radius + 20 && !star.collected) {
+                star.collected = true;
+                gameState.starlight++;
+                updateStarlightCounter();
+                createParticles(star.x, star.y, palette.starlight, 6);
+                
+                // TODO: Hook up collection chime sound
+                // const collect = new Audio('starlight-collect.mp3'); collect.play();
+            }
+            
+            if (star.x < -50 || star.collected) {
+                world.starlights.splice(i, 1);
+            }
+        }
+        
+        // Update particles
+        for (let i = world.particles.length - 1; i >= 0; i--) {
+            let p = world.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.02;
+            p.vy += 0.02; // gentle gravity
+            
+            if (p.life <= 0) {
+                world.particles.splice(i, 1);
+            }
+        }
+        
+        // Update distance
+        gameState.distance += world.scrollSpeed * 0.01;
+        
+        // Update distance counter HUD
+        const distElem = document.getElementById('distanceCounter');
+        if (distElem) {
+            distElem.textContent = `DRIFT: ${Math.floor(gameState.distance)}m / 45m`;
+        }
+        
+        if (!gameState._axDimSent && gameState.distance >= 45) {
+            gameState._axDimSent = true;
+            try { parent.postMessage({ axDim: 'complete' }, '*'); } catch (e) {}
+        }
+    }
+    
+    // Draw functions
+    function drawSky(palette) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, palette.skyTop);
+        gradient.addColorStop(1, palette.skyBottom);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    function drawParallax(palette) {
+        for (let layer of world.parallaxLayers) {
+            ctx.fillStyle = palette[layer.color];
+            ctx.beginPath();
+            
+            // Draw two copies for seamless scrolling
+            for (let offset of [0, canvas.width]) {
+                let x = layer.offset + offset;
+                let baseY = canvas.height * (1 - layer.height);
+                
+                ctx.moveTo(x, canvas.height);
+                
+                // Generate mountain-like silhouette
+                for (let i = 0; i <= canvas.width; i += 50) {
+                    let mountainHeight = Math.sin((i + x) * 0.005) * 50 + 
+                                        Math.sin((i + x) * 0.01) * 30 +
+                                        Math.sin((i + x) * 0.02) * 15;
+                    ctx.lineTo(x + i, baseY + mountainHeight);
+                }
+                
+                ctx.lineTo(x + canvas.width, canvas.height);
+                ctx.lineTo(x, canvas.height);
+            }
+            
+            ctx.fill();
+        }
+    }
+    
+    function drawObstacles(palette) {
+        for (let obs of world.obstacles) {
+            ctx.fillStyle = palette.obstacle;
+            const gapTop = obs.gapCenter - obs.gapSize / 2;
+            const gapBottom = obs.gapCenter + obs.gapSize / 2;
+            
+            // Glow effect
+            const glowAlpha = 0.3 + Math.sin(obs.glowPhase) * 0.2;
+            ctx.shadowColor = palette.obstacle;
+            ctx.shadowBlur = 20;
+            
+            if (obs.type === 'archway') {
+                // Draw archway top and bottom
+                ctx.fillRect(obs.x - obs.width / 2, 0, obs.width, gapTop);
+                ctx.fillRect(obs.x - obs.width / 2, gapBottom, obs.width, canvas.height - gapBottom);
+                
+                // Arch curve at top of gap
+                ctx.beginPath();
+                ctx.arc(obs.x, gapTop, obs.width / 2, 0, Math.PI, false);
+                ctx.fill();
+                
+                // Arch curve at bottom of gap
+                ctx.beginPath();
+                ctx.arc(obs.x, gapBottom, obs.width / 2, Math.PI, 0, false);
+                ctx.fill();
+            } else {
+                // Willow tree representation
+                const trunkWidth = obs.width * 0.3;
+                
+                // Top section
+                ctx.fillRect(obs.x - obs.width / 2, 0, obs.width, gapTop);
+                
+                // Bottom trunk
+                ctx.fillRect(obs.x - trunkWidth / 2, gapBottom, trunkWidth, canvas.height - gapBottom);
+                
+                // Drooping branches effect (semi-circles)
+                for (let i = -obs.width / 2; i <= obs.width / 2; i += 20) {
+                    ctx.beginPath();
+                    ctx.arc(obs.x + i, gapTop, 15, 0, Math.PI, false);
+                    ctx.fill();
+                }
+            }
+            
+            ctx.shadowBlur = 0;
+        }
+    }
+    
+    function drawStarlights(palette) {
+        for (let star of world.starlights) {
+            const glowSize = 15 + Math.sin(star.glowPhase) * 5;
+            const alpha = 0.6 + Math.sin(star.glowPhase) * 0.4;
+            
+            // Outer glow
+            const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, glowSize);
+            gradient.addColorStop(0, palette.starlight + 'ff');
+            gradient.addColorStop(0.5, palette.starlight + '66');
+            gradient.addColorStop(1, palette.starlight + '00');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Core
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.radius * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Helper to convert hex to rgba
+    const hexToRgba = (hex, alpha) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    function drawWisp(palette) {
+        let glowDim = 1;
+        
+        if (gameState.wispReforming) {
+            // Fading in effect during reformation
+            const fadeIn = gameState.wispReformProgress;
+            ctx.globalAlpha = fadeIn;
+        }
+        
+        // Dim wisp glow during flow interruption (lost momentum)
+        if (gameState.flowInterrupted && gameState.flowPauseTimer < 60) {
+            glowDim = 0.3 + (gameState.flowPauseTimer / 60) * 0.7;
+        }
+        
+        // Blackout mode - wisp controlled by glowLevel with dramatic pulse
+        if (gameState.blackout) {
+            // Dramatic glow/dim pulse - nearly invisible to bright
+            const pulsePhase = (Date.now() / 1000) % (Math.PI * 2);
+            const pulse = 0.15 + 0.85 * ((Math.sin(pulsePhase) + 1) / 2); // 0.15 to 1.0 dramatic swing
+            glowDim = gameState.wispGlowLevel * pulse;
+        }
+        
+        // Draw trail
+        for (let i = 0; i < wisp.trail.length; i++) {
+            const point = wisp.trail[i];
+            const alpha = (i / wisp.trail.length) * 0.4;
+            const size = (i / wisp.trail.length) * wisp.radius * 0.8;
+            
+            ctx.fillStyle = palette.wisp + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+            ctx.beginPath();
+            ctx.arc(point.x - (wisp.trail.length - i) * 2, point.y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Premium trail effect
+        if (gameState.hasPremiumTrail) {
+            ctx.save();
+            for (let i = 0; i < wisp.trail.length; i += 2) {
+                const point = wisp.trail[i];
+                const hue = (Date.now() / 10 + i * 10) % 360;
+                ctx.fillStyle = `hsla(${hue}, 70%, 60%, 0.3)`;
+                ctx.beginPath();
+                ctx.arc(point.x - (wisp.trail.length - i) * 2, point.y, wisp.radius * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+        
+        // Wisp glow (pulsing) - dimmed during flow interruption
+        let glowSize = (25 + Math.sin(wisp.glowPhase) * 5) * glowDim;
+        
+        // During blackout: enhanced multi-layer glow for visibility on black
+        if (gameState.blackout) {
+            glowSize *= 2.5; // Much bigger glow in blackout
+            
+            // Outer glow layer 1 (widest, faintest)
+            const glow1 = ctx.createRadialGradient(wisp.x, wisp.y, 0, wisp.x, wisp.y, glowSize * 2.5);
+            glow1.addColorStop(0, hexToRgba(palette.wisp, 0.3));
+            glow1.addColorStop(1, hexToRgba(palette.wisp, 0));
+            ctx.fillStyle = glow1;
+            ctx.beginPath();
+            ctx.arc(wisp.x, wisp.y, glowSize * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Outer glow layer 2 (medium)
+            const glow2 = ctx.createRadialGradient(wisp.x, wisp.y, 0, wisp.x, wisp.y, glowSize * 1.5);
+            glow2.addColorStop(0, hexToRgba(palette.wisp, 0.6));
+            glow2.addColorStop(1, hexToRgba(palette.wisp, 0));
+            ctx.fillStyle = glow2;
+            ctx.beginPath();
+            ctx.arc(wisp.x, wisp.y, glowSize * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        const gradient = ctx.createRadialGradient(wisp.x, wisp.y, 0, wisp.x, wisp.y, glowSize);
+        gradient.addColorStop(0, palette.wisp);
+        gradient.addColorStop(0.3, hexToRgba(palette.wisp, 0.5));
+        gradient.addColorStop(0.7, hexToRgba(palette.wisp, 0.2));
+        gradient.addColorStop(1, hexToRgba(palette.wisp, 0));
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(wisp.x, wisp.y, glowSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner glow
+        const innerGradient = ctx.createRadialGradient(wisp.x, wisp.y, 0, wisp.x, wisp.y, wisp.radius * 1.5);
+        innerGradient.addColorStop(0, palette.wispCore);
+        innerGradient.addColorStop(1, palette.wisp);
+        
+        ctx.fillStyle = innerGradient;
+        ctx.beginPath();
+        ctx.arc(wisp.x, wisp.y, wisp.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Core
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(wisp.x, wisp.y, wisp.radius * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add subtle light around wisp - dimmed during flow interruption
+        if (!gameState.blackout) {
+            ctx.shadowColor = palette.wisp;
+            ctx.shadowBlur = 30 * glowDim;
+            ctx.fillStyle = palette.wisp + '22';
+            ctx.beginPath();
+            ctx.arc(wisp.x, wisp.y, glowSize * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+        
+        ctx.globalAlpha = 1;
+    }
+    
+    function drawParticles(palette) {
+        for (let p of world.particles) {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+    
+    // Main render loop
+    function render() {
+        const palette = palettes[gameState.selectedPalette];
+        
+        drawSky(palette);
+        drawParallax(palette);
+        drawObstacles(palette);
+        drawStarlights(palette);
+        drawParticles(palette);
+        
+        // Draw wisp on top
+        if (gameState.isPlaying || gameState.blackout) {
+            drawWisp(palette);
+        }
+        
+        // Blackout fade overlay
+        if (gameState.blackout) {
+            ctx.fillStyle = `rgba(0, 0, 0, ${gameState.blackoutProgress})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+    
+    // Game loop
+    function gameLoop() {
+        if (gameState.isPlaying && !gameState.isPaused && !gameState.blackout) {
+            updatePhysics();
+            updateWorld();
+        }
+        
+        // Handle blackout / respawn sequence
+        if (gameState.blackout) {
+            // Fade to black or back in
+            gameState.blackoutProgress += 0.04 * gameState.blackoutDirection;
+            
+            if (gameState.blackoutDirection === 1) {
+                if (gameState.blackoutProgress >= 1) {
+                    gameState.blackoutProgress = 1;
+                    
+                    // Reset wisp position
+                    wisp.x = 150;
+                    wisp.y = canvas.height / 2;
+                    wisp.velocityY = 0;
+                    wisp.trail = [];
+                    gameState.distance = 0; // Reset distance
+                    
+                    // Clear world entities
+                    world.obstacles = [];
+                    world.starlights = [];
+                    
+                    // Switch to fading back in
+                    gameState.blackoutDirection = -1;
+                }
+            } else {
+                if (gameState.blackoutProgress <= 0) {
+                    gameState.blackoutProgress = 0;
+                    gameState.blackout = false;
+                }
+            }
+        }
+        
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // UI Functions
+    function updateStarlightCounter() {
+        document.getElementById('starlightCounter').textContent = gameState.starlight;
+    }
+    
+    function updateShopUI() {
+        document.querySelectorAll('.shop-item').forEach(item => {
+            const cost = parseInt(item.dataset.cost);
+            const itemName = item.dataset.item;
+            
+            if (itemName === gameState.selectedPalette) {
+                item.classList.add('purchased');
+                item.querySelector('.shop-item-price').textContent = '✓';
+            } else if (gameState.starlight >= cost) {
+                item.classList.remove('locked');
+            } else {
+                item.classList.add('locked');
+            }
+        });
+        
+        // Update tip jar button
+        const tipBtn = document.getElementById('tipJarBtn');
+        if (gameState.hasPremiumTrail) {
+            tipBtn.classList.add('purchased');
+            tipBtn.innerHTML = '☕ Thank You!<br><small>Premium Trail Unlocked ✓</small>';
+        }
+    }
+    
+    // Event Listeners
+    document.getElementById('startBtn').addEventListener('click', () => {
+        document.getElementById('startScreen').classList.add('hidden');
+        
+        // Reset all game state for fresh start
+        gameState.blackout = false;
+        gameState.blackoutProgress = 0;
+        gameState.wispGlowLevel = 1;
+        gameState.blackoutFailed = false;
+        gameState.blackoutPulse = 0;
+        gameState.wispReforming = false;
+        gameState.wispReformTimer = 0;
+        gameState.wispReformProgress = 0;
+        gameState.inputActive = false;
+        
+        // Reset wisp position
+        wisp.x = 150;
+        wisp.y = canvas.height / 2;
+        wisp.velocityY = 0;
+        wisp.trail = [];
+        wisp.glowPhase = 0;
+        
+        // Clear world entities
+        world.obstacles = [];
+        world.starlights = [];
+        world.particles = [];
+        world.spawnTimer = 0;
+        world.starlightSpawnTimer = 0;
+        
+        gameState.isPlaying = true;
+        initParallax();
+        
+        // Show tutorial hint briefly
+        setTimeout(() => {
+            document.getElementById('tutorialHint').classList.add('visible');
+        }, 1000);
+        setTimeout(() => {
+            document.getElementById('tutorialHint').classList.remove('visible');
+        }, 5000);
+        
+        // TODO: Hook up ambient background music start
+        // const bgm = new Audio('ambient-loop.mp3'); bgm.loop = true; bgm.volume = 0.3; bgm.play();
+    });
+    
+    document.getElementById('menuButton').addEventListener('click', () => {
+        gameState.isPaused = true;
+        document.getElementById('menuModal').classList.add('visible');
+        updateShopUI();
+    });
+    
+    document.getElementById('closeMenu').addEventListener('click', () => {
+        document.getElementById('menuModal').classList.remove('visible');
+        gameState.isPaused = false;
+    });
+    
+    // Shop items
+    document.querySelectorAll('.shop-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const cost = parseInt(item.dataset.cost);
+            const itemName = item.dataset.item;
+            
+            if (item.classList.contains('purchased')) {
+                gameState.selectedPalette = itemName;
+                updateShopUI();
+            } else if (gameState.starlight >= cost) {
+                gameState.starlight -= cost;
+                gameState.selectedPalette = itemName;
+                updateStarlightCounter();
+                updateShopUI();
+                
+                // TODO: Hook up purchase confirmation sound
+                // const purchase = new Audio('purchase-sound.mp3'); purchase.play();
+            }
+        });
+    });
+    
+    // Glowing Shrine (Rewarded Ad Simulation)
+    document.getElementById('shrineBtn').addEventListener('click', () => {
+        // Simulate ad watching
+        const btn = document.getElementById('shrineBtn');
+        btn.disabled = true;
+        btn.innerHTML = '✨ Watching...<br><small>Please wait</small>';
+        
+        setTimeout(() => {
+            const bonus = Math.floor(gameState.starlight * 0.5);
+            gameState.starlight += bonus;
+            updateStarlightCounter();
+            updateShopUI();
+            
+            btn.innerHTML = `✨ Received ${bonus} ✦!<br><small>Visit again later</small>`;
+            
+            // TODO: Hook up reward chime sound
+            // const reward = new Audio('reward-chime.mp3'); reward.play();
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '✨ Visit the Glowing Shrine<br><small>Double your Starlight (Simulated Ad)</small>';
+            }, 3000);
+        }, 2000);
+    });
+    
+    // Tip Jar (Premium Purchase Simulation)
+    document.getElementById('tipJarBtn').addEventListener('click', () => {
+        if (gameState.hasPremiumTrail) return;
+        
+        // Simulate purchase
+        const btn = document.getElementById('tipJarBtn');
+        btn.innerHTML = '☕ Processing...<br><small>Thank you!</small>';
+        
+        setTimeout(() => {
+            gameState.hasPremiumTrail = true;
+            updateShopUI();
+            
+            // TODO: Hook up premium unlock sound
+            // const premium = new Audio('premium-unlock.mp3'); premium.play();
+        }, 1500);
+    });
+    
+    function startGame() {
+        // Reset all game state for fresh start
+        gameState.blackout = false;
+        gameState.blackoutProgress = 0;
+        gameState.blackoutDirection = 1;
+        gameState.wispGlowLevel = 1;
+        gameState.blackoutFailed = false;
+        gameState.blackoutPulse = 0;
+        gameState.wispReforming = false;
+        gameState.wispReformTimer = 0;
+        gameState.wispReformProgress = 0;
+        gameState.inputActive = false;
+        gameState.distance = 0;
+        gameState._axDimSent = false;
+        
+        // Reset wisp position
+        wisp.x = 150;
+        wisp.y = canvas.height / 2;
+        wisp.velocityY = 0;
+        wisp.trail = [];
+        wisp.glowPhase = 0;
+        
+        // Clear world entities
+        world.obstacles = [];
+        world.starlights = [];
+        world.particles = [];
+        world.spawnTimer = 0;
+        world.starlightSpawnTimer = 0;
+        
+        gameState.isPlaying = true;
+        initParallax();
+        
+        // Hide start screen if present
+        const startScreen = document.getElementById('startScreen');
+        if (startScreen) {
+            startScreen.style.display = 'none';
+        }
+        
+        // Fade out level banner after 3 seconds
+        const banner = document.getElementById('levelBanner');
+        if (banner) {
+            banner.style.opacity = '1';
+            setTimeout(() => {
+                banner.style.opacity = '0';
+            }, 3000);
+        }
+    }
+    
+    // Start the game immediately
+    startGame();
+    
+    // Start the game loop
+    requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>

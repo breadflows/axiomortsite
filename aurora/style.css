@@ -1,0 +1,768 @@
+:root {
+  --neon-blue: #4a5c70; /* Muted blue-grey */
+  --neon-purple: #5b4a68; /* Heavily desaturated indigo */
+  --neon-green: #378051; /* Dusty, system-like green */
+  --neon-amber: #cfa853; /* Faded gold/amber */
+  --console-bg: #0d0f15;
+  --panel-border-light: #2c3545; /* Bevel highlight */
+  --panel-border-dark: #07090d; /* Bevel shadow */
+  --metal-gray: #0f121a; /* Solid charcoal */
+  --chrome-text: #e2e8f0; /* Off-white text */
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #151a24 0%, #07090d 100%);
+  color: var(--chrome-text);
+  font-family: 'Share Tech Mono', 'Bahnschrift', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+#webgl-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+}
+
+/* CRT & TV Simulation Overlays - Subtle and Static (No Flicker) */
+#crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  mix-blend-mode: overlay;
+  background: 
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.85) 100%);
+  opacity: 0.75;
+}
+
+#chromatic-aberration {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 39;
+  background: 
+    radial-gradient(ellipse at 35% 35%, rgba(0, 240, 255, 0.02) 0%, transparent 65%),
+    radial-gradient(ellipse at 65% 65%, rgba(189, 43, 218, 0.02) 0%, transparent 65%);
+  mix-blend-mode: screen;
+}
+
+/* Boot Screen (PS2 style) */
+#boot-screen {
+  position: fixed;
+  inset: 0;
+  background-color: #000000;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff;
+  transition: opacity 1.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 1.5s;
+}
+
+#boot-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.boot-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+}
+
+.logo-text {
+  font-family: 'Cinzel', serif;
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: 24px;
+  margin: 0;
+  padding-left: 24px; /* Account for letter-spacing offset */
+  background: linear-gradient(to bottom, #ffffff 0%, #a8d5ff 48%, #1f6ec0 52%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.45));
+  animation: logo-shimmer 4s ease-in-out infinite;
+}
+
+.boot-prompt {
+  font-size: 14px;
+  letter-spacing: 6px;
+  color: var(--neon-blue);
+  opacity: 0.85;
+  animation: boot-pulse 2s ease-in-out infinite;
+}
+
+#press-start-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #020208;
+  background: linear-gradient(to bottom, #ffffff, #8be2ff);
+  border: 1px solid #ffffff;
+  padding: 12px 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 15px rgba(0, 240, 255, 0.4),
+    inset 0 2px 2px #ffffff;
+  transition: transform 0.1s, box-shadow 0.2s, filter 0.2s;
+}
+
+#press-start-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 
+    0 4px 25px var(--neon-purple),
+    inset 0 2px 2px #ffffff;
+}
+
+#press-start-btn:active {
+  transform: scale(0.96);
+}
+
+/* Console HUD Overlay */
+#hud-container {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 25px;
+}
+
+#hud-container * {
+  pointer-events: auto;
+}
+
+/* Simplified Beveled Console Header Bar (8px border) */
+#console-header {
+  background: var(--metal-gray);
+  border: 8px solid;
+  border-color: var(--panel-border-light) var(--panel-border-dark) var(--panel-border-dark) var(--panel-border-light);
+  border-radius: 4px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: inset 2px 2px 0px rgba(255, 255, 255, 0.05), 6px 6px 0px #000000;
+}
+
+.console-logo {
+  font-family: 'Share Tech Mono', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin: 0;
+  color: var(--chrome-text);
+  text-shadow: 3px 3px 0px #000000;
+  text-transform: uppercase;
+}
+
+/* Middle Rows (3-Column BIOS Layout) */
+#console-middle-row {
+  display: flex;
+  flex: 1;
+  gap: 25px;
+  margin: 20px 0;
+  align-items: stretch;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+#console-middle-row * {
+  pointer-events: auto;
+}
+
+/* LEFT SIDE: Vertical Navigation Menu (Heavy console block) */
+.console-menu-left {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.menu-box {
+  background: var(--metal-gray);
+  border: 8px solid;
+  border-color: var(--panel-border-light) var(--panel-border-dark) var(--panel-border-dark) var(--panel-border-light);
+  border-radius: 4px;
+  padding: 30px 20px;
+  height: 100%;
+  box-shadow: inset 2px 2px 0px rgba(255, 255, 255, 0.05), 6px 6px 0px #000000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.menu-item {
+  font-size: 20px;
+  font-weight: 900;
+  color: rgba(216, 229, 255, 0.35);
+  cursor: pointer;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 4px solid transparent;
+  border-radius: 4px;
+  transition: color 0.1s, background-color 0.1s, border-color 0.1s;
+}
+
+.menu-pointer {
+  display: inline-block;
+  width: 15px;
+  color: transparent;
+  font-weight: 900;
+  font-size: 22px;
+}
+
+/* Solid green highlight plate on selection state (Tactile, No modern neon glow) */
+.menu-item.active {
+  background-color: #24412f;
+  border: 4px solid var(--neon-green);
+  color: #ffffff;
+  transform: translateX(6px);
+  box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.1), 4px 4px 0px #000000;
+}
+
+.menu-item.active .menu-pointer {
+  color: var(--neon-green);
+}
+
+/* RIGHT SIDE: Utilitarian Properties Panel (8px border) */
+.console-stats-right {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.stats-box {
+  background: var(--metal-gray);
+  border: 8px solid;
+  border-color: var(--panel-border-light) var(--panel-border-dark) var(--panel-border-dark) var(--panel-border-light);
+  border-radius: 4px;
+  padding: 30px 20px;
+  height: 100%;
+  box-shadow: inset 2px 2px 0px rgba(255, 255, 255, 0.05), 6px 6px 0px #000000;
+}
+
+.stats-header {
+  font-family: 'Share Tech Mono', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  border-bottom: 3px solid var(--panel-border-light);
+  padding-bottom: 8px;
+  margin-bottom: 25px;
+  color: var(--neon-blue);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0px #000000;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  row-gap: 22px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.stats-label {
+  color: #7b8c9d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stats-value {
+  color: #ffffff;
+  text-align: right;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0px #000000;
+}
+
+/* CENTER: Memory Card Slot Carousel (Upscaled 3x) */
+.console-carousel-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#memory-card-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  width: 100%;
+  height: 100%;
+}
+
+.card-slot {
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s, filter 0.4s;
+}
+
+.left-slot, .right-slot {
+  width: 130px;
+  height: 175px;
+  opacity: 0.35;
+  filter: grayscale(100%) blur(0.5px);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.left-slot:hover, .right-slot:hover {
+  opacity: 0.6;
+  filter: grayscale(40%);
+}
+
+.center-slot {
+  width: 280px;
+  height: 350px;
+  opacity: 1;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+/* Save File Card Styles (Thick physical borders, compartments, no neon glows) */
+.save-file-card {
+  background-color: #0c0f15;
+  border: 8px solid;
+  border-color: #3b475c #121620 #121620 #3b475c;
+  border-radius: 12px;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  padding: 15px;
+  box-shadow: 8px 8px 0px #000000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  outline: 3px solid #000000;
+  outline-offset: -5px;
+}
+
+/* Slow brightness pulse on selection bevel rather than neon outline blinking */
+.center-slot .save-file-card {
+  animation: card-bevel-pulse 2s infinite alternate;
+}
+
+.card-badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 900;
+  background: #000000;
+  color: var(--neon-green);
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1.5px solid var(--neon-green);
+  letter-spacing: 0.5px;
+}
+
+.card-label-area {
+  font-size: 10px;
+  font-weight: 900;
+  color: #7b8c9d;
+  text-align: center;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  letter-spacing: 1.5px;
+}
+
+.card-thumb-border {
+  border: 6px solid #000000;
+  border-radius: 4px;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+}
+
+.card-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-sector-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  background: #000000;
+  padding: 4px 8px;
+  border: 2px solid #1c222e;
+  font-size: 11px;
+}
+
+.sector-label {
+  color: #7b8c9d;
+}
+
+.sector-value {
+  color: var(--neon-blue);
+  font-weight: bold;
+}
+
+.card-under-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 900;
+  font-size: 20px;
+  color: #ffffff;
+  text-align: center;
+  margin-top: 15px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0px #000000;
+}
+
+.card-under-meta {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--neon-green);
+  text-align: center;
+  margin-top: 6px;
+  text-shadow: 1px 1px 0px #000000;
+  text-transform: uppercase;
+}
+
+/* Mini Save Cards (Left/Right Slots) */
+.mini-save-card {
+  background: #141a27;
+  border: 4px solid #2d3749;
+  border-radius: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+.mini-save-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+/* Playback Footer Panel (Solid, Tall, Chunky Game Box) */
+#playback-footer {
+  background: var(--metal-gray);
+  border: 8px solid;
+  border-color: var(--panel-border-light) var(--panel-border-dark) var(--panel-border-dark) var(--panel-border-light);
+  border-radius: 4px;
+  padding: 25px;
+  box-shadow: inset 2px 2px 0px rgba(255, 255, 255, 0.05), 6px -6px 0px #000000;
+}
+
+.footer-layout {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.description-section {
+  flex: 1.3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-track-meta {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--neon-green);
+  text-shadow: 1px 1px 0px #000000;
+  letter-spacing: 1px;
+}
+
+.track-title-text {
+  font-family: 'Share Tech Mono', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  text-transform: uppercase;
+  text-shadow: 3px 3px 0px #000000;
+  letter-spacing: 0px;
+}
+
+.track-description-text {
+  font-size: 14px;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+.controls-section {
+  flex: 0.7;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Seek Bar & Progress - Muted (No gradient purple, no box-shadow glow) */
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.progress-bar {
+  height: 12px;
+  background: #000000;
+  border: 2px solid #3c465a;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 6px);
+  pointer-events: none;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--neon-green);
+  transition: width 0.1s linear;
+}
+
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--neon-blue);
+  font-weight: bold;
+}
+
+/* Playback Control Buttons */
+.playback-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+
+.playback-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  background: #1a2233;
+  border: 3px solid #3c465a;
+  color: #ffffff;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 0px #000000;
+  transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
+}
+
+.playback-btn:hover {
+  border-color: var(--neon-green);
+  background-color: #1a231d;
+}
+
+.playback-btn:active {
+  transform: scale(0.92);
+}
+
+.play-pause-btn {
+  width: 52px;
+  height: 52px;
+  font-size: 20px;
+  background: #1d3325;
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: 4px 4px 0px #000000;
+}
+
+.play-pause-btn:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background-color: #24412f;
+}
+
+/* Muted, slightly faded controller prompt guides inside footer */
+.controller-prompt-row {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.prompt-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #7b8c9d;
+  text-transform: uppercase;
+}
+
+.prompt-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.prompt-btn.cross {
+  color: #5a82b3;
+  border-color: #5a82b3;
+}
+
+.prompt-btn.circle {
+  color: #c25858;
+  border-color: #c25858;
+}
+
+.prompt-btn.triangle {
+  color: #529e72;
+  border-color: #529e72;
+}
+
+.prompt-btn.square {
+  color: #b56b9c;
+  border-color: #b56b9c;
+}
+
+/* User Hint Overlay */
+#user-hint {
+  position: fixed;
+  bottom: 270px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  color: var(--neon-blue);
+  opacity: 0.55;
+  text-align: center;
+  pointer-events: none;
+  text-shadow: 0 0 4px rgba(0, 240, 255, 0.3);
+}
+
+/* Error Console */
+#error-console {
+  position: fixed;
+  left: 20px;
+  bottom: 270px;
+  right: 20px;
+  background: rgba(45, 0, 10, 0.9);
+  border: 1px solid var(--neon-purple);
+  color: #ffb7c5;
+  padding: 12px 18px;
+  font-size: 11px;
+  line-height: 1.6;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(189, 43, 218, 0.25);
+  z-index: 15;
+  display: none;
+}
+
+/* Animations */
+@keyframes logo-shimmer {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.3)); }
+  50% { filter: drop-shadow(0 0 25px rgba(189, 43, 218, 0.6)); }
+}
+
+@keyframes boot-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.35; }
+}
+
+/* Brightness bevel pulse for active state rather than neon glow blinking */
+@keyframes card-bevel-pulse {
+  0% {
+    border-color: #2c3545;
+    filter: brightness(0.85);
+    box-shadow: 8px 8px 0px #000000;
+  }
+  100% {
+    border-color: var(--neon-green);
+    filter: brightness(1.2);
+    box-shadow: 8px 8px 0px #000000;
+  }
+}
+
+/* Responsiveness adjustments */
+@media (max-width: 1024px) {
+  #console-middle-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  .console-menu-left, .console-stats-right {
+    width: 100%;
+    max-width: 500px;
+  }
+  .menu-box, .stats-box {
+    padding: 15px;
+  }
+  #playback-footer {
+    padding: 15px;
+  }
+  .footer-layout {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .controls-section {
+    max-width: 100%;
+  }
+}

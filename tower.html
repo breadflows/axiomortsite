@@ -1,0 +1,2383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AXIOMORT® | The Vault</title>
+    <meta name="description" content="Level 01 — STUDIO SOUNDS 2025. Twenty-six discs sealed in a tower above the city.">
+    <meta name="theme-color" content="#05070f">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Ctext x='16' y='24' font-size='22' font-family='serif' fill='%23d4af37' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --void:#05070f; --bone:#e8e4dc; --bone-dim:#8d94ad; --gold:#d4af37; --blue:#aebfe8;
+            --font-display:'Cinzel',serif; --font-mono:'Space Grotesk',sans-serif; --font-body:'Jost',sans-serif;
+        }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        html,body { width:100%; height:100%; overflow:hidden; background:var(--void); font-family:var(--font-body); color:var(--bone); }
+        canvas { display:block; }
+
+        /* intro */
+        #intro { position:fixed; inset:0; z-index:100; background:var(--void); display:flex;
+            flex-direction:column; justify-content:center; align-items:center; text-align:center;
+            padding:24px; transition:opacity 1.1s ease, visibility 1.1s; }
+        /* once loaded: sit ABOVE the loader so its video montage keeps playing behind a scrim */
+        #intro.ready { z-index:410; background:
+            radial-gradient(ellipse 120% 90% at 50% 50%, rgba(5,7,15,.42), rgba(5,7,15,.86)); }
+        #intro.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+        #intro .tag { font-family:var(--font-mono); font-weight:600; font-size:13px; letter-spacing:1.5px; color:var(--blue); text-transform:uppercase; margin-bottom:18px; }
+        #intro h1 { font-family:var(--font-display); font-weight:900; font-size:clamp(34px,7.5vw,76px); letter-spacing:.1em;
+            background:linear-gradient(178deg,#f7ead0,#e9cf7f 42%,#d4af37 70%,#b8922b); -webkit-background-clip:text; background-clip:text; color:transparent;
+            filter:drop-shadow(0 2px 26px rgba(212,175,55,.26)); }
+        #intro h1 span { color:inherit; }
+        #intro .story { max-width:580px; margin:24px 0 6px; font-weight:300; font-size:16px; line-height:1.85; color:#c2c9da; }
+        #intro .objective { font-family:var(--font-mono); font-weight:700; font-size:14px; letter-spacing:.5px; color:var(--gold); margin-top:18px;
+            border:1.5px solid rgba(212,175,55,.3); border-radius:30px; padding:10px 22px; display:inline-block; }
+        #begin { margin-top:40px; padding:17px 54px; background:transparent; color:var(--blue);
+            border:1px solid var(--blue); font-family:var(--font-display); font-size:14px; letter-spacing:5px;
+            cursor:pointer; transition:all .4s; text-transform:uppercase; }
+        #begin:hover { background:var(--blue); color:var(--void); box-shadow:0 0 40px rgba(174,191,232,.4); }
+        #intro .lore { max-width:540px; margin:20px 0 4px; font-family:var(--font-body); font-weight:300; font-size:16px; line-height:1.8; color:#c2c9da; }
+        #intro .keys { display:flex; flex-wrap:wrap; gap:16px 24px; justify-content:center; margin-top:30px; max-width:580px; }
+        #intro .kgroup { display:flex; flex-direction:column; align-items:center; gap:9px; }
+        #intro .krow { display:flex; gap:5px; }
+        #intro .kc { min-width:32px; height:32px; padding:0 9px; display:inline-flex; align-items:center; justify-content:center;
+            border:1.5px solid rgba(232,228,220,.28); border-bottom-width:3px; border-radius:8px;
+            font-family:var(--font-mono); font-weight:700; font-size:12px; color:#fff; background:rgba(255,255,255,.05); }
+        #intro .kgroup label { font-family:var(--font-mono); font-weight:600; font-size:10px; letter-spacing:1px; color:var(--bone-dim); text-transform:uppercase; }
+        #intro .enter-btn { margin-top:42px; padding:18px 60px; border:none; border-radius:40px; cursor:pointer;
+            font-family:var(--font-display); font-weight:700; font-size:16px; letter-spacing:5px; text-transform:uppercase; color:var(--void);
+            background:linear-gradient(135deg,#bcd2ff,var(--blue)); box-shadow:0 14px 44px rgba(174,191,232,.4); transition:transform .25s, box-shadow .25s;
+            display:inline-flex; align-items:center; gap:11px; }
+        #intro .enter-btn:hover { transform:translateY(-2px) scale(1.02); box-shadow:0 20px 56px rgba(174,191,232,.55); }
+        #intro .clickhint { margin-top:18px; font-family:var(--font-mono); font-weight:600; font-size:10px; letter-spacing:2px; color:rgba(232,228,220,.4); text-transform:uppercase; animation:pulse 2s infinite; }
+        #intro .backlink { position:absolute; top:22px; left:26px; font-family:var(--font-mono); font-weight:600; font-size:12px; letter-spacing:.5px; color:var(--bone-dim); text-decoration:none; }
+        #intro .backlink:hover { color:var(--gold); }
+
+        /* HUD */
+        #hud { position:fixed; inset:0; z-index:10; pointer-events:none; opacity:0; transition:opacity 1s; }
+        #hud.visible { opacity:1; }
+        .hud-tl { position:absolute; top:18px; left:22px; }
+        .hud-logo { font-family:var(--font-mono); font-weight:700; font-size:17px; letter-spacing:.5px; text-shadow:0 1px 8px rgba(0,0,0,.8); }
+        .hud-logo span { color:var(--gold); }
+        #disc-count { font-family:var(--font-mono); font-weight:700; font-size:16px; letter-spacing:.5px; color:#fff; margin-top:8px; text-shadow:0 1px 8px rgba(0,0,0,.95); }
+        #disc-count::before { content:'◉ '; color:var(--gold); }
+        #floor-ind { font-family:var(--font-mono); font-weight:600; font-size:13px; letter-spacing:.5px; color:#b6c0d8; margin-top:4px; text-shadow:0 1px 6px rgba(0,0,0,.9); }
+        #hint-ind { position:absolute; top:20px; right:22px; font-family:var(--font-mono); font-weight:600; font-size:13px;
+            letter-spacing:.5px; color:var(--blue); text-align:right; text-shadow:0 1px 6px #000;
+            background:rgba(8,11,22,.5); padding:7px 13px; border-radius:20px; backdrop-filter:blur(6px); }
+        #speed { position:absolute; bottom:44px; left:50%; transform:translateX(-50%); text-align:center; font-family:var(--font-mono); }
+        #speed b { font-weight:700; font-size:34px; color:#fff; text-shadow:0 0 18px rgba(174,191,232,.6),0 2px 8px #000; letter-spacing:-1px; }
+        #speed span { font-weight:600; font-size:12px; letter-spacing:1px; color:var(--bone-dim); margin-left:4px; }
+        #stamina-wrap { position:absolute; bottom:34px; left:50%; transform:translateX(-50%); width:240px; height:4px; border-radius:4px; background:rgba(232,228,220,.14); overflow:hidden; }
+        #stamina { height:100%; width:0%; border-radius:4px; background:linear-gradient(90deg,var(--blue),#fff); transition:width .08s linear; }
+        #prompt { position:absolute; bottom:88px; left:50%; transform:translateX(-50%);
+            font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:.5px; color:var(--void);
+            background:var(--gold); padding:11px 22px; border-radius:30px;
+            box-shadow:0 4px 24px rgba(212,175,55,.45); opacity:0; transition:opacity .3s; text-align:center; }
+        #prompt.visible { opacity:1; }
+        #crosshair { position:absolute; top:50%; left:50%; width:5px; height:5px; margin:-2.5px; border-radius:50%; background:rgba(255,255,255,.7); box-shadow:0 0 6px rgba(0,0,0,.6); }
+        #toast { position:absolute; top:70px; left:50%; transform:translateX(-50%); font-family:var(--font-mono);
+            font-weight:600; font-size:14px; letter-spacing:.5px; color:#fff; background:rgba(8,11,22,.82); border:1.5px solid rgba(212,175,55,.35);
+            padding:13px 26px; border-radius:30px; opacity:0; transition:opacity .4s; text-align:center; max-width:90vw; backdrop-filter:blur(8px); }
+        #toast.visible { opacity:1; }
+        #lobby-roster { position:fixed; top:72px; left:50%; transform:translateX(-50%); z-index:45;
+            width:min(620px,calc(100vw - 48px)); display:none; pointer-events:none; font-family:var(--font-mono); color:#e8e4dc;
+            border:1px solid rgba(232,228,220,.22); border-radius:8px;
+            background:linear-gradient(180deg,rgba(10,12,18,.48),rgba(10,12,18,.34));
+            box-shadow:0 18px 54px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
+            backdrop-filter:blur(10px); overflow:hidden; }
+        #lobby-roster.open { display:block; animation:rosterIn .16s ease-out; }
+        @keyframes rosterIn { from{opacity:0;transform:translate(-50%,-8px)} to{opacity:1;transform:translate(-50%,0)} }
+        #lobby-roster .lr-head { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px;
+            padding:10px 14px; border-bottom:1px solid rgba(232,228,220,.14); background:rgba(255,255,255,.035); }
+        #lobby-roster .lr-title { grid-column:2; font-size:12px; font-weight:800; letter-spacing:2px; color:#fff; }
+        #lobby-roster .lr-count { justify-self:end; font-size:10px; font-weight:800; letter-spacing:1.2px; color:rgba(232,228,220,.78); }
+        #lobby-roster .lr-list { padding:8px; display:grid; grid-template-columns:1fr; gap:5px; }
+        #lobby-roster .lr-row { display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:10px;
+            min-height:42px; padding:7px 10px; border:1px solid rgba(232,228,220,.1); border-radius:5px;
+            background:rgba(255,255,255,.045); }
+        #lobby-roster .lr-row.self { background:rgba(255,255,255,.075); border-color:rgba(232,228,220,.18); }
+        #lobby-roster .lr-row.bot { background:rgba(174,191,232,.07); border-color:rgba(174,191,232,.16); }
+        #lobby-roster .lr-dot { width:8px; height:8px; border-radius:50%; background:#d9f7df; box-shadow:0 0 8px rgba(217,247,223,.45); justify-self:center; }
+        #lobby-roster .lr-row.away .lr-dot { background:#9aa4b9; box-shadow:none; }
+        #lobby-roster .lr-name { font-size:13px; font-weight:800; letter-spacing:.3px; color:#fff; line-height:1.1; }
+        #lobby-roster .lr-sub { margin-top:3px; font-size:9px; font-weight:700; letter-spacing:.9px; color:rgba(232,228,220,.58); text-transform:uppercase; }
+        #lobby-roster .lr-ping { font-size:10px; font-weight:800; color:rgba(232,228,220,.72); letter-spacing:.7px; }
+        #lobby-roster .lr-foot { padding:8px 14px 10px; font-size:9px; font-weight:800; letter-spacing:1.1px; color:rgba(232,228,220,.5);
+            text-align:center; text-transform:uppercase; border-top:1px solid rgba(232,228,220,.1); }
+
+        /* disc-acquired reward card */
+        #disc-reward { position:fixed; top:50%; right:-460px; transform:translateY(-50%); z-index:40; width:400px; max-width:88vw;
+            border:1.5px solid rgba(212,175,55,.42); border-radius:18px; overflow:hidden; pointer-events:none;
+            background:linear-gradient(180deg,#0d1018,#070a12); box-shadow:0 24px 70px rgba(0,0,0,.6);
+            transition:right .55s cubic-bezier(.16,1,.3,1), opacity .4s; font-family:var(--font-mono); }
+        #disc-reward.show { right:30px; }
+        #disc-reward .dr-media { position:relative; width:100%; aspect-ratio:16/9; background:#04060c; }
+        #disc-reward .dr-media video, #disc-reward .dr-media img { width:100%; height:100%; object-fit:cover; display:block; }
+        #disc-reward .dr-media::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,transparent 45%,rgba(7,10,18,.92)); }
+        #disc-reward .dr-body { padding:14px 22px 20px; position:relative; }
+        #disc-reward .dr-k { font-weight:700; font-size:11px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
+        #disc-reward .dr-ti { font-weight:700; font-size:23px; color:#fff; margin:7px 0 5px; letter-spacing:-.4px; line-height:1.08; }
+        #disc-reward .dr-np { font-weight:600; font-size:11px; letter-spacing:1.5px; color:var(--blue); }
+        #disc-reward .dr-np::before { content:'▸ '; }
+        #disc-reward .dr-timer { height:3px; border-radius:3px; background:rgba(255,255,255,.12); margin-top:14px; overflow:hidden; }
+        #disc-reward .dr-timer i { display:block; height:100%; width:100%; transform-origin:left; background:linear-gradient(90deg,var(--gold),#fff); }
+
+        /* dimension modal */
+        #dim-modal { position:fixed; inset:0; z-index:60; display:none; align-items:center; justify-content:center;
+            background:rgba(5,7,15,.88); backdrop-filter:blur(6px); padding:20px; }
+        #dim-modal.open { display:flex; }
+        .dim-card { width:min(540px,94vw); border:1.5px solid rgba(212,175,55,.3); border-radius:18px;
+            background:linear-gradient(170deg,#10131f,#0a0d1a); padding:40px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.6); }
+        .dim-card .k { font-family:var(--font-mono); font-weight:700; font-size:12px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
+        .dim-card h2 { font-family:var(--font-mono); font-weight:700; font-size:34px; letter-spacing:-.5px; margin:14px 0 10px; color:#fff; }
+        .dim-card p { font-family:var(--font-body); font-weight:400; font-size:15px; line-height:1.75; color:#c2c9da; margin-bottom:28px; }
+        .btn-a { font-family:var(--font-mono); font-weight:700; font-size:13px; letter-spacing:.5px; text-decoration:none;
+            padding:14px 28px; border:1.5px solid var(--gold); border-radius:30px; color:var(--gold); background:transparent; cursor:pointer; transition:all .25s; }
+        .btn-a:hover { background:var(--gold); color:var(--void); box-shadow:0 6px 24px rgba(212,175,55,.4); transform:translateY(-1px); }
+        .btn-a.ghost { border-color:rgba(232,228,220,.25); color:#c2c9da; }
+        .btn-a.ghost:hover { background:rgba(232,228,220,.12); color:#fff; box-shadow:none; }
+
+        /* minigame frame */
+        #dim-frame { position:fixed; inset:0; z-index:80; display:none; background:#000; }
+        #dim-frame.open { display:block; }
+        #dim-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+        #dim-bar { display:none; }
+        #dim-bar .nm { font-family:var(--font-mono); font-weight:700; font-size:15px; letter-spacing:.5px; color:var(--gold); }
+        #dim-return { font-family:var(--font-mono); font-weight:700; font-size:13px; letter-spacing:.5px; padding:11px 22px; border-radius:30px;
+            background:transparent; border:1.5px solid var(--gold); color:var(--gold); cursor:pointer; transition:all .25s; }
+        #dim-return:hover:not(:disabled) { background:var(--gold); color:var(--void); box-shadow:0 4px 18px rgba(212,175,55,.4); }
+        #dim-leave { border-radius:30px; }
+
+        /* pause */
+        #pause { position:fixed; inset:0; z-index:50; display:none; background:rgba(5,7,15,.92); backdrop-filter:blur(8px);
+            align-items:center; justify-content:center; }
+        #pause.open { display:flex; }
+        .pause-inner { text-align:center; }
+        .pause-inner h2 { font-family:var(--font-display); letter-spacing:4px; font-size:32px; margin-bottom:8px; }
+        .pause-inner h2 span { color:var(--gold); }
+        .pause-sub { font-family:var(--font-mono); font-weight:600; font-size:14px; letter-spacing:.5px; color:#b6c0d8; margin-bottom:34px; }
+        .pause-list { display:flex; flex-direction:column; gap:14px; align-items:center; }
+
+        /* win */
+        #win { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; flex-direction:column;
+            background:radial-gradient(ellipse at center, rgba(28,42,90,.95), rgba(5,7,15,.98)); text-align:center; padding:24px; }
+        #win.open { display:flex; }
+        #win .tag { font-family:var(--font-mono); font-size:11px; letter-spacing:8px; color:var(--gold); margin-bottom:22px; animation:pulse 2s infinite; }
+        #win h1 { font-family:var(--font-display); font-size:clamp(30px,6.5vw,64px); letter-spacing:6px; margin-bottom:18px; }
+        #win p { max-width:520px; color:var(--bone-dim); font-weight:200; line-height:1.9; margin-bottom:32px; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        /* touch */
+        #joy { position:absolute; bottom:56px; left:36px; width:110px; height:110px; border-radius:50%;
+            border:1px solid rgba(232,228,220,.2); display:none; pointer-events:auto; touch-action:none; }
+        #joy-knob { position:absolute; top:50%; left:50%; width:44px; height:44px; margin:-22px; border-radius:50%;
+            background:rgba(174,191,232,.3); border:1px solid var(--blue); }
+        #btn-act { position:absolute; bottom:78px; right:40px; width:70px; height:70px; border-radius:50%;
+            border:1px solid var(--gold); background:rgba(212,175,55,.15); color:var(--gold);
+            font-family:var(--font-mono); font-size:10px; display:none; pointer-events:auto; }
+        body.touch #joy, body.touch #btn-act { display:block; }
+        #btn-pause-m { position:absolute; top:16px; right:18px; padding:8px 14px; border:1px solid rgba(232,228,220,.2);
+            background:rgba(5,7,15,.5); color:var(--bone-dim); font-family:var(--font-mono); font-size:10px;
+            letter-spacing:2px; display:none; pointer-events:auto; }
+        body.touch #btn-pause-m { display:block; }
+    </style>
+</head>
+<body>
+
+<div id="intro">
+    <a class="backlink" href="index.html">&larr; LOG OUT</a>
+    <div class="tag">Skydeck 61 - The Label Vault</div>
+    <h1>THE <span>VAULT</span></h1>
+    <p class="lore">
+        When the Signal collapsed, the 26 master discs that held the world together were sealed
+        inside the label's tower above the skyline. You're the last engineer who can still read them. Climb, recover
+        every master, and you'll re-press the bridge to the island.
+    </p>
+    <div class="keys">
+        <div class="kgroup"><div class="krow"><span class="kc">W</span><span class="kc">A</span><span class="kc">S</span><span class="kc">D</span></div><label>Move</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">SPACE</span></div><label>Jump · Bhop</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">SHIFT</span></div><label>Sprint</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">E</span></div><label>Collect · Lift</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">I</span></div><label>Discs</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">TAB</span></div><label>Lobby</label></div>
+        <div class="kgroup"><div class="krow"><span class="kc">MOUSE</span></div><label>Look</label></div>
+    </div>
+    <button id="begin" class="enter-btn"><span>&#9654;</span> ENTER</button>
+    <div class="clickhint">or click anywhere to drop in</div>
+</div>
+
+<div id="lobby-roster" aria-hidden="true">
+    <div class="lr-head">
+        <div class="lr-title">LOBBY</div>
+        <div class="lr-count" id="lr-count">2 ONLINE</div>
+    </div>
+    <div class="lr-list" id="lr-list"></div>
+    <div class="lr-foot">TAB - LOBBY ROSTER · I - DISC INVENTORY</div>
+</div>
+
+<div id="hud">
+    <div class="hud-tl">
+        <div class="hud-logo">THE<span>VAULT</span></div>
+        <div id="disc-count">DISCS 0 / 26</div>
+        <div id="floor-ind">SKYDECK 61</div>
+        <div style="margin-top:4px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(255,210,74,.75);">BETA v0.9</div>
+    </div>
+    <div id="hint-ind"></div>
+    <div id="crosshair"></div>
+    <div id="prompt">[E] COLLECT DISC</div>
+    <div id="toast"></div>
+    <div id="speed"><b id="speed-num">0</b><span>SPD</span></div>
+    <div id="stamina-wrap"><div id="stamina"></div></div>
+    <div id="joy"><div id="joy-knob"></div></div>
+    <button id="btn-act">PICK UP</button>
+    <button id="btn-pause-m">MENU</button>
+</div>
+
+<!-- disc-acquired reward card -->
+<div id="disc-reward">
+    <div class="dr-media" id="dr-media"></div>
+    <div class="dr-body">
+        <div class="dr-k" id="dr-k">DISC ACQUIRED</div>
+        <div class="dr-ti" id="dr-ti">—</div>
+        <div class="dr-np" id="dr-np">NOW PLAYING</div>
+        <div class="dr-timer"><i id="dr-bar"></i></div>
+    </div>
+</div>
+
+<div id="dim-modal">
+    <div class="dim-card">
+        <div class="k" id="dm-k">BHOP COURSE</div>
+        <h2 id="dm-title">???</h2>
+        <p id="dm-desc"></p>
+        <div style="display:flex;gap:14px;justify-content:center">
+            <button class="btn-a" id="dm-enter">ENTER THE DISC</button>
+            <button class="btn-a ghost" id="dm-leave">NOT YET</button>
+        </div>
+    </div>
+</div>
+
+<div id="dim-frame">
+    <div id="dim-bar"></div>
+    <iframe id="df-iframe" src="" allow="autoplay; fullscreen"></iframe>
+</div>
+
+<div id="pause">
+    <div class="pause-inner">
+        <h2>TOWER <span>PAUSED</span></h2>
+        <div class="pause-sub" id="pause-sub">ARCHIVE 0 / 26</div>
+        <div class="pause-list">
+            <button class="btn-a" id="resume">RESUME</button>
+            <button class="btn-a ghost" id="open-inv">CD INVENTORY (I)</button>
+            <button class="btn-a ghost" id="goto-island">THE ISLAND — LOCKED</button>
+            <a class="btn-a ghost" href="index.html">LOG OUT</a>
+            <button class="btn-a ghost" id="reset-save" style="opacity:.6">RESET ARCHIVE</button>
+        </div>
+    </div>
+</div>
+
+<div id="win">
+    <div class="tag">ARCHIVE INTEGRITY 100%</div>
+    <h1>ARCHIVE COMPLETE</h1>
+    <p>Twenty-six discs hum in the vault. Through the glass, past the city's edge, a gold signal
+       blinks offshore — eighteen more fragments, scattered on an island that shouldn't exist.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <a class="btn-a" href="island.html">TRAVEL TO THE ISLAND</a>
+        <button class="btn-a ghost" id="win-stay">KEEP EXPLORING</button>
+    </div>
+</div>
+
+<script src="js/loader.js?v=3"></script>
+<script src="js/inventory.js?v=4"></script>
+<script src="js/Engine.js"></script>
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "@pixiv/three-vrm": "./js/three-vrm.module.js"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+window.BufferGeometryUtils = BufferGeometryUtils;
+
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { createRobot, SKINS } from './js/robot.js?v=3';
+import { ARIA } from './js/companion.js?v=7';
+import { MP, AXChat } from './js/mp.js?v=4';
+window.THREE = THREE; // Expose globally for local UMD modules like three-vrm
+
+// Filter out harmless FBXLoader material warnings to keep the console perfectly clean
+const _originalWarn = console.warn;
+console.warn = function(...args) {
+    const msg = args.join(' ');
+    if (msg.includes('map is not supported in three.js, skipping texture.')) return;
+    _originalWarn.apply(console, args);
+};
+
+// pick a random skin on the player's very first entrance, then keep it
+if (localStorage.getItem('ax_skin') == null) localStorage.setItem('ax_skin', String(Math.floor(Math.random() * SKINS.length)));
+const MY_SKIN = (parseInt(localStorage.getItem('ax_skin'), 10) || 0) % SKINS.length;
+
+/* ════════════════ TRACK DATA — STUDIO SOUNDS 2025 ════════════════ */
+const TRACKS = [
+    {t:"Machina Corpus",folder:"1 Machina Corpus",audio:"MixeaMediumNeutralhdMachinaCorpusRemaster-mastered.mp3",img:"800x800-9505173--C0B19EC7-5227-482C-817DCFE0055D6E4C--0--79710--imagelarge31db43c5af5c4ff8b9913f345351dc9f.jpg"},
+    {t:"Ink Of Infinity",folder:"2 Ink Of Infinity",audio:"LANDRInkOfInfinityBalancedMedium.mp3",img:"800x800-9505173--B75D4CEA-02D5-410C-AC950AA9DF5D6BE0--0--100291--imagelarge43b3c8433e324a10af4a4e457f932ea3.jpg"},
+    {t:"Rift's Bounty",folder:"3 Rift's Bounty",audio:"RiftsBountyMalikCreed-mastered.mp3",img:"800x800-9505173--9FE1D9EB-7BF6-4118-99A8A0B93088F070--0--1599132--driftsbountycover.jpg"},
+    {t:"The Nexus Veil",folder:"4 The Nexus Veil",audio:"TheNexusVeil.mp3",img:"800x800-9505173--CE0018D0-50BA-4021-90F9E03E696CF281--mod-1749445658.jpg"},
+    {t:"The Nexus Veil (Galactic Chill)",folder:"5 The Nexus Veil (Galactic Chill)",audio:"TheNexusVeil (1).mp3",img:"800x800-9505173--11E05B6C-B27F-44C4-BF840D30A4889B43--0--81744--1000032453.jpg"},
+    {t:"The Nexus Veil (Anthem)",folder:"6 The Nexus Veil (Anthem)",audio:"TheNEXUSVeilLessoverstimulatedvibesRemastered.mp3",img:"800x800-9505173--17F3D509-A665-448E-B9DB7B2CE8A52AD7--0--153455--imagelarge7a4eecb7723a47d8bb0edb1679bffb71.jpg"},
+    {t:"The Rose Petals Resistance",folder:"7 The Rose Petals Ressistance",audio:"TheRosePetalsResistanceMayasNeonHuntv4style50weird50nopersonaextraelectro.mp3",img:"800x800-9505173--B85A943A-1F3E-42A1-ADCC197DC2899983--0--349490--03.jpg"},
+    {t:"Ink Between Worlds (Rift Soundtrack)",folder:"8 Ink Between Worlds (The Rift Soundtrack)",audio:"ThroughtheInk.mp3",img:"800x800-9505173--D8232C15-0932-4C31-97F3DEFB411C7A33--0--88537--imagelarge9ca5c366c91f4797a9166f59963bbdda.jpg"},
+    {t:"106.5s — Jul 1 4:32PM",folder:"9 106.5s Jul 1 432PM",audio:"106-mastered.mp3",img:"800x800-9505173--3D538CC9-2C15-44B9-8DED613E0D579BAA--0--3665304--f8916ddfda464653bf8fe9ca8fce36e7.jpg"},
+    {t:"Go Cry To Interpol",folder:"10 Go Cry To Interpol",audio:"GoCrytoInterpol.mp3",img:"800x800-9505173--5561940C-E202-4273-83C54CEC4D9D2375--0--1542355--0db03a51b6064a69920851a818f4c413.jpg"},
+    {t:"TrapStar",folder:"11 TrapStar",audio:"Trapstar.mp3",img:"800x800-9505173--2E6AC500-6191-449E-998B78A538B0EF21--0--61681--imagelarged18b89fcfde74845bffa63c56ebecbde.jpg"},
+    {t:"Glitch Rebirth",folder:"12 Glitch Rebirth",audio:"GlitchRebirthv0.2.mp3",img:"800x800-9505173--EF41E9B6-8A2E-49DA-A845A7C13520A74E--0--2260545--0c719f0d598f45e48650bbcb0ab8bc2b.jpg"},
+    {t:"Neon Hunters",folder:"13 Neon Hunters",audio:"RosePetalsRessistancehook.mp3",img:"800x800-9505173--D217436A-7E94-4DD0-A1F35DA9487143BA--0--1884888--ChatGPTImageJul102025022902AM.jpg"},
+    {t:"Event Horizon Lament",folder:"14 Event Horizon Lament",audio:"EventHorizonLament.mp3",img:"800x800-9505173--B52047B5-9B8C-45AD-89CC66335D4C7361--0--73648--1000034474.jpg"},
+    {t:"Ink Between Worlds (Rift Mix)",folder:"15 Ink Between Worlds (Rift Mix)",audio:"InkBetweenWorldsRemasteredRemixnew100SIstyleimprovedv2.mp3",img:"800x800-9505173--BEC87121-EF7B-423C-9A59DED3366AC6D9--0--118580--1000035148.jpg"},
+    {t:"Nobody",folder:"16 Nobody",audio:"Timeline100086400.mp3",img:"800x800-9505173--70827A2E-B79D-4BDF-A56B7F0417343F2D--0--227840--01.jpg"},
+    {t:"Theta Glyph Eclipse — Inception Haze",folder:"17 Theta Glyph Eclipse -  Inception Haze",audio:"ThetaGlyphEclipseInstrumental.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c54.jpg"},
+    {t:"Theta Glyph Eclipse — Recursive Bridge",folder:"18 Theta Glyph Eclipse - Recursive Bridge",audio:"ThetaGlyphEclipseInstrumental1.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c54.jpg"},
+    {t:"Theta Glyph Eclipse — Awakening Hijack",folder:"19 Theta Glyph Eclipse - Awakening Hijack",audio:"ThetaGlyphEclipse.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c54643.jpg"},
+    {t:"Theta Glyph Eclipse — Climax Divine",folder:"20 Theta Glyph Eclipse - Climax Divine",audio:"ThetaGlyphEclipse1.mp3",img:"800x800-9505173--41574B65-842C-4832-BD6D4740BEAACD74--0--2285016--breadflowsEcstaticroboticfemaleandroidinmetallictogavcf479809c5 (1).jpg"},
+    {t:"Pressure Seal",folder:"21 Pressure Seal",audio:"PressureSeal.mp3",img:"800x800-9505173--8C19305D-2798-47BF-A93DEF3BE3D337D0--0--85553--imagelarge1b0599a712d74ef4ac30b1be334d5044.jpg"},
+    {t:"Chronodrift",folder:"22 Chronodrift",audio:"Chronodrift.mp3",img:"800x800-9505173--398DC3FC-6CD5-4E33-A0F24B0FB58C846E--0--1518526--gemini2.5flashimagepreviewEpiccinematicindustrialalbumcoverdarkmetalliccityscapeatduskasymme.jpg"},
+    {t:"Rift's Bounty — Creed's Oath",folder:"23 Rift's Bounty Creeds Oath",audio:"RiftsBountyv0.4.mp3",img:"800x800-9505173--78CBAF13-D1BE-45CD-89B657982A6B606E--0--93603--imagelarge69d5d43c1c4b43eb9cdaf3c7dc1c8bf1.jpg"},
+    {t:"When the Grace Is Good",folder:"24 When the Grace Is Good",audio:"WHENTHEGRACEISGOODMatrixCrackingVersionv0.2.mp3",img:"800x800-9505173--54264C4D-3ADB-4197-A2D935E8EAA154FD--0--40625--imagelargea282191724ca4b2e8721ac3251828592.jpg"},
+    {t:"Phantom Glide",folder:"25 Phantom Glide",audio:"PhantomGlide.mp3",img:"800x800-9505173--7DD6AA13-A2A1-4B74-98BA9BD85C58CD56--0--27597--imagelargea367396fdbc943eabbbd716798585956.jpg"},
+    {t:"GOOD GRACE",folder:"26 GOOD GRACE",audio:"TheSecondWaveWhentheGraceisGood2008Trance-mastered.mp3",img:"800x800-9505173--424BF13E-9019-483C-89F765392644ED7D--0--5464302--1000042374.jpg"}
+];
+const trackURL = (tr) => 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.audio);
+const coverURL = (tr) => 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.img);
+
+/* Discs are archived on pickup. Bring an archived disc to the courier on the TV stage to run it:
+   first play launches its course/dimension, cleared discs become stage playback. */
+const DIMENSIONS = {
+    8:  { name: 'THE MAZE',      kind: 'dim', src: 'maze.html?v=2',  desc: 'This master corrupted into a living labyrinth. It reconfigures as you move — escape it and the disc is yours.' },
+    14: { name: 'GRAVITY WELL',  kind: 'dim', src: 'game.html?v=2',  desc: 'A disc that bent the rules. Gravity no longer obeys consensus in there — collect the shards to claim it.' },
+    21: { name: 'PHANTOM DRIFT', kind: 'dim', src: 'zephyr.html?v=3', desc: 'A cozy endless wind hides inside this one. Drift far enough and it surfaces.' }
+};
+// resolve any disc to its minigame: special ones use DIMENSIONS, the rest are their own BHOP course
+function dimFor(d){
+    if (DIMENSIONS[d.idx]) return DIMENSIONS[d.idx];
+    const tr = TRACKS[d.idx];
+    return {
+        name: tr.t.toUpperCase(),
+        kind: 'bhop',
+        src: 'AXIOMORT_BHOP.html?level=' + d.idx + '&single=1&v=4',
+        desc: 'Surf the “' + tr.t + '” course — chain jumps, strafe the air to build speed, then slam through the billboard to claim the disc.'
+    };
+}
+
+/* ════════════════ SEEDED RNG ════════════════ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rng = mulberry32(0x70E32);
+
+/* ════════════════ RENDERER / SCENE ════════════════ */
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = false;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.92;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+
+// Initialize Phase 2: Global ECS Architecture
+window.AXEngine = window.AXEngine || {};
+window.AXEngine.ecs = new window.AXEngine.ECSManager(5000); // Massive flat array buffer
+window.AXEngine.physicsSys = new window.AXEngine.Systems.PhysicsSystem();
+window.AXEngine.syncSys = new window.AXEngine.Systems.TransformSyncSystem();
+
+// Initialize Phase 3: Global Data-Driven State Bus
+window.AXEngine.stateBus = new window.AXEngine.StateBus();
+
+scene.background = new THREE.Color(0xb9dcff);
+scene.fog = new THREE.FogExp2(0xd8f0ff, 0.00014);
+
+const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 3000);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.1, 0.28, 0.96);
+composer.addPass(bloom);
+
+/* lights */
+const hemi = new THREE.HemisphereLight(0xeaf7ff, 0xc9d4dd, .82);
+scene.add(hemi);
+const sunlight = new THREE.DirectionalLight(0xfff1c7, 1.05);
+sunlight.position.set(-260, 620, 240);
+scene.add(sunlight);
+const amb = new THREE.AmbientLight(0xe9f5ff, .38);
+scene.add(amb);
+const floorLights = [0,1,2].map(() => { const l = new THREE.PointLight(0xd8f0ff, 16, 54, 2.4); scene.add(l); return l; });
+const GAME_HOUR_MS = 60000;
+const START_GAME_HOUR = 8.5;
+const dayNight = {
+    sun:null,
+    moon:null,
+    stars:null,
+    cityMat:null,
+    crownMat:null,
+    roofMat:null,
+    roofTrim:null,
+    hazeMat:null,
+    cloudMat:null,
+    hour: START_GAME_HOUR
+};
+
+/* ════════════════ TEXTURE FACTORY ════════════════ */
+function makeTexture(size, painter, repeat = 1) {
+    const c = document.createElement('canvas'); c.width = c.height = size;
+    painter(c.getContext('2d'), size);
+    const tx = new THREE.CanvasTexture(c);
+    tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+    tx.repeat.set(repeat, repeat);
+    tx.colorSpace = THREE.SRGBColorSpace;
+    tx.anisotropy = 8;
+    return tx;
+}
+function speckle(g, s, base, tones, n, rMin, rMax, a) {
+    g.fillStyle = base; g.fillRect(0,0,s,s);
+    for (let i=0;i<n;i++){ g.fillStyle = tones[(rng()*tones.length)|0]; g.globalAlpha = a*(0.4+rng()*0.6);
+        g.beginPath(); g.arc(rng()*s, rng()*s, rMin+rng()*(rMax-rMin), 0, 7); g.fill(); }
+    g.globalAlpha = 1;
+}
+let texConcrete, texCarpet, texCeil, texCity, texMetal;
+let matSlab, matCarpet, matCeil;
+
+function makeSurfaces() {
+  texConcrete = makeTexture(512, (g,s) => {
+    speckle(g,s,'#dce5eb',['#eef5f8','#c8d5de','#b9c8d3','#f8fbff'],12000,0.45,1.9,0.42);
+    g.globalAlpha=.22; g.strokeStyle='#aebfc9'; g.lineWidth=2;
+    for(let i=0;i<=8;i++){ const p=i*s/8; g.beginPath(); g.moveTo(p,0); g.lineTo(p,s); g.stroke(); g.beginPath(); g.moveTo(0,p); g.lineTo(s,p); g.stroke(); }
+    g.globalAlpha=.12; g.strokeStyle='#ffffff'; g.lineWidth=1;
+    for(let i=0;i<18;i++){ g.beginPath(); g.moveTo(rng()*s,0); g.lineTo(rng()*s,s); g.stroke(); }
+    g.globalAlpha=1;
+  }, 8);
+  texCarpet = makeTexture(512, (g,s) => {
+    speckle(g,s,'#c7d8e3',['#e5f0f6','#aebfcc','#d6e4ec','#8fb3cc'],15000,0.45,1.6,0.42);
+    g.globalAlpha=.16; g.strokeStyle='#6fb7e5'; g.lineWidth=3;
+    for(let i=0;i<7;i++){ const y=(i+.35)*s/7; g.beginPath(); g.moveTo(0,y); g.lineTo(s,y); g.stroke(); }
+    g.globalAlpha=1;
+  }, 10);
+  texCeil = makeTexture(256, (g,s) => {
+    g.fillStyle='#d7e2e9'; g.fillRect(0,0,s,s);
+    g.strokeStyle='#aebdc8'; g.lineWidth=4;
+    for(let i=0;i<=4;i++){ g.beginPath(); g.moveTo(i*s/4,0); g.lineTo(i*s/4,s); g.stroke();
+        g.beginPath(); g.moveTo(0,i*s/4); g.lineTo(s,i*s/4); g.stroke(); }
+    g.globalAlpha=.18; g.fillStyle='#ffffff'; g.fillRect(10,10,s-20,s-20); g.globalAlpha=1;
+  }, 12);
+  texCity = makeTexture(256, (g,s) => {
+    g.fillStyle='#edf5fb'; g.fillRect(0,0,s,s);
+    g.fillStyle='rgba(255,255,255,.5)';
+    g.fillRect(0,0,s,s*.18);
+    const cols=10, rows=16;
+    for(let x=0;x<cols;x++) for(let y=0;y<rows;y++){
+        if (rng() < 0.34) {
+            g.fillStyle = rng() < 0.6 ? `rgba(84,145,205,${0.22+rng()*0.22})` : `rgba(180,220,255,${0.24+rng()*0.25})`;
+            g.fillRect(x*s/cols+3, y*s/rows+2, s/cols-6, s/rows-5);
+        }
+    }
+  });
+  texCity.repeat.set(1,1);
+  texMetal = makeTexture(256, (g,s) => {
+    speckle(g,s,'#b6c5cf',['#d9e3ea','#8fa2af','#edf4f8','#9badb8'],6500,0.5,1.8,0.36);
+    g.globalAlpha=.24; g.strokeStyle='#6e8392';
+    for(let i=0;i<40;i++){ const y=rng()*s; g.beginPath(); g.moveTo(0,y); g.lineTo(s,y); g.stroke(); }
+    g.globalAlpha=1;
+  }, 2);
+  matSlab = new THREE.MeshStandardMaterial({ map: texConcrete, color:0xdce6ec, roughness: .58, metalness:.04 });
+  matCarpet = new THREE.MeshStandardMaterial({ map: texCarpet, color:0xc8d9e3, roughness: .68, metalness:.02 });
+  matCeil = new THREE.MeshStandardMaterial({ map: texCeil, color:0xd7e2e9, roughness: .62, side: THREE.DoubleSide });
+
+  if (window.AXEngine && window.AXEngine.ProceduralFactory) {
+      window.AXEngine.ProceduralFactory.injectPremiumMaterial(matSlab, { color: 0x00ffcc, scale: 0.5 });
+      window.AXEngine.ProceduralFactory.injectPremiumMaterial(matCarpet, { color: 0xff00ff, scale: 2.0 });
+      window.AXEngine.ProceduralFactory.injectPremiumMaterial(matCeil, { color: 0x00aaff, scale: 0.25 });
+  }
+}
+
+/* ════════════════ TOWER GEOMETRY ════════════════ */
+const FLOORS = 13, FH = 8, HALF = 30, HOLE = 12;   // tower 60×60, atrium 24×24
+const platforms = [];   // {minX,maxX,minZ,maxZ,y} flat
+const ramps = [];       // {minX,maxX,minZ,maxZ,axis,from,to,y0,y1}
+
+const FLOOR_COLORS = [0x2f9dff,0xff4f4f,0x34d4ff,0xffffff,0xffc247,0x44b4ff,0x6ef0c2,0xff5b5b,0x7fb8ff,0xf5f8ff,0x4fd1ff,0xff7070,0xffffff];
+const SKYDECK_BASE = 61;
+const skydeckLabel = (f) => `SKYDECK ${SKYDECK_BASE + f}`;
+
+const tower = new THREE.Group();
+scene.add(tower);
+
+function addBox(w, h, d, mat, x, y, z, group = tower) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z); group.add(m); return m;
+}
+// snap placement to a clean 2-unit grid → no half-clipped props or discs in walls
+const GRID = 2;
+const snap = (v) => Math.round(v / GRID) * GRID;
+// is (x,z) on a walkable band of this floor (away from the atrium void)?
+const onBand = (x, z, f) => f === 0 || Math.abs(x) > HOLE + 1 || Math.abs(z) > HOLE + 1;
+
+function buildFloors() {
+    const addMacroPlatform = (w, h, d, mat, x, y, z) => {
+        let geo;
+        if (window.AXEngine && window.AXEngine.ArchitecturalGenerator) {
+            geo = window.AXEngine.ArchitecturalGenerator.createPlatform(w, h, d);
+        } else {
+            geo = new THREE.BoxGeometry(w, h, d);
+        }
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(x, y, z);
+        tower.add(m);
+        return m;
+    };
+
+for (let f = 0; f < FLOORS; f++) {
+    const y = f * FH;
+    const carpetMat = matCarpet;
+    if (f === 0) {
+        addMacroPlatform(HALF*2, .6, HALF*2, matSlab, 0, y-.3, 0);
+        addBox(HALF*2, .04, HALF*2, carpetMat, 0, y+.021, 0);
+        platforms.push({ minX:-HALF, maxX:HALF, minZ:-HALF, maxZ:HALF, y });
+    } else {
+        // 4 bands around the atrium hole
+        const bands = [
+            { x:0, z:(HOLE+HALF)/2, w:HALF*2, d:HALF-HOLE },
+            { x:0, z:-(HOLE+HALF)/2, w:HALF*2, d:HALF-HOLE },
+            { x:(HOLE+HALF)/2, z:0, w:HALF-HOLE, d:HOLE*2 },
+            { x:-(HOLE+HALF)/2, z:0, w:HALF-HOLE, d:HOLE*2 }
+        ];
+        for (const b of bands) {
+            addMacroPlatform(b.w, .6, b.d, matSlab, b.x, y-.3, b.z);
+            addBox(b.w, .04, b.d, carpetMat, b.x, y+.021, b.z);
+            platforms.push({ minX:b.x-b.w/2, maxX:b.x+b.w/2, minZ:b.z-b.d/2, maxZ:b.z+b.d/2, y });
+        }
+        // glass railings around atrium edge
+        const rail = new THREE.MeshPhysicalMaterial({ color:0x9fc4ff, transparent:true, opacity:.13, roughness:.05, metalness:0 });
+        addBox(HOLE*2, 1.1, .06, rail, 0, y+.56, HOLE).userData.collidable = true;
+        addBox(HOLE*2, 1.1, .06, rail, 0, y+.56, -HOLE).userData.collidable = true;
+        addBox(.06, 1.1, HOLE*2, rail, HOLE, y+.56, 0).userData.collidable = true;
+        addBox(.06, 1.1, HOLE*2, rail, -HOLE, y+.56, 0).userData.collidable = true;
+    }
+
+    // neon perimeter strip — floor accent color
+    const neon = new THREE.MeshBasicMaterial({ color: FLOOR_COLORS[f] });
+    addBox(HALF*2-.4, .1, .1, neon, 0, y+2.6, HALF-.22);
+    addBox(HALF*2-.4, .1, .1, neon, 0, y+2.6, -(HALF-.22));
+    addBox(.1, .1, HALF*2-.4, neon, HALF-.22, y+2.6, 0);
+    addBox(.1, .1, HALF*2-.4, neon, -(HALF-.22), y+2.6, 0);
+
+    // ceiling light panels (emissive)
+    const panel = new THREE.MeshStandardMaterial({ color:0xdde8ef, emissive:0xbde6ff, emissiveIntensity:.18, roughness:.5 });
+    for (const px of [-21, 0, 21]) for (const pz of [-21, 0, 21]) {
+        if (f > 0 && Math.abs(px) < HOLE && Math.abs(pz) < HOLE) continue;
+        addBox(5, .06, 2.2, panel, px, y+FH-.72, pz);
+    }
+}
+}
+
+/* ════════════════ STAIRCASE — connecting module spiral ════════════════
+   Built from flight + landing MODULES on the atrium grid. Each flight runs
+   one side of the atrium from corner A (floor f) up to corner B (floor f+1),
+   and a flat LANDING sits at B where the next flight begins — so flights
+   connect by construction (no magic-number gaps) and every landing also
+   overlaps the floor band, so you can step off onto each level. */
+function buildStairs() {
+    const stepMat = new THREE.MeshStandardMaterial({ map: texMetal, color:0xaebbc4, roughness:.58, metalness:.2 });
+    const landMat = new THREE.MeshStandardMaterial({ map: texMetal, color:0x9fb0bb, roughness:.5, metalness:.25 });
+    const SR = HOLE - 1.5;            // stair-run inset from tower centre (landings overlap the floor bands)
+    const SW = 3.0;                  // stair / landing width
+    const LAND = 4.0;                // landing footprint
+    const corners = [[SR, -SR], [SR, SR], [-SR, SR], [-SR, -SR]];   // 4 atrium corners, CCW
+    const N = 20;                    // steps per flight
+    const stepGeo = new THREE.BoxGeometry(SW, .34, (FH / N) + .4);
+    const steps = new THREE.InstancedMesh(stepGeo, stepMat, (FLOORS - 1) * N);
+    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S = new THREE.Vector3(1, 1, 1);
+    let si = 0;
+    for (let f = 0; f < FLOORS - 1; f++) {
+        const a = corners[f % 4], b = corners[(f + 1) % 4];
+        const y0 = f * FH, y1 = (f + 1) * FH;
+        const runX = a[0] !== b[0];          // flight travels along X (else along Z)
+        for (let k = 0; k < N; k++) {
+            const t = (k + .5) / N;
+            const x = a[0] + (b[0] - a[0]) * t;
+            const z = a[1] + (b[1] - a[1]) * t;
+            const y = y0 + (y1 - y0) * t;
+            Q.setFromAxisAngle(V.set(0, 1, 0), runX ? Math.PI / 2 : 0);
+            M.compose(new THREE.Vector3(x, y - .17, z), Q, S);
+            steps.setMatrixAt(si++, M);
+        }
+        // collision ramp (explicit run coords c0→c1 so the slope maps exactly to the flight)
+        ramps.push(runX
+            ? { axis:'x', c0:a[0], c1:b[0], y0, y1, minX:Math.min(a[0],b[0]), maxX:Math.max(a[0],b[0]), minZ:a[1]-SW/2, maxZ:a[1]+SW/2 }
+            : { axis:'z', c0:a[1], c1:b[1], y0, y1, minZ:Math.min(a[1],b[1]), maxZ:Math.max(a[1],b[1]), minX:a[0]-SW/2, maxX:a[0]+SW/2 });
+        // flat landing at the top corner — flight f ends here and flight f+1 begins here
+        platforms.push({ minX:b[0]-LAND/2, maxX:b[0]+LAND/2, minZ:b[1]-LAND/2, maxZ:b[1]+LAND/2, y:y1 });
+        addBox(LAND, .34, LAND, landMat, b[0], y1 - .17, b[1]);
+    }
+    // a starting landing at corner 0 on the ground floor so the first flight has a base
+    platforms.push({ minX:corners[0][0]-LAND/2, maxX:corners[0][0]+LAND/2, minZ:corners[0][1]-LAND/2, maxZ:corners[0][1]+LAND/2, y:0 });
+    steps.count = si;
+    tower.add(steps);
+}
+
+/* glass curtain wall + mullions */
+function buildGlass() {
+    const H = FLOORS*FH;
+    const glass = new THREE.MeshPhysicalMaterial({ color:0xc4e5f6, transparent:true, opacity:.26, roughness:.025, metalness:0, transmission:.18, thickness:.08, side:THREE.DoubleSide });
+    // the -Z side is left OPEN as a projection balcony (the video plays on a skyscraper across the gap)
+    for (const [x,z,ry] of [[0,HALF,0],[HALF,0,Math.PI/2],[-HALF,0,Math.PI/2]]) {
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(HALF*2, H), glass);
+        p.position.set(x, H/2, z); p.rotation.y = ry; tower.add(p);
+    }
+    const mull = new THREE.MeshStandardMaterial({ color:0xbac8d2, roughness:.34, metalness:.12 });
+    const vGeo = new THREE.BoxGeometry(.18, H, .18);
+    const inst = new THREE.InstancedMesh(vGeo, mull, 4*13);
+    const M = new THREE.Matrix4(); let mi=0;
+    for (let s=0;s<4;s++) { if (s===1) continue;   // skip mullions on the open -Z balcony side
+        for (let k=0;k<=12;k++) {
+            const t = -HALF + k*(HALF*2/12);
+            const pos = s===0?[t,H/2,HALF]:s===2?[HALF,H/2,t]:[-HALF,H/2,t];
+            M.makeTranslation(...pos); inst.setMatrixAt(mi++, M);
+        }
+    }
+    inst.count=mi; tower.add(inst);
+    // open-air balcony railing on the -Z edge — lean out over the city, don't fall off
+    const balRail = new THREE.MeshPhysicalMaterial({ color:0xdaf4ff, transparent:true, opacity:.30, roughness:.02, transmission:.25, thickness:.06, side:THREE.DoubleSide });
+    addBox(20, 1.12, .12, balRail, -20, .57, -HALF).userData.collidable = true;
+    addBox(20, .12, .2, mull, -20, 1.14, -HALF);
+    addBox(20, 1.12, .12, balRail, 20, .57, -HALF).userData.collidable = true;
+    addBox(20, .12, .2, mull, 20, 1.14, -HALF);
+    // corner columns
+    const col = new THREE.MeshStandardMaterial({ map: texConcrete, color:0xd0dce4, roughness:.5, metalness:.04 });
+    for (const [x,z] of [[HALF,HALF],[HALF,-HALF],[-HALF,HALF],[-HALF,-HALF]])
+        addBox(1.6, H, 1.6, col, x, H/2, z).userData.collidable = true;
+}
+
+/* lift platform */
+const lift = { mesh:null, floor:0, moving:false, t:0, from:0, to:0, x:-HOLE+2.5, z:-HOLE+2.5 };
+function buildLift() {
+    const g = new THREE.Group();
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(4,.24,4), new THREE.MeshStandardMaterial({ map:texMetal, color:0xbfd0db, metalness:.16, roughness:.44 }));
+    const ring = new THREE.Mesh(new THREE.BoxGeometry(4.2,.06,4.2), new THREE.MeshBasicMaterial({ color:0x2f9dff }));
+    ring.position.y = .16; g.add(plate, ring);
+    g.position.set(lift.x, .12, lift.z);
+    tower.add(g); lift.mesh = g;
+    // shaft glow guides
+    const guide = new THREE.MeshBasicMaterial({ color:0x2f9dff, transparent:true, opacity:.2 });
+    for (const [gx,gz] of [[lift.x-2.2,lift.z-2.2],[lift.x+2.2,lift.z-2.2],[lift.x-2.2,lift.z+2.2],[lift.x+2.2,lift.z+2.2]])
+        addBox(.07, FLOORS*FH, .07, guide, gx, FLOORS*FH/2, gz);
+}
+
+/* props — deliberate, grid-aligned office layout (rows of desks + racks), not random scatter */
+function buildProps() {
+    const deskTop = new THREE.MeshStandardMaterial({ color:0xd8e3ea, roughness:.48, metalness:.04 });
+    const deskLeg = new THREE.MeshStandardMaterial({ color:0x8798a6, roughness:.38, metalness:.18 });
+    const rackMat = new THREE.MeshStandardMaterial({ color:0xb8c8d3, roughness:.45, metalness:.12 });
+    const ledMat = new THREE.MeshBasicMaterial({ color:0x2f9dff });
+    const screenMat = new THREE.MeshBasicMaterial({ color:0xb9e8ff });
+
+    function makeDesk() {
+        const g = new THREE.Group();
+        const top = new THREE.Mesh(new THREE.BoxGeometry(3, .12, 1.4), deskTop); top.position.y = 1.05; g.add(top);
+        for (const [lx,lz] of [[-1.35,-.55],[1.35,-.55],[-1.35,.55],[1.35,.55]]) {
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(.1,1.05,.1), deskLeg); leg.position.set(lx,.52,lz); g.add(leg);
+        }
+        const mon = new THREE.Mesh(new THREE.BoxGeometry(1.1,.66,.06), deskLeg); mon.position.set(0,1.5,-.3); g.add(mon);
+        const scr = new THREE.Mesh(new THREE.PlaneGeometry(1,.56), screenMat); scr.position.set(0,1.5,-.265); g.add(scr);
+        return g;
+    }
+    function makeRack() {
+        const g = new THREE.Group();
+        const r = new THREE.Mesh(new THREE.BoxGeometry(1.1,2.2,1), rackMat); r.position.y = 1.1; g.add(r);
+        for (let k=0;k<5;k++){ const led = new THREE.Mesh(new THREE.BoxGeometry(.5,.05,.02), ledMat); led.position.set(0,.4+k*.4,.52); g.add(led); }
+        return g;
+    }
+    function makeCrates() {
+        const g = new THREE.Group();
+        const c1 = new THREE.Mesh(new THREE.BoxGeometry(1.2,1.2,1.2), new THREE.MeshStandardMaterial({ map:texMetal, roughness:.8 })); c1.position.y=.6; g.add(c1);
+        const c2 = c1.clone(); c2.scale.setScalar(.7); c2.position.set(.2,1.62,.1); c2.rotation.y=.5; g.add(c2);
+        return g;
+    }
+    const place = (factory, x, y, z, ry) => {
+        const g = factory(); g.position.set(snap(x), y, snap(z)); g.rotation.y = ry; g.userData.collidable = true; tower.add(g);
+    };
+    // central stage / bar footprint on the skydeck — keep desks out of it
+    const blocked = (f, x, z) => f === 0 && Math.abs(x) < 6 && z > -14 && z < -2;
+
+    for (let f = 0; f < FLOORS; f++) {
+        const y = f * FH;
+        // two facing rows of workstations on the +X and -X side bands
+        for (const z of [-8, -4, 0, 4, 8]) {
+            if (!blocked(f, 20, z)) place(makeDesk, 20, y, z, -Math.PI/2);   // +X band, facing inward
+            if (!blocked(f, -20, z)) place(makeDesk, -20, y, z,  Math.PI/2); // -X band, facing inward
+        }
+        // a server-rack bank lining the +Z band
+        for (const x of [-10, -5, 5, 10]) if (!blocked(f, x, 20)) place(makeRack, x, y, 20, Math.PI);
+        // crate stacks tucked in the back corners
+        place(makeCrates, 25, y, 25, 0);
+        place(makeCrates, -25, y, 25, Math.PI/2);
+    }
+}
+
+let ariaVrm = null;
+let ariaVrmTime = 0;
+let ariaLook = null;        // invisible target the VRM's eyes/head track
+let ariaBlinkT = 1.4;       // seconds until next blink
+
+async function buildAriaBar() {
+    return new Promise((resolve, reject) => {
+        const barGroup = new THREE.Group();
+        // Tucked against the -X glass wall (wall is at x=-30). Counter runs ALONG the wall (long in Z),
+        // bartender's back to the wall, customers/stools on the room (+X) side.
+        barGroup.position.set(-27.6, 0, -8);
+
+        // Counter — 2 deep in X, 6 long in Z
+        const counterMat = new THREE.MeshStandardMaterial({ color: 0x111622, roughness: 0.1, metalness: 0.8 });
+        const counterTopMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.3, metalness: 0.9 });
+        addBox(2, 1.1, 6, counterMat, 0, 0.55, 0, barGroup);
+        addBox(2.2, 0.05, 6.2, counterTopMat, 0, 1.125, 0, barGroup);
+
+        // Neon under-glow
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0x7cffb2 });
+        addBox(1.8, 0.05, 5.8, glowMat, 0, 1.05, 0, barGroup);
+
+        // Stools on the room side (+X), spaced down the length of the counter
+        const stoolMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.8 });
+        const seatMat = new THREE.MeshStandardMaterial({ color: 0x4a5a7a, roughness: 0.9 });
+        for(let i=-2; i<=2; i+=2) {
+            addBox(0.1, 0.8, 0.1, stoolMat, 1.7, 0.4, i, barGroup);
+            const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16), seatMat);
+            seat.position.set(1.7, 0.85, i);
+            barGroup.add(seat);
+        }
+        
+        // Point light for the bar
+        const light = new THREE.PointLight(0xd4af37, 2, 8);
+        light.position.set(0, 2.5, 0);
+        barGroup.add(light);
+        
+        tower.add(barGroup);
+        
+        // Load VRM
+        const loader = new GLTFLoader();
+        loader.register((parser) => new VRMLoaderPlugin(parser));
+            
+            loader.load('media/models/Guardian_Angel.vrm', (gltf) => {
+                ariaVrm = gltf.userData.vrm;
+                const vrm = ariaVrm;
+
+                // NOTE: do NOT call VRMUtils.removeUnnecessaryJoints here — on this model it
+                // rebinds each sub-mesh to its own reduced skeleton, so posing the humanoid arms
+                // only moves one mesh and the rest stay stuck in the T-pose.
+                // Leave VRM materials exactly as authored — do NOT force DoubleSide. The face
+                // uses transparent decal overlays (eyes/brows/mouth); rendering their back faces
+                // shows up as a discoloured "mask" patch over her face.
+                vrm.scene.traverse((o) => {
+                    if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false; }
+                });
+
+                // ── relaxed idle pose: lift her out of the default T-pose ──
+                const h = vrm.humanoid;
+                const setBone = (name, x, y, z) => { const b = h.getNormalizedBoneNode(name); if (b) b.rotation.set(x, y, z); };
+                setBone('leftUpperArm',  0.05, 0, -1.42);   // arms down at her sides
+                setBone('rightUpperArm', 0.05, 0,  1.42);
+                setBone('leftLowerArm',  0.18, 0, -0.12);   // soft elbow, hands rest toward the counter
+                setBone('rightLowerArm', 0.18, 0,  0.12);
+                setBone('leftHand',  0, 0, 0);
+                setBone('rightHand', 0, 0, 0);
+                setBone('spine',  0.04, 0, 0);                  // gentle counter-lean
+                setBone('chest',  0.02, 0, 0);
+                setBone('leftUpperLeg',  0, 0,  0.04);          // relaxed stance
+                setBone('rightUpperLeg', 0, 0, -0.04);
+                vrm.update(0);
+
+                // ── auto-scale to a believable height + ground her feet ──
+                vrm.scene.rotation.y = Math.PI / 2;             // face the room (+X), back to the wall
+                vrm.scene.scale.setScalar(1);
+                vrm.scene.position.set(-29.0, 0, -8);           // behind the counter, just off the wall
+                vrm.scene.updateMatrixWorld(true);
+                let box = new THREE.Box3().setFromObject(vrm.scene);
+                const curH = box.max.y - box.min.y;
+                if (curH > 0.1) vrm.scene.scale.setScalar(1.72 / curH);
+                vrm.scene.updateMatrixWorld(true);
+                box = new THREE.Box3().setFromObject(vrm.scene);
+                vrm.scene.position.y += -box.min.y;             // feet exactly on floor
+
+                // ── she watches the player ──
+                ariaLook = new THREE.Object3D();
+                scene.add(ariaLook);
+                if (vrm.lookAt) vrm.lookAt.target = ariaLook;
+
+                tower.add(vrm.scene);
+
+                // ── floating "ARIA" name tag so players know who she is ──
+                const headY = (box.max.y - box.min.y);   // grounded, so this is her head height
+                const tagC = document.createElement('canvas'); tagC.width = 256; tagC.height = 80;
+                const tg = tagC.getContext('2d');
+                tg.font = '800 46px "Space Grotesk", Arial'; tg.textAlign = 'center'; tg.textBaseline = 'middle';
+                tg.shadowColor = 'rgba(0,0,0,.95)'; tg.shadowBlur = 14;
+                tg.fillStyle = '#ffd34a'; tg.fillText('ARIA', 128, 40);
+                const tagTex = new THREE.CanvasTexture(tagC); tagTex.colorSpace = THREE.SRGBColorSpace;
+                const tagSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex, transparent: true, depthTest: false, depthWrite: false }));
+                tagSprite.scale.set(1.5, 0.47, 1); tagSprite.renderOrder = 999;
+                tagSprite.position.set(vrm.scene.position.x, headY + 0.42, vrm.scene.position.z);
+                tower.add(tagSprite);
+
+                resolve();
+            }, undefined, (e) => {
+                console.error('Failed to load VRM', e);
+                resolve(); // Don't crash the whole load process if VRM fails
+            });
+    });
+}
+
+/* ════════════════ CITY OUTSIDE ════════════════ */
+// procedural window-grid facade — lit windows + dark mullions, applied to any building material
+function applyWindowGrid(material, o = {}) {
+    const cw = o.cw || 4.6, ch = o.ch || 5.2, bright = o.bright || 2.8, litFrac = o.litFrac || 0.70, mull = o.mull || 0.34;
+    material.onBeforeCompile = (shader) => {
+        material.userData.shader = shader;
+        shader.vertexShader = 'varying vec3 vWP;\n' + shader.vertexShader.replace(
+            '#include <worldpos_vertex>',
+            '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;'
+        );
+        shader.fragmentShader = 'varying vec3 vWP;\nfloat h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n' + shader.fragmentShader;
+        shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <emissivemap_fragment>',
+            `#include <emissivemap_fragment>
+             float u = (abs(vWP.x) > abs(vWP.z)) ? vWP.z : vWP.x;
+             vec2 cs = vec2(${cw.toFixed(2)}, ${ch.toFixed(2)});
+             vec2 g = vec2(u, vWP.y);
+             vec2 cell = floor(g / cs);
+             vec2 f = fract(g / cs);
+             float pane = step(0.12, f.x) * step(0.12, f.y) * step(f.x, 0.88) * step(f.y, 0.88);
+             float lit = step(${litFrac.toFixed(2)}, h21(cell));
+             vec3 win = mix(vec3(0.20, 0.30, 0.46), vec3(1.0, 0.93, 0.74), lit);
+             totalEmissiveRadiance += win * pane * (0.06 + lit * ${bright.toFixed(2)});
+             diffuseColor.rgb *= mix(${mull.toFixed(2)}, 1.0, pane);
+            `
+        );
+    };
+}
+function buildCity() {
+    const archetypes = (window.AXEngine && window.AXEngine.ArchitecturalGenerator) 
+        ? window.AXEngine.ArchitecturalGenerator.createCityBuildingArchetypes() 
+        : [new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0)];
+
+    const cityBaseY = -280;
+    const hazeY = -58;
+    
+    // City material with a PROCEDURAL WINDOW-GRID facade — turns textureless boxes into
+    // detailed skyscrapers (lit windows + mullions) for an AAA skyline read.
+    const bMat = new THREE.MeshStandardMaterial({ color:0xeef3f9, roughness:.34, metalness:.06, emissive:0x0b1420, emissiveIntensity:1 });
+    applyWindowGrid(bMat, { cw:4.6, ch:5.2, bright:2.8, litFrac:0.70 });
+    dayNight.cityMat = bMat;
+    
+    const cityMeshes = archetypes.map(geo => {
+        const im = new THREE.InstancedMesh(geo, bMat, 430);
+        im.count = 0;
+        scene.add(im);
+        return im;
+    });
+
+    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S = new THREE.Vector3();
+    for (let i = 0; i < 430; i++) {
+        const ang = rng()*Math.PI*2;
+        const rad = 92 + rng()*1050;
+        const near = Math.max(0, 1 - rad / 1140);
+        const w = 12 + rng()*42;
+        const d = 12 + rng()*42;
+        const h = 90 + rng()*360*near + (rng() < .18 ? 180 + rng()*260 : 0);
+        const x = Math.cos(ang)*rad;
+        const z = Math.sin(ang)*rad;
+        if (z > 50 && Math.abs(x) < 175 && rad < 560) continue;
+        
+        Q.setFromAxisAngle(new THREE.Vector3(0,1,0), (rng()*4|0)*Math.PI/2);
+        M.compose(V.set(x, cityBaseY, z), Q, S.set(w,h,w)); // Use w for both X and Z to avoid weird scaling on cylinders
+        
+        const im = cityMeshes[rng() * cityMeshes.length | 0];
+        im.setMatrixAt(im.count++, M);
+    }
+    const crownMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.16, blending:THREE.AdditiveBlending, depthWrite:false });
+    dayNight.crownMat = crownMat;
+    for (let i=0;i<80;i++){
+        const a = rng()*Math.PI*2;
+        const r = 115 + rng()*940;
+        const pad = new THREE.Mesh(new THREE.CircleGeometry(8+rng()*28, 20).rotateX(-Math.PI/2), crownMat);
+        pad.position.set(Math.cos(a)*r, cityBaseY + 115 + rng()*245, Math.sin(a)*r);
+        scene.add(pad);
+    }
+    const roofMat = new THREE.MeshStandardMaterial({ color:0xf9fcff, roughness:.24, metalness:.08, emissive:0xc8ebff, emissiveIntensity:.025 });
+    const roofTrim = new THREE.MeshBasicMaterial({ color:0x2f9dff, transparent:true, opacity:.38, depthWrite:false });
+    dayNight.roofMat = roofMat;
+    dayNight.roofTrim = roofTrim;
+    for (let i=0;i<34;i++){
+        const a = rng()*Math.PI*2;
+        const r = 80 + rng()*260;
+        const x = Math.cos(a)*r;
+        const z = Math.sin(a)*r;
+        if (z > 35 && Math.abs(x) < 145 && r < 330) continue;
+        const w = 18 + rng()*52;
+        const d = 18 + rng()*52;
+        const y = -34 - rng()*42;
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(w, .34, d), roofMat);
+        roof.position.set(x, y, z);
+        roof.rotation.y = (rng()*4|0)*Math.PI/2;
+        scene.add(roof);
+        const trim = new THREE.Mesh(new THREE.BoxGeometry(w + .8, .08, d + .8), roofTrim);
+        trim.position.copy(roof.position);
+        trim.position.y += .24;
+        trim.rotation.y = roof.rotation.y;
+        scene.add(trim);
+    }
+    // the real street is far below; the first playable floor should read as a skydeck, not a lobby.
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(1750,64).rotateX(-Math.PI/2),
+        new THREE.MeshStandardMaterial({ color:0xbfd9eb, roughness:.82, metalness:.02 }));
+    ground.position.y = cityBaseY - 2.2; scene.add(ground);
+    const hazeMat = new THREE.MeshBasicMaterial({ color:0xeaf8ff, transparent:true, opacity:.22, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+    dayNight.hazeMat = hazeMat;
+    const haze = new THREE.Mesh(new THREE.CircleGeometry(1220,64).rotateX(-Math.PI/2), hazeMat);
+    haze.position.y = hazeY;
+    scene.add(haze);
+    const cloudMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.08, blending:THREE.AdditiveBlending, depthWrite:false });
+    dayNight.cloudMat = cloudMat;
+    for (let i=0;i<54;i++){
+        const p = new THREE.Mesh(new THREE.CircleGeometry(38+rng()*110, 22).rotateX(-Math.PI/2), cloudMat);
+        const a=rng()*Math.PI*2, r=105+rng()*900;
+        p.scale.set(1.8+rng()*2.8, 1, .55+rng()*.9);
+        p.rotation.z = rng()*Math.PI;
+        p.position.set(Math.cos(a)*r, hazeY + (rng()*12-6), Math.sin(a)*r);
+        scene.add(p);
+    }
+    // ── CLOUD SEA: a soft bank the skyline rises out of, hiding the flat ground far below ──
+    const cloudTex = makeTexture(128, (g, s) => {
+        const r = g.createRadialGradient(s/2, s/2, 4, s/2, s/2, s/2);
+        r.addColorStop(0, 'rgba(255,255,255,0.96)');
+        r.addColorStop(0.5, 'rgba(238,247,255,0.55)');
+        r.addColorStop(1, 'rgba(238,247,255,0)');
+        g.fillStyle = r; g.fillRect(0, 0, s, s);
+    });
+    const cloudSeaMat = new THREE.SpriteMaterial({ map: cloudTex, transparent: true, opacity: .9, depthWrite: false, depthTest: true });
+    dayNight.cloudSeaMat = cloudSeaMat;
+    // (Removed the broad horizontal cloud-deck planes: being huge + horizontal, they passed THROUGH
+    //  the tall projection skyscraper and poked out its front. The vertical sprites below depth-test
+    //  against the building correctly, so they read as a cloud bank without clipping it.)
+
+    // is this xz inside the projection-skyscraper corridor (building at x -25..25, z -68..-96)?
+    const inProjectionCorridor = (x, z) => (z < -35 && Math.abs(x) < Math.max(80, -z * 0.7));
+
+    // dense white cloud SEA concentrated at the horizon → a solid bank the skyline rises out of,
+    // burying the flat ground. Layered close-in so it reads as mass even against a pale sky.
+    for (let i = 0; i < 320; i++) {
+        const a = rng()*Math.PI*2, r = 180 + rng()*820;
+        const cx = Math.cos(a)*r, cz = Math.sin(a)*r;
+        if (inProjectionCorridor(cx, cz)) continue;   // keep clouds out of the skyscraper / screen sightline
+        const sp = new THREE.Sprite(cloudSeaMat);
+        const sc = 120 + rng()*340;
+        sp.scale.set(sc, sc*0.62, 1);
+        sp.position.set(cx, -8 - rng()*64, cz);       // tight horizon band ≈ -8..-72
+        sp.renderOrder = -1;
+        scene.add(sp);
+    }
+    // bright sun disk in the blue sky
+    const sunTex = makeTexture(128,(g,s)=>{ const r=g.createRadialGradient(s/2,s/2,5,s/2,s/2,s/2);
+        r.addColorStop(0,'rgba(255,252,224,1)'); r.addColorStop(.34,'rgba(255,240,160,.82)'); r.addColorStop(1,'rgba(255,240,160,0)');
+        g.fillStyle=r; g.fillRect(0,0,s,s); });
+    const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map:sunTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending }));
+    sun.scale.setScalar(340); sun.position.set(-720,860,-900); scene.add(sun);
+    dayNight.sun = sun;
+    const moonTex = makeTexture(128,(g,s)=>{ const r=g.createRadialGradient(s*.42,s*.38,2,s/2,s/2,s*.48);
+        r.addColorStop(0,'rgba(246,250,255,1)'); r.addColorStop(.48,'rgba(200,220,255,.82)'); r.addColorStop(1,'rgba(200,220,255,0)');
+        g.fillStyle=r; g.fillRect(0,0,s,s); });
+    const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map:moonTex, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending }));
+    moon.scale.setScalar(170); scene.add(moon); dayNight.moon = moon;
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = [];
+    for (let i=0;i<700;i++){
+        const a = rng()*Math.PI*2;
+        const y = 280 + rng()*1000;
+        const r = 720 + rng()*1250;
+        starPos.push(Math.cos(a)*r, y, Math.sin(a)*r);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color:0xeaf3ff, size:2.2, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending }));
+    scene.add(stars); dayNight.stars = stars;
+}
+
+/* ════════════════ DISCS ════════════════ */
+const texLoader = new THREE.TextureLoader();
+const discs = [];
+function buildDiscs() {
+    const discGeo = new THREE.CylinderGeometry(.6,.6,.07,36);
+    const ringGeo = new THREE.TorusGeometry(.61,.05,10,40);
+    const labelGeo = new THREE.CircleGeometry(.42, 32);
+    // floating "MINIGAME" tag for dimension discs
+    function makeTag(text){
+        const c = document.createElement('canvas'); c.width = 512; c.height = 140;
+        const cx = c.getContext('2d');
+        cx.font = '800 60px "Space Grotesk", Arial'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+        cx.shadowColor = 'rgba(0,0,0,.85)'; cx.shadowBlur = 14;
+        cx.fillStyle = '#ff3df0'; cx.fillText(text, 256, 70);
+        const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, transparent: true, depthTest: false, depthWrite: false }));
+        s.scale.set(3.4, 0.93, 1); s.renderOrder = 999;
+        return s;
+    }
+    for (let i = 0; i < 26; i++) {
+        const f = Math.floor(i/2);
+        const isDim = !!DIMENSIONS[i];
+        const color = isDim ? 0xff2bd6 : FLOOR_COLORS[f];
+        // two per floor, deterministic spots on opposite bands
+        let x, z, tries=0;
+        do {
+            const side = (i%2===0) ? 1 : -1;
+            x = side * (HOLE+3 + rng()*(HALF-HOLE-7));
+            z = (rng()*2-1)*(HALF-6);
+            if (rng()<.5){ const t=x; x=z; z=t; }
+            x = snap(x); z = snap(z);
+            tries++;
+        } while (tries<30 && f>0 && !onBand(x, z, f));
+        const y = f*FH + 1.5;
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({ color:0xe8edf6, roughness:.15, metalness:.9, emissive:color, emissiveIntensity:.12 }));
+        body.rotation.x = Math.PI/2;
+        const ring = new THREE.Mesh(ringGeo, new THREE.MeshStandardMaterial({ color, roughness:.25, metalness:.9, emissive:color, emissiveIntensity:.7 }));
+        const label = new THREE.Mesh(labelGeo, new THREE.MeshBasicMaterial({ map: texLoader.load(coverURL(TRACKS[i])) }));
+        label.position.z = .045;
+        const label2 = label.clone(); label2.rotation.y = Math.PI; label2.position.z = -.045;
+        g.add(body, ring, label, label2);
+        // dimension discs get a second portal ring + a floating MINIGAME tag
+        let tag = null;
+        if (isDim) {
+            const portal = new THREE.Mesh(new THREE.TorusGeometry(.85, .07, 12, 48),
+                new THREE.MeshStandardMaterial({ color:0xff2bd6, emissive:0xff2bd6, emissiveIntensity:1.2, metalness:.6, roughness:.3 }));
+            portal.rotation.x = Math.PI/2; g.add(portal); g.userData.portal = portal;
+            tag = makeTag('◈ DIMENSION'); tag.position.set(x, y + 1.5, z); scene.add(tag);
+        }
+        g.position.set(x, y, z);
+        const beam = new THREE.Mesh(new THREE.CylinderGeometry(isDim?.3:.22, isDim?.7:.55, FH-2.4, 12, 1, true),
+            new THREE.MeshBasicMaterial({ color, transparent:true, opacity: isDim?.32:.16, side:THREE.DoubleSide, depthWrite:false }));
+        beam.position.set(x, f*FH + (FH-2.4)/2 + .4, z);
+        scene.add(g, beam);
+        discs.push({ idx:i, group:g, beam, tag, base:y, floor:f, collected:false, dim: DIMENSIONS[i] || null });
+    }
+}
+
+/* day/night: one real minute is one in-game hour, so a full day lasts 24 minutes */
+const dnSkyDay = new THREE.Color(0xb9dcff);
+const dnSkyDawn = new THREE.Color(0xf7bd7a);
+const dnSkyNight = new THREE.Color(0x07111f);
+const dnFogDay = new THREE.Color(0xd8f0ff);
+const dnFogDawn = new THREE.Color(0xffd7a2);
+const dnFogNight = new THREE.Color(0x0b1528);
+const dnSunDay = new THREE.Color(0xfff1c7);
+const dnSunDawn = new THREE.Color(0xff9f55);
+const dnTmp = new THREE.Color();
+const dnTmp2 = new THREE.Color();
+function smoothstep(edge0, edge1, x) {
+    const t = THREE.MathUtils.clamp((x - edge0) / (edge1 - edge0), 0, 1);
+    return t * t * (3 - 2 * t);
+}
+
+function updateDayNight() {
+    const hour = (START_GAME_HOUR + performance.now() / GAME_HOUR_MS) % 24;
+    dayNight.hour = hour;
+    const phase = ((hour - 6) / 24) * Math.PI * 2;
+    const sunY = Math.sin(phase);
+    const sunX = Math.cos(phase);
+    const daylight = smoothstep(-0.12, 0.28, sunY);
+    const night = 1 - daylight;
+    const twilight = Math.pow(THREE.MathUtils.clamp(1 - Math.abs(sunY) / 0.34, 0, 1), 1.6);
+    const sunHeight = Math.max(-0.18, sunY);
+
+    // Phase 3: Publish raw state globally
+    if (window.AXEngine && window.AXEngine.stateBus) {
+        window.AXEngine.stateBus.set('DAYLIGHT', daylight);
+        window.AXEngine.stateBus.set('NIGHT', night);
+        window.AXEngine.stateBus.set('TWILIGHT', twilight);
+        window.AXEngine.stateBus.set('SUN_X', sunX);
+        window.AXEngine.stateBus.set('SUN_Y', sunY);
+        window.AXEngine.stateBus.set('SUN_HEIGHT', sunHeight);
+    }
+}
+
+// Phase 3: Decoupled Subscribers listening to StateBus
+function setupLightingSubscribers() {
+    if (!window.AXEngine || !window.AXEngine.stateBus) return;
+    
+    window.AXEngine.stateBus.subscribe('DAYLIGHT', (daylight) => {
+        const night = window.AXEngine.stateBus.get('NIGHT');
+        const twilight = window.AXEngine.stateBus.get('TWILIGHT');
+        const sunX = window.AXEngine.stateBus.get('SUN_X');
+        const sunY = window.AXEngine.stateBus.get('SUN_Y');
+        const sunHeight = window.AXEngine.stateBus.get('SUN_HEIGHT');
+
+        dnTmp.copy(dnSkyNight).lerp(dnSkyDay, daylight).lerp(dnSkyDawn, twilight * 0.58);
+        scene.background.copy(dnTmp);
+        dnTmp2.copy(dnFogNight).lerp(dnFogDay, daylight).lerp(dnFogDawn, twilight * 0.5);
+        scene.fog.color.copy(dnTmp2);
+        scene.fog.density = THREE.MathUtils.lerp(0.00034, 0.00011, daylight) + twilight * 0.000035;
+
+        sunlight.position.set(sunX * 860, 80 + sunHeight * 900, -720);
+        sunlight.intensity = 0.04 + daylight * 1.16 + twilight * 0.28;
+        sunlight.color.copy(dnSunDay).lerp(dnSunDawn, twilight * 0.8);
+        hemi.intensity = 0.16 + daylight * 0.7 + twilight * 0.12;
+        amb.intensity = 0.12 + daylight * 0.3 + twilight * 0.06;
+        renderer.toneMappingExposure = 0.62 + daylight * 0.34 + twilight * 0.1;
+        bloom.strength = 0.08 + night * 0.18 + twilight * 0.08;
+
+        floorLights.forEach((l) => {
+            l.intensity = 11 + night * 24 + twilight * 8;
+            l.color.setHex(daylight > 0.45 ? 0xd8f0ff : 0x8fb8ff);
+        });
+        if (dayNight.cityMat) {
+            dayNight.cityMat.color.setHex(daylight > 0.5 ? 0xf8fbff : 0xb9c8d9);
+            dayNight.cityMat.emissive.setHex(daylight > 0.35 ? 0xb7dcff : 0x8fc6ff);
+            dayNight.cityMat.emissiveIntensity = 0.025 + night * 0.32 + twilight * 0.12;
+        }
+        if (dayNight.roofMat) dayNight.roofMat.emissiveIntensity = 0.018 + night * 0.12 + twilight * 0.04;
+        if (dayNight.roofTrim) dayNight.roofTrim.opacity = 0.24 + night * 0.42 + twilight * 0.22;
+        if (dayNight.crownMat) dayNight.crownMat.opacity = 0.08 + night * 0.38 + twilight * 0.16;
+        if (dayNight.hazeMat) {
+            dayNight.hazeMat.color.copy(dnTmp2);
+            dayNight.hazeMat.opacity = 0.14 + daylight * 0.12 + twilight * 0.16;
+        }
+        if (dayNight.cloudMat) dayNight.cloudMat.opacity = 0.04 + daylight * 0.06 + twilight * 0.05;
+        if (dayNight.sun) {
+            dayNight.sun.position.set(sunX * 880, 130 + sunHeight * 900, -900);
+            dayNight.sun.material.opacity = daylight;
+            dayNight.sun.scale.setScalar(260 + twilight * 140);
+        }
+        if (dayNight.moon) {
+            dayNight.moon.position.set(-sunX * 760, 160 + Math.max(0, -sunY) * 760, 820);
+            dayNight.moon.material.opacity = Math.max(0, night - twilight * 0.45) * 0.85;
+        }
+        if (dayNight.stars) dayNight.stars.material.opacity = Math.max(0, night - twilight * 0.35) * 0.72;
+    });
+}
+setupLightingSubscribers();
+
+/* ════════════════ THE COURIER (robot + stage screen) ════════════════ */
+const STAGE_POS = { x: 0, y: 0.4, z: -9.2 };
+const STAGE_FBX_PATH = 'assets/models/';
+const STAGE_FBX_FILE = 'base_basic_pbr.fbx';
+const STAGE_FBX_HEIGHT = 2.0;   // courier stands at roughly player height, not a giant
+const ROBOT_FACE_PLAYER_ROT = 0;
+const ROBOT_FACE_PROJECTOR_ROT = Math.PI;
+const PLAYER_MODEL_HEIGHT = 1.75;
+let robot = null, robotScreenVid = null, robotScreenTex = null, projectionRig = null, robotGreeted = false, playerRobot = null, playerMoving = false, nearRobot = false;
+let currentFloorNum = 0;
+// ARIA's emotion → the courier's mocap clips (dommy-mommy avatar emotion system)
+function ariaEmote(mood){
+    if (!robot) return;
+    switch (mood) {
+        case 'wave':  robot.playOnce('wave', 'chill'); break;
+        case 'cheer': robot.playOnce('yes', 'dance'); break;
+        case 'happy':
+        case 'proud': robot.playOnce('yes', 'chill'); break;
+        case 'think': robot.play('chill'); break;
+        default:      robot.play('chill');
+    }
+    
+    if (ariaVrm) {
+        const exp = ariaVrm.expressionManager;
+        exp.setValue('happy', 0);
+        exp.setValue('angry', 0);
+        exp.setValue('sad', 0);
+        exp.setValue('relaxed', 0);
+        exp.setValue('surprised', 0);
+        
+        if (mood === 'happy' || mood === 'cheer') exp.setValue('happy', 1.0);
+        else if (mood === 'think') exp.setValue('relaxed', 1.0);
+        else if (mood === 'wave') { exp.setValue('happy', 0.5); exp.setValue('relaxed', 0.5); }
+    }
+}
+function timeout(ms, label){
+    return new Promise((_, reject) => setTimeout(() => reject(new Error(label || 'Timed out')), ms));
+}
+function makeProjectionBeamGeometry() {
+    const s = { x: STAGE_POS.x, y: STAGE_POS.y + 2.58, z: STAGE_POS.z - 0.25 };
+    const t = { x: 0, y: 15.5, z: -67.6 };
+    const sw = .72, sh = .4, tw = 30, th = 16.9;
+    const verts = new Float32Array([
+        s.x-sw/2, s.y-sh/2, s.z,  s.x+sw/2, s.y-sh/2, s.z,  s.x+sw/2, s.y+sh/2, s.z,  s.x-sw/2, s.y+sh/2, s.z,
+        t.x-tw/2, t.y-th/2, t.z,  t.x+tw/2, t.y-th/2, t.z,  t.x+tw/2, t.y+th/2, t.z,  t.x-tw/2, t.y+th/2, t.z
+    ]);
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+    geom.setIndex([0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,3,7, 2,7,6, 3,0,4, 3,4,7]);
+    geom.computeVertexNormals();
+    return geom;
+}
+function createBalconyProjectionRig() {
+    const g = new THREE.Group();
+    scene.add(g);
+
+    const balconyMat = new THREE.MeshStandardMaterial({ color:0xf8fbff, roughness:.32, metalness:.04 });
+    const railMat = new THREE.MeshPhysicalMaterial({ color:0xdaf4ff, transparent:true, opacity:.36, roughness:.02, transmission:.25, thickness:.06 });
+    const frameMat = new THREE.MeshStandardMaterial({ color:0xf6f9fc, roughness:.28, metalness:.22 });
+    
+    // Balcony connects directly to the -Z edge (z=-30) and extends out to z=-38
+    addBox(20, .32, 8, balconyMat, 0, .06, -34, g);
+    addBox(20.4, .12, .18, frameMat, 0, .36, -29.95, g);
+    addBox(20.4, .12, .18, frameMat, 0, .36, -38.05, g);
+    addBox(.18, .12, 8.2, frameMat, -10.1, .36, -34, g);
+    addBox(.18, .12, 8.2, frameMat, 10.1, .36, -34, g);
+    addBox(19.8, 1.15, .08, railMat, 0, 1.05, -38.12, g);
+    addBox(.08, 1.15, 8, railMat, -10.15, 1.05, -34, g);
+    addBox(.08, 1.15, 8, railMat, 10.15, 1.05, -34, g);
+
+    const beamMat = new THREE.MeshBasicMaterial({
+        color: 0x8ee7ff,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide
+    });
+    const beam = new THREE.Mesh(makeProjectionBeamGeometry(), beamMat);
+    beam.visible = true;
+    beam.renderOrder = 21;
+    g.add(beam);
+    const outline = new THREE.LineSegments(
+        new THREE.EdgesGeometry(beam.geometry),
+        new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false })
+    );
+    outline.visible = true;
+    outline.renderOrder = 21;
+    g.add(outline);
+
+    const scanMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+    const scanPlanes = [];
+    const sy = STAGE_POS.y + 2.58;
+    const sz = STAGE_POS.z - 0.25;
+    for (let i=0;i<4;i++) {
+        const t = (i + 1) / 5;
+        const w = .72 + (30 - .72) * t;
+        const h = .4 + (16.9 - .4) * t;
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), scanMat.clone());
+        p.position.set(0, sy + (15.5 - sy) * t, sz + (-67.6 - sz) * t);
+        p.renderOrder = 22;
+        g.add(p);
+        scanPlanes.push(p);
+    }
+    const targetLight = new THREE.PointLight(0x7be7ff, 0, 26, 2);
+    targetLight.position.set(0, 5.15, -29.8);
+    g.add(targetLight);
+
+    // ── GIANT screen projected on a skyscraper across the gap (the lore money-shot) ──
+    // Glossy white Mirror's Edge aesthetic
+    const bldgMat = new THREE.MeshStandardMaterial({ color:0x0e1521, roughness:0.5, metalness:0.2, emissive:0x0a1322, emissiveIntensity:0.25 });
+    applyWindowGrid(bldgMat, { cw:2.6, ch:3.2, bright:3.6, litFrac:0.62, mull:0.28 });   // bold lit windows on the near tower
+
+    const screenBldg = new THREE.Mesh(new THREE.BoxGeometry(50, 360, 28), bldgMat);
+    screenBldg.position.set(0, -110, -82);
+    g.add(screenBldg);
+    
+    // vertical fins for architectural flair — keep them OFF the screen area (screen spans x -15..15)
+    for (let f=-20; f<=20; f+=10) {
+        if (Math.abs(f) > 16) addBox(1.2, 360, 29, frameMat, f, -110, -82, g);
+    }
+
+    const stageZ = -67.6;
+    const stageW = 30, stageH = 16.9;
+    const stageY = 15.5;
+    const stageBackMat = new THREE.MeshBasicMaterial({ color:0x01040a, side:THREE.DoubleSide });
+    const stageBack = new THREE.Mesh(new THREE.PlaneGeometry(stageW + 1.4, stageH + 1.4), stageBackMat);
+    stageBack.position.set(0, stageY, stageZ - .08); stageBack.renderOrder = 18; g.add(stageBack);
+    
+    const stageScreenMat = new THREE.MeshBasicMaterial({ map: robotScreenTex, color:0xffffff, transparent:true, opacity:0, toneMapped:false, side:THREE.DoubleSide });
+    const stageScreen = new THREE.Mesh(new THREE.PlaneGeometry(stageW, stageH), stageScreenMat);
+    stageScreen.position.set(0, stageY, stageZ); stageScreen.renderOrder = 20; g.add(stageScreen);
+    
+    addBox(stageW + 1.6, .55, .55, frameMat, 0, stageY + stageH/2 + .5, stageZ, g);
+    addBox(stageW + 1.6, .55, .55, frameMat, 0, stageY - stageH/2 - .5, stageZ, g);
+    addBox(.55, stageH + 1.6, .55, frameMat, -stageW/2 - .5, stageY, stageZ, g);
+    addBox(.55, stageH + 1.6, .55, frameMat,  stageW/2 + .5, stageY, stageZ, g);
+    
+    const stageGlow = new THREE.PointLight(0x9fd8ff, 0, 70, 2);
+    stageGlow.position.set(0, stageY, stageZ + 12); g.add(stageGlow);
+
+    return { group:g, beam, outline, scanPlanes, targetLight,
+             stageScreen, stageScreenMat, stageBackMat, stageGlow, active:false, pulse:0 };
+}
+function setProjectionActive(active) {
+    if (!projectionRig) return;
+    projectionRig.active = active;
+    projectionRig.beam.visible = active;
+    projectionRig.outline.visible = active;
+    projectionRig.scanPlanes.forEach((p) => { p.visible = active; });
+    if (robot && robot.setProjecting) robot.setProjecting(active);
+    if (!active && robotScreenVid) robotScreenVid.pause();
+}
+function setProjectionPlayback(idx, fromNetwork = false) {
+    if (!robotScreenVid || !projectionRig || !VIDEO_IDX.has(idx)) {
+        setProjectionActive(false);
+        return;
+    }
+    const tr = TRACKS[idx];
+    robotScreenVid.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/video.mp4';
+    robotScreenVid.load();
+    robotScreenVid.play().catch(()=>{});
+    if (!fromNetwork && typeof MP !== 'undefined' && MP.connected()) MP.event('play', tr.t, idx);
+    setProjectionActive(true);
+}
+// expose so a networked "<player> played <disc>" event can light up the projection here too
+window.setProjectionPlayback = setProjectionPlayback;
+function updateProjectionRig(dt) {
+    if (!projectionRig) return;
+    projectionRig.pulse += dt;
+    const p = projectionRig.pulse;
+    if (projectionRig.active) {
+        const wave = .5 + .5 * Math.sin(p * 6.2);
+        projectionRig.beam.material.opacity = .05 + wave * .045;
+        projectionRig.outline.material.opacity = .08 + wave * .12;
+        projectionRig.targetLight.intensity = 6 + wave * 11;
+        if (projectionRig.stageScreenMat) projectionRig.stageScreenMat.opacity = 1;
+        if (projectionRig.stageGlow) projectionRig.stageGlow.intensity = 24 + wave * 14;
+        projectionRig.scanPlanes.forEach((plane, i) => {
+            plane.material.opacity = .035 + .07 * Math.max(0, Math.sin(p * 4.8 - i * .9));
+            plane.scale.setScalar(1 + .018 * Math.sin(p * 5.6 + i));
+        });
+    } else {
+        if (projectionRig.stageScreenMat) projectionRig.stageScreenMat.opacity = 0;
+        if (projectionRig.stageGlow) projectionRig.stageGlow.intensity = 0;
+        projectionRig.beam.material.opacity = 0;
+        projectionRig.outline.material.opacity = 0;
+        projectionRig.targetLight.intensity = 0;
+        projectionRig.scanPlanes.forEach((plane) => { plane.material.opacity = 0; });
+    }
+}
+async function createStageFbxCourier(x, y, z){
+    const loader = new FBXLoader();
+    loader.setPath(STAGE_FBX_PATH);
+    loader.setResourcePath(STAGE_FBX_PATH);
+    const fbx = await new Promise((resolve, reject) => {
+        loader.load(STAGE_FBX_FILE, resolve, undefined, reject);
+    });
+    fbx.traverse((o) => {
+        if (o.isMesh) {
+            o.castShadow = true;
+            o.receiveShadow = true;
+            if (o.material) {
+                const mats = Array.isArray(o.material) ? o.material : [o.material];
+                mats.forEach((mat) => {
+                    mat.side = THREE.DoubleSide;
+                    if (mat.map) mat.map.colorSpace = THREE.SRGBColorSpace;
+                    mat.needsUpdate = true;
+                });
+            }
+        }
+    });
+
+    const wrap = new THREE.Group();
+    const box = new THREE.Box3().setFromObject(fbx);
+    const size = box.getSize(new THREE.Vector3());
+    const tallest = Math.max(size.x || 1, size.y || 1, size.z || 1);
+    // Scale relative to original FBX scale
+    fbx.scale.multiplyScalar(STAGE_FBX_HEIGHT / tallest);
+    fbx.updateMatrixWorld(true);
+    const scaledBox = new THREE.Box3().setFromObject(fbx);
+    const center = scaledBox.getCenter(new THREE.Vector3());
+    fbx.position.set(-center.x, -scaledBox.min.y, -center.z);
+    wrap.add(fbx);
+    wrap.position.set(x, y, z);
+    wrap.rotation.y = ROBOT_FACE_PLAYER_ROT;
+    scene.add(wrap);
+    console.log('[AXIOMORT] Stage FBX courier loaded.');
+
+    // ── procedural personality (the FBX is a single mesh, so we animate the whole body) ──
+    const baseY = y;
+    let targetRot = ROBOT_FACE_PLAYER_ROT, faceRot = ROBOT_FACE_PLAYER_ROT;
+    let projecting = false;
+    let t = Math.random() * 12;                 // personal phase so it doesn't look robotic-synced
+    let gesture = null, gestureT = 0;           // current one-shot/looping flourish
+    let idleTimer = 4 + Math.random() * 6;      // seconds until the next ambient fidget
+    function startGesture(type, dur) { gesture = { type, dur }; gestureT = 0; }
+    return {
+        group: wrap,
+        // friendly-name hooks the game already calls (robot.play / playOnce)
+        play(key) { if (key === 'dance' || key === 'chill') startGesture('dance', 7); },
+        playOnce(key) {
+            if (key === 'yes') startGesture('nod', 1.15);
+            else if (key === 'dance') startGesture('dance', 7);
+            else if (key === 'wave') startGesture('wave', 1.6);
+            else startGesture('nod', 1.0);
+        },
+        setProjecting(active) {
+            projecting = active;
+            targetRot = active ? ROBOT_FACE_PROJECTOR_ROT : ROBOT_FACE_PLAYER_ROT;
+            if (active) startGesture('present', 1.3);
+        },
+        update(dt) {
+            dt = dt || 0.016; t += dt;
+            // smoothly turn to face the player / the projector
+            const turn = Math.atan2(Math.sin(targetRot - faceRot), Math.cos(targetRot - faceRot));
+            faceRot += turn * Math.min(1, dt * 3.8);
+            const settled = Math.abs(turn) < 0.04;
+
+            // ambient life: breathing bob + slow weight-shift + the odd idle glance
+            let bobY  = 0.014 + Math.sin(t * 1.55) * 0.022;
+            let leanZ = Math.sin(t * 0.8) * 0.018;
+            let glance = (!projecting && settled) ? Math.sin(t * 0.5) * 0.05 : 0;
+            let pitchX = 0, hopY = 0;
+
+            // every few seconds, an unprompted little fidget so it never feels frozen
+            if (!gesture && settled && (idleTimer -= dt) <= 0) {
+                idleTimer = 6 + Math.random() * 7;
+                startGesture(Math.random() < 0.5 ? 'nod' : 'lookAround', 1.4);
+            }
+
+            // active flourishes
+            if (gesture) {
+                gestureT += dt;
+                const p = Math.min(1, gestureT / gesture.dur);
+                if (gesture.type === 'nod')        pitchX = Math.sin(gestureT * 13) * 0.15 * (1 - p);          // quick decaying nods
+                else if (gesture.type === 'wave')  { leanZ += Math.sin(gestureT * 9) * 0.10 * (1 - p); glance += Math.sin(gestureT * 9) * 0.12 * (1 - p); }
+                else if (gesture.type === 'present') pitchX = -0.13 * Math.sin(p * Math.PI);                   // a small bow toward the screen
+                else if (gesture.type === 'lookAround') glance += Math.sin(gestureT * 2.2) * 0.16 * Math.sin(p * Math.PI);
+                else if (gesture.type === 'dance') { leanZ += Math.sin(gestureT * 6.5) * 0.13; hopY = Math.abs(Math.sin(gestureT * 6.5)) * 0.11; glance += Math.sin(gestureT * 3.2) * 0.18; }
+                if (gestureT >= gesture.dur) { gesture = null; gestureT = 0; }
+            }
+
+            wrap.rotation.y = faceRot + glance;
+            wrap.rotation.x = pitchX;
+            wrap.rotation.z = leanZ;
+            wrap.position.y = baseY + bobY + hopY;
+        }
+    };
+}
+function createFallbackCourier(x, y, z){
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    const white = new THREE.MeshStandardMaterial({ color:0xeae6dc, metalness:.28, roughness:.45 });
+    const gold = new THREE.MeshStandardMaterial({ color:0xd4af37, emissive:0xd4af37, emissiveIntensity:.16, metalness:.8, roughness:.28 });
+    const dark = new THREE.MeshStandardMaterial({ color:0x080b12, metalness:.35, roughness:.5 });
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(.48, 1.05, 8, 18), white);
+    body.position.y = 1.2;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(1.05, .72, .58), dark);
+    head.position.y = 2.18;
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(.72, .4), new THREE.MeshBasicMaterial({ color:0xaebfe8 }));
+    face.position.set(0, 2.18, .296);
+    const legGeo = new THREE.CapsuleGeometry(.16, .8, 6, 12);
+    const armGeo = new THREE.CapsuleGeometry(.13, .85, 6, 12);
+    const l1 = new THREE.Mesh(legGeo, gold); l1.position.set(-.24, .45, 0);
+    const l2 = l1.clone(); l2.position.x = .24;
+    const a1 = new THREE.Mesh(armGeo, gold); a1.position.set(-.62, 1.38, 0); a1.rotation.z = .22;
+    const a2 = a1.clone(); a2.position.x = .62; a2.rotation.z = -.22;
+    g.add(body, head, face, l1, l2, a1, a2);
+    scene.add(g);
+    return {
+        group:g,
+        play(){},
+        playOnce(){},
+        setProjecting(active){ g.rotation.y = active ? ROBOT_FACE_PROJECTOR_ROT : ROBOT_FACE_PLAYER_ROT; },
+        update(dt){ if (!projectionRig || !projectionRig.active) g.rotation.y = Math.sin(performance.now() * .001) * .05; }
+    };
+}
+async function buildCourier(){
+    // Disc videos project from the courier face screen to the exterior balcony.
+    robotScreenVid = document.createElement('video');
+    robotScreenVid.style.position = 'absolute';
+    robotScreenVid.style.width = '1px';
+    robotScreenVid.style.height = '1px';
+    robotScreenVid.style.opacity = '0.01';
+    robotScreenVid.style.pointerEvents = 'none';
+    document.body.appendChild(robotScreenVid);
+    robotScreenVid.muted = true; robotScreenVid.loop = true; robotScreenVid.playsInline = true;
+    robotScreenVid.src = 'media/tracks/' + encodeURIComponent(TRACKS[0].folder) + '/video.mp4';
+    robotScreenTex = new THREE.VideoTexture(robotScreenVid);
+    robotScreenTex.colorSpace = THREE.SRGBColorSpace;
+    projectionRig = createBalconyProjectionRig();
+    // a little riser stage
+    addBox(8, .4, 5, new THREE.MeshStandardMaterial({ map: texMetal, color:0xf8fbff, metalness:.12, roughness:.36 }), 0, .2, STAGE_POS.z);
+    const edge = new THREE.MeshBasicMaterial({ color: 0x2f9dff });
+    addBox(8.2, .12, .12, edge, 0, .46, STAGE_POS.z + 2.45); addBox(8.2,.12,.12, edge, 0,.46,STAGE_POS.z - 2.45);
+
+    try {
+        // Centre-stage courier uses the FBX robot; the humanoid GLB is reserved for the player mirror.
+        robot = await Promise.race([
+            createStageFbxCourier(STAGE_POS.x, STAGE_POS.y, STAGE_POS.z),
+            timeout(6500, 'Stage FBX courier load timed out')
+        ]);
+        robot.play('chill');
+    } catch (err) {
+        console.warn('[AXIOMORT] Courier model unavailable; using fallback stage courier.', err);
+        robot = createFallbackCourier(STAGE_POS.x, STAGE_POS.y, STAGE_POS.z);
+    }
+
+    // Create the player character robot model for the mirror when the GLB is available.
+    try {
+        playerRobot = await Promise.race([
+            createRobot(THREE, scene, { x: 0, y: 0, z: 0, height: PLAYER_MODEL_HEIGHT, shadow: true, skin: MY_SKIN }),
+            timeout(6500, 'Player mirror model load timed out')
+        ]);
+        window.playerRobot = playerRobot;
+        playerRobot.group.traverse((o) => { o.layers.set(1); });
+        playerRobot.play('idle');
+    } catch (err) {
+        console.warn('[AXIOMORT] Mirror player model skipped.', err);
+    }
+
+    // Create a large wall mirror on the East wall of the ground floor lobby
+    const mirrorGeo = new THREE.PlaneGeometry(16, 8);
+    const mirror = new Reflector(mirrorGeo, {
+        clipBias: 0.003,
+        textureWidth: window.innerWidth * window.devicePixelRatio,
+        textureHeight: window.innerHeight * window.devicePixelRatio,
+        color: 0x7a8a9a
+    });
+    mirror.position.set(29.8, 4, 0);
+    mirror.rotation.y = -Math.PI / 2;
+    scene.add(mirror);
+    mirror.camera.layers.enable(1); // Enable Layer 1 so it renders the player character model!
+
+    // Add a sleek gold frame around the mirror
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
+    addBox(0.2, 0.1, 16.2, frameMat, 29.7, 8.05, 0); // Top
+    addBox(0.2, 0.1, 16.2, frameMat, 29.7, -0.05, 0); // Bottom
+    addBox(0.2, 8.2, 0.1, frameMat, 29.7, 4.0, 8.05); // Left
+    addBox(0.2, 8.2, 0.1, frameMat, 29.7, 4.0, -8.05); // Right
+}
+
+/* ════════════════ COLLISION ════════════════ */
+function groundAt(x, z, yRef) {
+    let best = -1e9;
+    for (const p of platforms)
+        if (x>=p.minX && x<=p.maxX && z>=p.minZ && z<=p.maxZ && p.y <= yRef+.6 && p.y > best) best = p.y;
+    for (const r of ramps) {
+        if (x>=r.minX && x<=r.maxX && z>=r.minZ && z<=r.maxZ) {
+            const c = r.axis==='z' ? z : x;
+            let t = (c - r.c0) / (r.c1 - r.c0);
+            t = Math.max(0, Math.min(1, t));
+            const y = r.y0 + t*(r.y1-r.y0);
+            if (y <= yRef+.9 && y > best) best = y;
+        }
+    }
+    // lift platform
+    if (Math.abs(x-lift.x)<2 && Math.abs(z-lift.z)<2) {
+        const ly = lift.mesh.position.y + .12;
+        if (ly <= yRef+.9 && ly > best) best = ly;
+    }
+    return best;
+}
+
+/* ════════════════ PLAYER ════════════════ */
+const controls = new PointerLockControls(camera, renderer.domElement);
+const player = { pos:new THREE.Vector3(0,1.75,18), vel:new THREE.Vector3(), onGround:false, stamina:1, h:1.75 };
+
+// ── direct GMod/Source bhop movement (replaces the broken ECS player controller) ──
+const PLY = { gravity:24, walk:7.5, sprint:12, jump:8.4, airCap:1.4, groundAccel:12, airAccel:90, friction:7, radius:0.45 };
+function playerFloorY(x, z, y) {
+    const g = groundAt(x, z, y - player.h + 0.6);
+    return g < -1e8 ? -1e9 : g + player.h;        // very low = over the void → fall
+}
+function resolvePlayerAxis(axis) {
+    const p = player.pos, v = player.vel, hw = PLY.radius, ph = player.h;
+    const pMinY = p.y - ph, pMaxY = p.y;
+    for (let i = 0; i < boxes.length; i++) {
+        const b = boxes[i];
+        if (pMaxY <= b.min.y || pMinY >= b.max.y) continue;
+        if (p.x + hw > b.min.x && p.x - hw < b.max.x && p.z + hw > b.min.z && p.z - hw < b.max.z) {
+            if (axis === 'x') { p.x = (p.x > (b.min.x + b.max.x) / 2) ? b.max.x + hw + 0.001 : b.min.x - hw - 0.001; v.x = 0; }
+            else             { p.z = (p.z > (b.min.z + b.max.z) / 2) ? b.max.z + hw + 0.001 : b.min.z - hw - 0.001; v.z = 0; }
+        }
+    }
+}
+function movePlayer(dt, wish, moving, wantJump, sprinting) {
+    const p = player.pos, v = player.vel;
+    const wishSpeed = sprinting ? PLY.sprint : PLY.walk;
+    if (player.onGround) {
+        if (!wantJump) {                                   // friction (skipped on the jump frame → bhop keeps speed)
+            const sp = Math.hypot(v.x, v.z);
+            if (sp > 0.1) { const k = Math.max(0, sp - sp * PLY.friction * dt) / sp; v.x *= k; v.z *= k; }
+            else { v.x = 0; v.z = 0; }
+        }
+        if (moving) {                                      // ground acceleration
+            const add = wishSpeed - (v.x * wish.x + v.z * wish.z);
+            if (add > 0) { const acc = Math.min(PLY.groundAccel * wishSpeed * dt, add); v.x += acc * wish.x; v.z += acc * wish.z; }
+        }
+        if (wantJump) { v.y = PLY.jump; player.onGround = false; }
+    } else if (moving) {                                   // air-strafe (capped) → the bunnyhop accel trick
+        const add = PLY.airCap - (v.x * wish.x + v.z * wish.z);
+        if (add > 0) { const acc = Math.min(PLY.airAccel * dt, add); v.x += acc * wish.x; v.z += acc * wish.z; }
+    }
+    v.y -= PLY.gravity * dt;
+    p.x += v.x * dt; resolvePlayerAxis('x');
+    p.z += v.z * dt; resolvePlayerAxis('z');
+    p.y += v.y * dt;
+    const floorY = playerFloorY(p.x, p.z, p.y);
+    if (p.y <= floorY) { p.y = floorY; if (v.y < 0) v.y = 0; player.onGround = true; }
+    else player.onGround = false;
+}
+const speedNum = document.getElementById('speed-num');
+camera.position.copy(player.pos);
+camera.lookAt(0, 2.8, 70);
+
+const keys = {};
+let uiOpen = false;
+let lobbyRosterOpen = false;
+
+function rosterPilotName() {
+    const pilot = localStorage.getItem('ax_pilot');
+    return pilot && pilot !== 'GUEST' ? pilot.toUpperCase() : 'GUEST PILOT';
+}
+function lobbyPlayers() {
+    const deck = skydeckLabel(currentFloorNum || 0);
+    const others = (typeof MP !== 'undefined' && MP.connected()) ? MP.roster().map(p => ({
+        name: p.name, tag: `${p.level === 'island' ? 'THE ISLAND' : 'THE VAULT'} - ${MP.skinName(p.skin)} UNIT`, ping: 'ONLINE', cls: ''
+    })) : [];
+    return [
+        { name: rosterPilotName(), tag: `${deck} - ARCHIVE ${collected.size}/26`, ping: '0 ms', cls: 'self' },
+        ...others,
+        { name: 'ARIA', tag: 'VAULT COMMS BOT - ONLINE', ping: 'BOT', cls: 'bot' }
+    ];
+}
+function rosterText(value) {
+    return String(value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
+function renderLobbyRoster() {
+    const list = document.getElementById('lr-list');
+    const count = document.getElementById('lr-count');
+    if (!list || !count) return;
+    const players = lobbyPlayers();
+    count.textContent = players.length + ' ONLINE';
+    list.innerHTML = players.map(p => `
+        <div class="lr-row ${p.cls || ''}">
+            <span class="lr-dot"></span>
+            <span><span class="lr-name">${rosterText(p.name)}</span><span class="lr-sub">${rosterText(p.tag)}</span></span>
+            <span class="lr-ping">${rosterText(p.ping)}</span>
+        </div>`).join('');
+}
+function openLobbyRoster() {
+    if (!started || lobbyRosterOpen) return;
+    if ($('pause').classList.contains('open')) togglePause();
+    if (AXInventory.isOpen()) AXInventory.close();
+    if (ARIA.isOpen()) ARIA.close();
+    renderLobbyRoster();
+    lobbyRosterOpen = true;
+    const roster = document.getElementById('lobby-roster');
+    roster.classList.add('open');
+    roster.setAttribute('aria-hidden', 'false');
+}
+function closeLobbyRoster() {
+    if (!lobbyRosterOpen) return;
+    lobbyRosterOpen = false;
+    const roster = document.getElementById('lobby-roster');
+    roster.classList.remove('open');
+    roster.setAttribute('aria-hidden', 'true');
+}
+function toggleLobbyRoster() { lobbyRosterOpen ? closeLobbyRoster() : openLobbyRoster(); }
+
+addEventListener('keydown', (e) => {
+    if (e.code === 'Tab' || e.key === 'Tab') { 
+        if (!e.repeat) { e.preventDefault(); openLobbyRoster(); }
+        return; 
+    }
+    if (e.code === 'KeyI' || (e.key && e.key.toLowerCase() === 'i')) { toggleInventory(); return; }
+    if ((e.code === 'Enter' || e.code === 'KeyY') && started && !AXChat.isTyping()) { e.preventDefault(); AXChat.open(); return; }
+    keys[e.code] = true;
+    if (e.code === 'KeyE') onAction();
+    if (e.code === 'KeyQ') liftGo(-1);
+    // T talks to ARIA through the SAME chat box (no separate overlapping window)
+    if (e.code === 'KeyT') {
+        if (started && !AXChat.isTyping()) {
+            e.preventDefault(); AXChat.open();
+            const inp = document.getElementById('axchat-in'); if (inp) inp.value = '@aria ';
+        }
+    }
+});
+addEventListener('keyup', (e) => {
+    if (e.code === 'Tab' || e.key === 'Tab') { e.preventDefault(); closeLobbyRoster(); return; }
+    keys[e.code] = false;
+});
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; closeLobbyRoster(); });
+renderer.domElement.addEventListener('click', () => {
+    if (started && !uiOpen && !isTouch) controls.lock();
+});
+
+// Punch & kick action triggers when pointer is locked
+document.addEventListener('mousedown', (e) => {
+    if (!started || uiOpen || AXInventory.isOpen()) return;
+    if (controls.isLocked) {
+        const thenKey = playerMoving ? 'walk' : 'idle';
+        if (e.button === 0) {
+            if (playerRobot) playerRobot.playOnce('punch', thenKey);
+            MP.broadcastAnim('punch');        // everyone sees the swing, even a whiff that lands nothing
+            MP.tryPunch(camera);              // + knockback if it actually connects
+        } else if (e.button === 2) {
+            if (playerRobot) playerRobot.playOnce('kick', thenKey);
+            MP.broadcastAnim('kick');
+            MP.tryPunch(camera);
+        }
+    }
+});
+document.addEventListener('contextmenu', (e) => {
+    if (controls.isLocked) {
+        e.preventDefault();
+    }
+});
+
+/* touch (same scheme as island) */
+const isTouch = matchMedia('(pointer: coarse)').matches;
+let joyVec = { x:0, y:0 }, lookTouch = null, lookPrev = { x:0, y:0 }, yaw = Math.PI, pitch = 0;
+if (isTouch) {
+    document.body.classList.add('touch');
+    const joy = document.getElementById('joy'), knob = document.getElementById('joy-knob');
+    let jid = null, cx=0, cy=0;
+    joy.addEventListener('touchstart',(e)=>{ const t=e.changedTouches[0]; jid=t.identifier; const r=joy.getBoundingClientRect(); cx=r.left+r.width/2; cy=r.top+r.height/2; },{passive:true});
+    addEventListener('touchmove',(e)=>{ for(const t of e.changedTouches){
+        if(t.identifier===jid){ const dx=(t.clientX-cx)/55, dy=(t.clientY-cy)/55; const m=Math.min(1,Math.hypot(dx,dy)); const a=Math.atan2(dy,dx);
+            joyVec.x=Math.cos(a)*m; joyVec.y=Math.sin(a)*m; knob.style.transform=`translate(${joyVec.x*33}px,${joyVec.y*33}px)`; }
+        else if(lookTouch===t.identifier){ yaw-=(t.clientX-lookPrev.x)*.0042; pitch-=(t.clientY-lookPrev.y)*.0042;
+            pitch=Math.max(-1.45,Math.min(1.45,pitch)); lookPrev={x:t.clientX,y:t.clientY}; } } },{passive:true});
+    addEventListener('touchstart',(e)=>{ for(const t of e.changedTouches){
+        if(t.identifier!==jid && t.clientX>innerWidth*.4 && lookTouch===null) { lookTouch=t.identifier; lookPrev={x:t.clientX,y:t.clientY}; } } },{passive:true});
+    addEventListener('touchend',(e)=>{ for(const t of e.changedTouches){
+        if(t.identifier===jid){ jid=null; joyVec.x=joyVec.y=0; knob.style.transform=''; }
+        if(t.identifier===lookTouch) lookTouch=null; } },{passive:true});
+    document.getElementById('btn-act').addEventListener('click', onAction);
+    document.getElementById('btn-pause-m').addEventListener('click', togglePause);
+}
+
+/* ════════════════ STATE / SAVE ════════════════ */
+const SAVE_KEY = 'ax_tower_v1';
+const COURSE_SAVE_KEY = 'ax_tower_courses_v1';
+let collected = new Set();
+let courseCleared = new Set();
+try { (JSON.parse(localStorage.getItem(SAVE_KEY))||[]).forEach(i=>collected.add(i)); } catch(e){}
+try { (JSON.parse(localStorage.getItem(COURSE_SAVE_KEY))||[]).forEach(i=>courseCleared.add(i)); } catch(e){}
+function applySave(){ discs.forEach(d => { if (collected.has(d.idx)) hideDisc(d); }); }
+function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify([...collected])); }
+function saveCourses(){ localStorage.setItem(COURSE_SAVE_KEY, JSON.stringify([...courseCleared])); }
+function hideDisc(d){ d.collected = true; d.group.visible = false; d.beam.visible = false; if (d.tag) d.tag.visible = false; }
+
+const $ = id => document.getElementById(id);
+const music = new Audio(); music.volume = .65;
+
+function updateHUD(){
+    $('disc-count').textContent = `DISCS ${collected.size} / 26`;
+    $('pause-sub').textContent = `ARCHIVE ${collected.size} / 26`;
+    const isl = $('goto-island');
+    if (collected.size >= 26) { isl.textContent = 'THE ISLAND — UNLOCKED'; isl.style.color = 'var(--gold)'; isl.style.borderColor = 'var(--gold)'; }
+    if (window.AXInventory) AXInventory.refresh();
+}
+function toast(msg, ms=3400){ const el=$('toast'); el.textContent=msg; el.classList.add('visible');
+    clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('visible'), ms); }
+
+/* inventory (PS2 CD player) */
+function renderAxiomortTab(){
+    const owned = TRACKS.map((tr, i) => ({ tr, i })).filter(x => collected.has(x.i));
+    if (!owned.length) {
+        return `<div class="ax-extra-wrap"><div class="ax-extra-head"><div><div class="ax-extra-title">AXIOMORT</div><div class="ax-extra-sub">Balcony projection</div></div></div><div class="ax-extra-sub">Recover a disc, then bring it to the courier projector.</div></div>`;
+    }
+    return `<div class="ax-extra-wrap">
+        <div class="ax-extra-head"><div><div class="ax-extra-title">AXIOMORT</div><div class="ax-extra-sub">Give archived discs to the courier projector</div></div><div class="ax-extra-sub">${owned.length} READY</div></div>
+        <div class="ax-list">${owned.map(({tr, i}) => `<button class="ax-row" data-ax-disc="${i}"><b>${String(i + 1).padStart(2,'0')} ${tr.t}</b><span>${courseCleared.has(i) ? 'Cleared - balcony projection' : 'First play starts course'}</span></button>`).join('')}</div>
+    </div>`;
+}
+function refreshAxiomortTab(root){
+    const pane = root.querySelector('[data-pane="axiomort"]');
+    if (pane) pane.innerHTML = renderAxiomortTab();
+}
+AXInventory.init({
+    title: 'STUDIO SOUNDS',
+    subtitle: 'MEMORY CARD 1 — TOWER ARCHIVE',
+    tracks: TRACKS.map(tr => ({ t: tr.t, src: trackURL(tr), img: coverURL(tr), meta: 'STUDIO SOUNDS 2025 — BREADFLOWS' })),
+    isOwned: i => collected.has(i),
+    footer: '&#9651; CLOSE&nbsp;&nbsp;&middot;&nbsp;&nbsp;I',
+    extraTabs: [{ id: 'axiomort', label: 'AXIOMORT', html: renderAxiomortTab(), onShow: refreshAxiomortTab }],
+    onOpen: () => { music.pause(); controls.unlock(); uiOpen = true; },
+    onClose: () => { uiOpen = false; if (started && !isTouch) controls.lock(); }
+});
+function toggleInventory(){ if (lobbyRosterOpen) closeLobbyRoster(); if ($('pause').classList.contains('open')) togglePause(); AXInventory.toggle(); }
+$('open-inv').addEventListener('click', () => { togglePause(); AXInventory.open(); });
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-ax-disc]');
+    if (!btn) return;
+    launchAxiomortDisc(Number(btn.dataset.axDisc));
+});
+
+/* pause */
+function togglePause(){
+    if (lobbyRosterOpen) { closeLobbyRoster(); return; }
+    if (AXInventory.isOpen()) { AXInventory.close(); return; }
+    const p = $('pause');
+    if (p.classList.contains('open')) { p.classList.remove('open'); uiOpen=false; if (!isTouch) controls.lock(); }
+    else { p.classList.add('open'); uiOpen=true; controls.unlock(); }
+}
+$('resume').addEventListener('click', togglePause);
+$('goto-island').addEventListener('click', () => {
+    if (collected.size >= 26) location.href = 'island.html';
+    else toast('THE ISLAND IS SEALED — COMPLETE THE ARCHIVE FIRST');
+});
+$('reset-save').addEventListener('click', () => {
+    if (!confirm('Reset the tower archive? All 26 discs will be re-sealed.')) return;
+    collected.clear(); courseCleared.clear(); save(); saveCourses();
+    discs.forEach(d => { d.collected=false; d.group.visible=true; d.beam.visible=true; if (d.tag) d.tag.visible=true; });
+    updateHUD(); togglePause();
+});
+$('win-stay').addEventListener('click', () => { $('win').classList.remove('open'); uiOpen=false; if (!isTouch) controls.lock(); });
+
+/* ════════════════ DISC COLLECTION + DIMENSIONS ════════════════ */
+let nearDisc = null, pendingDim = null;
+
+function onAction(){
+    if (nearDisc && !nearDisc.collected) { collectDisc(nearDisc); return; }
+    if (nearRobot) { AXInventory.openTab('axiomort'); return; }
+    // lift
+    if (Math.abs(player.pos.x-lift.x)<2.2 && Math.abs(player.pos.z-lift.z)<2.2) liftGo(1);
+}
+function collectDisc(d){
+    grantDisc(d, { playPreview: false });
+    toast('DISC ARCHIVED - BRING IT TO THE COURIER PROJECTOR');
+}
+function promptDiscCourse(d){
+    pendingDim = d;
+    d._dim = dimFor(d);
+    $('dm-title').textContent = d._dim.name;
+    $('dm-desc').textContent = d._dim.desc;
+    $('dm-k').textContent = d._dim.kind === 'dim' ? 'DIMENSION DISC' : 'BHOP COURSE — ' + (d.idx+1) + ' / 26';
+    $('dim-modal').classList.add('open');
+    uiOpen = true; controls.unlock();
+}
+function playDiscOnStage(idx){
+    const tr = TRACKS[idx];
+    music.src = trackURL(tr); music.play().catch(()=>{});
+    if (robot) robot.playOnce('yes', 'dance');
+    setProjectionPlayback(idx);                                  // the in-world balcony projection
+    showProjectionPanel(idx);                                    // + an unmissable cinema panel
+    AXChat.add('', `You played ${tr.t} on the projection`, 'sys'); // your own action in the shared feed too
+}
+// the courier's projection, mirrored into a clear side panel so it can't be missed
+function showProjectionPanel(idx){
+    const tr = TRACKS[idx];
+    const media = $('dr-media'); media.innerHTML = '';
+    if (typeof VIDEO_IDX !== 'undefined' && VIDEO_IDX.has(idx)) {
+        const v = document.createElement('video');
+        v.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/video.mp4';
+        v.muted = true; v.autoplay = true; v.loop = true; v.playsInline = true; v.play().catch(()=>{});
+        media.appendChild(v);
+    } else {
+        const img = document.createElement('img');
+        img.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.img);
+        media.appendChild(img);
+    }
+    $('dr-k').textContent = 'NOW PROJECTING ▸ COURIER';
+    $('dr-ti').textContent = tr.t;
+    const np = $('dr-np'); if (np) np.textContent = 'BALCONY PROJECTION';
+    $('disc-reward').classList.add('show');
+    const bar = $('dr-bar');
+    bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; void bar.offsetWidth;
+    bar.style.transition = 'transform 9s linear'; bar.style.transform = 'scaleX(0)';
+    clearTimeout(rewardTimer);
+    rewardTimer = setTimeout(() => {
+        $('disc-reward').classList.remove('show');
+        const vv = media.querySelector('video'); if (vv) vv.pause();
+    }, 9000);
+}
+function launchAxiomortDisc(idx){
+    const d = discs[idx];
+    if (!d || !collected.has(idx)) return;
+    if (!nearRobot) { toast('BRING THE DISC TO THE COURIER PROJECTOR'); return; }
+    if (AXInventory.isOpen()) AXInventory.close();
+    if (!courseCleared.has(idx)) { promptDiscCourse(d); return; }
+    playDiscOnStage(idx);
+}
+window.launchAxiomortDisc = launchAxiomortDisc;
+function grantDisc(d, opts = {}){
+    const alreadyOwned = collected.has(d.idx);
+    collected.add(d.idx); save(); hideDisc(d); updateHUD();
+    const tr = TRACKS[d.idx];
+    if (opts.playPreview !== false) { music.src = trackURL(tr); music.play().catch(()=>{}); }
+    showDiscReward(d.idx);
+    // the courier reacts; full video projection only starts when the disc is given to him.
+    if (robot) robot.playOnce('yes', 'dance');
+    // ARIA reacts to the win (emote is driven by her line's mood tag)
+    ARIA.event('disc', { name: tr.t, n: collected.size, total: 26 });
+    if (!alreadyOwned) {
+        AXChat.add('', `You picked up ${tr.t}`, 'sys');   // your own action in the shared feed
+        if (typeof MP !== 'undefined' && MP.connected()) MP.event('pickup', tr.t);   // tell everyone else: "<user> picked up <disc>"
+    }
+    if (!alreadyOwned && collected.size >= 26) setTimeout(() => { $('win').classList.add('open'); uiOpen=true; controls.unlock(); }, 2400);
+}
+let rewardTimer = null;
+function showDiscReward(idx){
+    const tr = TRACKS[idx];
+    const media = $('dr-media');
+    media.innerHTML = '';
+    if (typeof VIDEO_IDX !== 'undefined' && VIDEO_IDX.has(idx)) {
+        const v = document.createElement('video');
+        v.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/video.mp4';
+        v.muted = true; v.autoplay = true; v.loop = true; v.playsInline = true;
+        v.play().catch(()=>{});
+        media.appendChild(v);
+    } else {
+        const img = document.createElement('img'); img.src = trackURL ? 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.img) : ''; media.appendChild(img);
+    }
+    $('dr-k').textContent = `DISC ACQUIRED ▸ ${String(collected.size).padStart(2,'0')} / 26`;
+    $('dr-ti').textContent = tr.t;
+    $('disc-reward').classList.add('show');
+    const bar = $('dr-bar');
+    bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)';
+    void bar.offsetWidth;
+    bar.style.transition = 'transform 5.4s linear'; bar.style.transform = 'scaleX(0)';
+    clearTimeout(rewardTimer);
+    rewardTimer = setTimeout(() => {
+        $('disc-reward').classList.remove('show');
+        const vv = media.querySelector('video'); if (vv) vv.pause();
+    }, 5400);
+}
+let dimCleared = false;
+function completePendingCourse(){
+    if (!pendingDim) return;
+    courseCleared.add(pendingDim.idx);
+    saveCourses();
+    playDiscOnStage(pendingDim.idx);
+    AXInventory.refresh();
+    pendingDim = null;
+}
+function setClaimState(cleared){
+    dimCleared = cleared;
+    const b = $('dim-return');
+    if (!b) return;
+    b.disabled = !cleared;
+    b.style.opacity = cleared ? '1' : '.35';
+    b.style.cursor = cleared ? 'pointer' : 'not-allowed';
+    b.style.borderColor = cleared ? 'var(--gold)' : '';
+    b.textContent = cleared ? 'CLEARED' : 'IN PROGRESS';
+}
+addEventListener('message', (e) => {
+    if (e.data && e.data.axDim === 'complete' && $('dim-frame').classList.contains('open')) {
+        setClaimState(true);
+        setTimeout(() => {
+            if (!$('dim-frame').classList.contains('open')) return;
+            $('dim-frame').classList.remove('open');
+            $('df-iframe').src = '';
+            completePendingCourse();
+            uiOpen = false;
+            for (const k in keys) keys[k] = false;
+            window.focus();
+            document.body.focus();
+            if (!isTouch) controls.lock();
+        }, 1200);
+    }
+});
+$('dm-enter').addEventListener('click', () => {
+    $('dim-modal').classList.remove('open');
+    const d = pendingDim;
+    const dim = d._dim || dimFor(d);
+    const dfName = $('df-name');
+    if (dfName) dfName.textContent = dim.name;
+    $('dim-frame').classList.add('open');
+    setClaimState(false);
+    music.pause();
+    // cinematic warp: play this disc's own clip while the course loads
+    const dvid = (typeof VIDEO_IDX !== 'undefined' && VIDEO_IDX.has(d.idx))
+        ? ['media/tracks/' + encodeURIComponent(TRACKS[d.idx].folder) + '/video.mp4']
+        : collectedVideoURLs();
+    AXLoader.show({ videos: dvid, label: 'Loading ' + dim.name, sub: dim.kind === 'dim' ? 'Warping dimension' : 'Building the course' });
+    let p = 0;
+    const tk = setInterval(() => { p = Math.min(0.9, p + 0.07); AXLoader.set(p); }, 170);
+    const ifr = $('df-iframe');
+    ifr.onload = () => {
+        clearInterval(tk); AXLoader.set(1);
+        AXLoader.hide().then(() => {
+            try {
+                ifr.focus();
+                ifr.contentWindow.focus();
+            } catch (e) {}
+        });
+        ifr.onload = null;
+    };
+    ifr.src = dim.src;
+    // safety: never hang the loader if onload never fires
+    setTimeout(() => { clearInterval(tk); if (document.querySelector('#ax-load.on')) AXLoader.hide(); }, 9000);
+});
+$('dm-leave').addEventListener('click', () => {
+    $('dim-modal').classList.remove('open'); pendingDim=null; uiOpen=false;
+    for (const k in keys) keys[k] = false;
+    window.focus();
+    document.body.focus();
+    if (!isTouch) controls.lock();
+});
+const dimReturnBtn = $('dim-return');
+if (dimReturnBtn) dimReturnBtn.addEventListener('click', () => {
+    if (!dimCleared) return;
+    $('dim-frame').classList.remove('open');
+    $('df-iframe').src = '';
+    completePendingCourse();
+    uiOpen=false;
+    for (const k in keys) keys[k] = false;
+    window.focus();
+    document.body.focus();
+    if (!isTouch) controls.lock();
+});
+const dimLeaveBtn = $('dim-leave');
+if (dimLeaveBtn) dimLeaveBtn.addEventListener('click', () => {
+    $('dim-frame').classList.remove('open');
+    $('df-iframe').src = '';
+    pendingDim=null; uiOpen=false;
+    for (const k in keys) keys[k] = false;
+    window.focus();
+    document.body.focus();
+    if (!isTouch) controls.lock();
+    toast('THE DISC REMAINS SEALED — COME BACK AND BEAT IT');
+});
+
+/* ════════════════ LIFT ════════════════ */
+function liftGo(dir){
+    if (lift.moving) return;
+    if (Math.abs(player.pos.x-lift.x)>2.2 || Math.abs(player.pos.z-lift.z)>2.2) return;
+    const target = lift.floor + dir;
+    if (target < 0 || target > FLOORS-1) return;
+    lift.moving = true; lift.t = 0; lift.from = lift.floor*FH; lift.to = target*FH; lift.floor = target;
+}
+
+/* ════════════════ COLLISION AABB SYSTEM ════════════════ */
+const boxes = [];
+
+function initPhysics() {
+    boxes.length = 0;
+    
+    // Find all meshes/groups marked as collidable
+    scene.traverse((o) => {
+        if (o.userData && o.userData.collidable) {
+            const box = new THREE.Box3().setFromObject(o);
+            boxes.push(box);
+        }
+    });
+    
+    // Pass global geometry to ECS PhysicsSystem
+    if (window.AXEngine && window.AXEngine.ecs) {
+        window.AXEngine.ecs.collisionBoxes = boxes;
+        // Map the existing complex floor generation logic into the generic ECS system
+        window.AXEngine.ecs.collisionFloorCallback = (x, z, checkY) => {
+            const g = groundAt(x, z, checkY - 1.75 + 0.6); // player offset math mapped
+            if (g < -1e8) {
+                // over the atrium void
+                return 1.75; // ground at lobby floor
+            }
+            return g + 1.75;
+        };
+    }
+    console.log(`[AXIOMORT] Initialized ${boxes.length} physical colliders in the vault.`);
+}
+    
+/* ════════════════ MAIN LOOP ════════════════ */
+const clock = new THREE.Clock();
+const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3();
+let started = false;
+let worldReady = false;
+
+// Register player in ECS
+let playerEcsId = -1;
+function initPlayerECS() {
+    if (window.AXEngine && window.AXEngine.ecs) {
+        playerEcsId = window.AXEngine.ecs.addEntity(player, 0, 1.75, 18);
+        window.AXEngine.playerCtrl = new window.AXEngine.Systems.PlayerControllerSystem();
+    }
+}
+
+function step(dt){
+    /* lift animation */
+    if (lift.moving) {
+        lift.t = Math.min(1, lift.t + dt/2.2);
+        const e = lift.t<.5 ? 2*lift.t*lift.t : 1-Math.pow(-2*lift.t+2,2)/2;
+        const y = lift.from + (lift.to-lift.from)*e;
+        const riding = Math.abs(player.pos.x-lift.x)<2.2 && Math.abs(player.pos.z-lift.z)<2.2 && player.pos.y < lift.mesh.position.y + 3.4;
+        lift.mesh.position.y = y + .12;
+        if (riding) { player.pos.y = y + .12 + player.h; player.vel.y = 0; player.onGround = true; }
+        if (lift.t >= 1) lift.moving = false;
+    }
+
+    // ── GMod-style movement: ground accel + air-strafe + bunny hop ──
+    const sprinting = keys['ShiftLeft'] || keys['ShiftRight'];
+    camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+    right.crossVectors(fwd, new THREE.Vector3(0,1,0));
+    wish.set(0,0,0);
+    if (keys['KeyW']||keys['ArrowUp']) wish.add(fwd);
+    if (keys['KeyS']||keys['ArrowDown']) wish.sub(fwd);
+    if (keys['KeyD']||keys['ArrowRight']) wish.add(right);
+    if (keys['KeyA']||keys['ArrowLeft']) wish.sub(right);
+    if (isTouch){ wish.addScaledVector(fwd,-joyVec.y); wish.addScaledVector(right,joyVec.x); }
+    const moving = wish.lengthSq() > 0;
+    playerMoving = moving;
+    if (moving) wish.normalize();
+
+    const wishSpeed = sprinting ? 12 : 7.5;
+    const wantJump = keys['Space'];
+
+    // direct bhop movement (gravity, accel, air-strafe, AABB + floor collision)
+    movePlayer(dt, wish, moving, wantJump, sprinting);
+
+    // level bounds: full deck, but the open -Z balcony bay narrows to the projection alcove
+    let minX = -HALF + .6, maxX = HALF - .6;
+    if (player.pos.z < -HALF + .6) { minX = -9.4; maxX = 9.4; }
+    player.pos.x = THREE.MathUtils.clamp(player.pos.x, minX, maxX);
+    // stay inside the balcony railing (the open bay beyond it has no floor → was a fall hazard)
+    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -HALF + .6, HALF - .6);
+
+    // atrium fall-catch
+    if (player.pos.y < -15) { player.pos.set(0, 1.75, 18); player.vel.set(0, 0, 0); player.onGround = true; }
+
+    // speedometer
+    const hspeed = Math.hypot(player.vel.x, player.vel.z);
+    if (speedNum) speedNum.textContent = Math.round(hspeed * 8);
+    $('stamina').style.width = Math.min(100, hspeed / 22 * 100) + '%';
+
+    camera.position.copy(player.pos);
+    if (moving && player.onGround) camera.position.y += Math.sin(performance.now()*.012)*.05;
+    if (isTouch){ camera.rotation.order='YXZ'; camera.rotation.y=yaw; camera.rotation.x=pitch; camera.rotation.z=0; }
+
+    /* floor lights follow player */
+    const pf = Math.max(0, Math.min(FLOORS-1, Math.round((player.pos.y-player.h)/FH)));
+    floorLights[0].position.set(20, pf*FH+5.6, 20);
+    floorLights[1].position.set(-20, pf*FH+5.6, -20);
+    floorLights[2].position.set(player.pos.x, pf*FH+5.2, player.pos.z);
+    $('floor-ind').textContent = skydeckLabel(pf);
+    if (pf !== currentFloorNum) { currentFloorNum = pf; if (started && pf > 0) ARIA.event('floor', { f: pf + 1 }); }
+
+    /* discs */
+    nearDisc = null;
+    let nearest = null, nd = 1e9;
+    for (const d of discs){
+        if (d.collected) continue;
+        const dist = d.group.position.distanceTo(player.pos);
+        if (dist < 3) nearDisc = d;
+        if (dist < nd){ nd = dist; nearest = d; }
+    }
+    // the courier: idle/chill, waves when you come to the stage on the entry skydeck
+    if (robot) {
+        robot.update(dt);
+        const onLobby = player.pos.y < FH;
+        const distToBot = onLobby ? Math.hypot(player.pos.x - robot.group.position.x, player.pos.z - robot.group.position.z) : 99;
+        nearRobot = distToBot < 5.2;
+        if (distToBot < 7 && !robotGreeted) { robotGreeted = true; robot.playOnce('wave', 'chill'); }
+        else if (distToBot > 11) robotGreeted = false;
+    } else nearRobot = false;
+
+    // player character robot update
+    if (playerRobot) {
+        playerRobot.update(dt);
+        playerRobot.setPosition(player.pos.x, player.pos.y - player.h, player.pos.z);
+        
+        const dir = new THREE.Vector3();
+        camera.getWorldDirection(dir);
+        const angle = Math.atan2(dir.x, dir.z);
+        playerRobot.group.rotation.y = angle;
+        
+        if (playerRobot.getCurrentKey() !== '__once') {
+            if (!player.onGround) {
+                if (player.vel.y > 1) playerRobot.play('jumpUp');
+                else if (player.vel.y < -1) playerRobot.play('air');
+                else playerRobot.play('land');
+            } else if (playerMoving) {
+                playerRobot.play('walk');
+            } else {
+                playerRobot.play('idle');
+            }
+        }
+    }
+
+    $('prompt').textContent = nearDisc ? (nearDisc.dim ? '[E] ENTER DIMENSION DISC' : '[E] PLAY THIS COURSE')
+        : (Math.abs(player.pos.x-lift.x)<2.2 && Math.abs(player.pos.z-lift.z)<2.2 ? '[E] LIFT UP — [Q] DOWN' : '');
+    const nearLift = Math.abs(player.pos.x-lift.x)<2.2 && Math.abs(player.pos.z-lift.z)<2.2;
+    $('prompt').textContent = nearDisc ? '[E] ARCHIVE DISC'
+        : nearRobot ? '[E] GIVE DISC TO COURIER'
+        : (nearLift ? '[E] LIFT UP - [Q] DOWN' : '');
+    $('prompt').classList.toggle('visible', !!$('prompt').textContent);
+    $('hint-ind').textContent = nearest ? `NEAREST DISC - ${skydeckLabel(nearest.floor)}` : 'ARCHIVE COMPLETE';
+}
+
+let swarmMesh = null;
+const SWARM_COUNT = 1000;
+
+function buildSwarmDrones() {
+    if (!window.AXEngine || !window.AXEngine.ecs) return;
+    
+    // Low poly security drone geometry
+    const geo = new THREE.TetrahedronGeometry(0.3, 0);
+    // Sleek Mirror's Edge black/gloss material to contrast the white city
+    const mat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.8 });
+    
+    swarmMesh = new THREE.InstancedMesh(geo, mat, SWARM_COUNT);
+    swarmMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    
+    for (let i = 0; i < SWARM_COUNT; i++) {
+        // Spawn drones swirling around the tower
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 20 + Math.random() * 40;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = 30 + Math.random() * 200;
+        
+        // Add to ECS (Type 2 = SwarmDrone)
+        const id = window.AXEngine.ecs.addEntity(null, x, y, z, 0.3, 0.3, 2);
+        
+        // Initial velocity (circling)
+        const ecsIdx = id * 16;
+        window.AXEngine.ecs.buffer[ecsIdx + 3] = -Math.sin(angle) * 10; // vx
+        window.AXEngine.ecs.buffer[ecsIdx + 5] = Math.cos(angle) * 10; // vz
+        window.AXEngine.ecs.buffer[ecsIdx + 10] = 18.0; // speed limit
+    }
+    
+    scene.add(swarmMesh);
+    window.AXEngine.swarmSys = new window.AXEngine.Systems.SwarmSystem();
+}
+
+function animate(){
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), .05);
+    
+    // keep the procedural "smart material" shaders animating (noise/dirt/edge-wear over time)
+    if (window.AXEngine && window.AXEngine.ProceduralFactory && window.AXEngine.proceduralMats) {
+        window.AXEngine.ProceduralFactory.updateTime(dt);
+    }
+    
+    if (started && !uiOpen && !AXInventory.isOpen()) step(dt);
+    if (started) MP.update(dt);
+    
+    if (ariaVrm) {
+        ariaVrmTime += dt;
+        const h = ariaVrm.humanoid;
+        // breathing rides on top of her baseline counter-lean (set once in buildAriaBar)
+        const spine = h.getNormalizedBoneNode('spine');
+        if (spine) spine.rotation.x = 0.04 + Math.sin(ariaVrmTime * 1.6) * 0.022;
+        const chest = h.getNormalizedBoneNode('chest');
+        if (chest) chest.rotation.x = 0.02 + Math.sin(ariaVrmTime * 1.6 + 0.4) * 0.012;
+        // slow weight-shift so she isn't a statue
+        const hips = h.getNormalizedBoneNode('hips');
+        if (hips) hips.rotation.z = Math.sin(ariaVrmTime * 0.6) * 0.03;
+        const neck = h.getNormalizedBoneNode('neck');
+        if (neck) neck.rotation.x = Math.sin(ariaVrmTime * 1.2 + 1) * 0.015;
+
+        // she watches the player — keep the look-target on the camera
+        if (ariaLook) ariaLook.position.copy(camera.position);
+
+        // natural, randomised blink (quick close + open) instead of a constant flicker
+        ariaBlinkT -= dt;
+        let blink = 0;
+        if (ariaBlinkT < 0.16) { blink = ariaBlinkT < 0.08 ? (1 - ariaBlinkT / 0.08) : ((0.16 - ariaBlinkT) / 0.08); }
+        if (ariaBlinkT <= 0) ariaBlinkT = 2.4 + Math.random() * 3.6;
+        ariaVrm.expressionManager.setValue('blink', Math.max(0, Math.min(1, blink)));
+
+        ariaVrm.update(dt);
+    }
+    updateDayNight();
+    updateProjectionRig(dt);
+    if (worldReady) composer.render();
+}
+animate();
+
+addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+});
+
+/* ════════════════ BOOT ════════════════ */
+// STUDIO SOUNDS indices that ship with a video.mp4 → montage source.
+const VIDEO_IDX = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,19,20,21,24]);
+function collectedVideoURLs(){
+    const owned = [...collected].filter(i => VIDEO_IDX.has(i));
+    const src = owned.length ? owned : [0,2,5,11,12,21,24];   // default reel for new pilots
+    return src.map(i => 'media/tracks/' + encodeURIComponent(TRACKS[i].folder) + '/video.mp4');
+}
+
+async function boot(){
+    await AXLoader.runPhases([
+        ['Generating surfaces',    makeSurfaces],
+        ['Raising the floors',     buildFloors],
+        ['Hanging the staircase',  buildStairs],
+        ['Glazing the tower',      () => { buildGlass(); buildLift(); }],
+        ['Furnishing the studios', buildProps],
+        ['Building ARIA bar',      buildAriaBar],
+        ['Lighting the city',      buildCity],
+        ['Pressing the discs',     buildDiscs],
+        ['Waking the courier',     buildCourier],
+    ], {
+        videos: collectedVideoURLs(),
+        label: 'Entering the Vault',
+        sub: 'Booting environment',
+        minMs: 2800
+    });
+    applySave();
+    initPhysics();
+    worldReady = true;
+    updateHUD();
+    AXLoader.hold();        // keep the montage playing behind the enter-gate
+    $('intro').classList.add('ready');
+}
+
+function enterGame(){
+    if (!worldReady || started) return;
+    $('intro').classList.add('hidden');
+    AXLoader.hide();        // tear down the montage as we drop into the world
+    $('hud').classList.add('visible');
+    started = true; updateHUD();
+    if (!isTouch) controls.lock();
+    const pilot = localStorage.getItem('ax_pilot');
+    toast(collected.size > 0
+        ? `WELCOME BACK${pilot ? ', '+pilot.toUpperCase() : ''} — ${collected.size} / 26 ARCHIVED`
+        : `WELCOME${pilot ? ', '+pilot.toUpperCase() : ''} — FOLLOW THE COLORED BEAMS · [T] CHAT · [I] INVENTORY · [TAB] LOBBY`, 6000);
+    // wake ARIA — the AI companion living in the Vault, hosted by the courier
+    if (pilot && pilot !== 'GUEST') ARIA.setPilot(pilot.charAt(0).toUpperCase() + pilot.slice(1).toLowerCase());
+    // ARIA's replies surface in the shared #axchat feed, so retire her separate floating
+    // window/tab — it used to sit on top of the game chat in the bottom-left corner.
+    const ariaHide = document.createElement('style');
+    ariaHide.textContent = '#aria,#aria-tab{display:none!important;}';
+    document.head.appendChild(ariaHide);
+    ARIA.init({
+        host: 'THE VAULT',
+        onEmote: ariaEmote,
+        getState: () => ({ collected: collected.size, total: 26, floor: SKYDECK_BASE + currentFloorNum, pilot: localStorage.getItem('ax_pilot') }),
+        canProactive: () => !$('dim-frame').classList.contains('open') && !$('dim-modal').classList.contains('open') && !$('win').classList.contains('open') && !uiOpen,
+        onOpen: () => { if (!isTouch) controls.unlock(); },
+        onClose: () => { if (started && !isTouch && !uiOpen && !AXInventory.isOpen() && !lobbyRosterOpen) controls.lock(); }
+    });
+    // multiplayer — join the Vault, render other pilots, chat, punch
+    window.__ARIA_ASK = (text) => ARIA.ask(text);
+    MP.init({
+        scene, level: 'vault', skin: MY_SKIN, name: localStorage.getItem('ax_pilot') || 'PILOT', boardEnabled: false,
+        getSelf: () => {
+            const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize();
+            const anim = !player.onGround ? 'air' : (Math.hypot(player.vel.x, player.vel.z) > 1.5 ? 'walk' : 'idle');
+            return { pos: [player.pos.x, player.pos.y - player.h, player.pos.z], rot: Math.atan2(f.x, f.z), anim };
+        },
+        onPunched: (kx, kz) => { player.vel.x += kx; player.vel.z += kz; player.vel.y += 4; toast('💥 KNOCKED BACK'); },
+        onTyping: (typing) => { if (typing) { for (const k in keys) keys[k] = false; } }
+    });
+}
+$('begin').addEventListener('click', (e) => { e.stopPropagation(); enterGame(); });
+$('intro').addEventListener('click', (e) => { if (e.target.closest('.backlink')) return; enterGame(); });
+controls.addEventListener('unlock', () => {
+    if (started && !uiOpen && !AXInventory.isOpen() && !ARIA.isOpen() && !lobbyRosterOpen && !$('win').classList.contains('open')
+        && !$('dim-modal').classList.contains('open') && !$('dim-frame').classList.contains('open')) {
+        $('pause').classList.add('open'); uiOpen = true;
+    }
+});
+boot();
+
+/* debug */
+try {
+    window.__AX = { player, discs, camera, collected, keys, grantDisc, playDiscOnStage, dayNight, teleport(x,z,f){ player.pos.set(x,(f||0)*FH+2,z); } };
+} catch (err) {
+    console.debug('[AXIOMORT] Debug hook unavailable in this browser context.');
+}
+</script>
+</body>
+</html>

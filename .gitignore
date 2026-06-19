@@ -1,0 +1,21 @@
+# --- AXIOMORT: don't commit dev/scratch junk ---
+
+# bundled three.js dev copy (the game uses js/three-vrm.module.js, not this 44MB tree)
+temp_vrm/
+
+# scratch files
+temp.mjs
+temp.js
+todo.html
+
+# unused minified VRM build (the game imports the .module.js one)
+js/three-vrm.min.js
+
+# dev-only preview config (Claude Code launch settings)
+.claude/
+
+# node + OS junk
+node_modules/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AURORA Console Music Player</title>
+  <!-- Google Fonts for Y2K/Frutiger Aero look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&family=Cinzel:wght@600;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- PS2-Style Boot Screen -->
+  <div id="boot-screen">
+    <canvas id="boot-canvas"></canvas>
+    <div class="boot-content">
+      <h1 class="logo-text">AURORA</h1>
+      <p class="boot-prompt">INSERT ALBUM DISC</p>
+      <button id="press-start-btn">PRESS START</button>
+    </div>
+  </div>
+
+  <!-- Main WebGL Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- CRT Simulation Overlays -->
+  <div id="crt-overlay"></div>
+  <div id="chromatic-aberration"></div>
+
+  <!-- Audio Element -->
+  <audio id="audio-player" preload="metadata"></audio>
+
+  <!-- Console UI HUD -->
+  <div id="hud-container">
+    <!-- Top Bar: Console Info & Logo -->
+    <header id="console-header">
+      <h2 class="console-logo">[ AURORA MEMORY SYSTEM ]</h2>
+    </header>
+
+    <!-- Middle Area containing Left Menu, Center Carousel, and Right Stats -->
+    <div id="console-middle-row">
+      <!-- LEFT: Vertical Navigation Menu -->
+      <aside class="console-menu-left">
+        <div class="menu-box">
+          <ul id="menu-list">
+            <li class="menu-item active" id="menu-load"><span class="menu-pointer">></span> LOAD GAME</li>
+            <li class="menu-item" id="menu-new"><span class="menu-pointer"></span> NEW GAME</li>
+            <li class="menu-item" id="menu-options"><span class="menu-pointer"></span> OPTIONS</li>
+            <li class="menu-item" id="menu-extras"><span class="menu-pointer"></span> EXTRAS</li>
+            <li class="menu-item" id="menu-back"><span class="menu-pointer"></span> BACK</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- CENTER: 3-Card Memory Card Carousel -->
+      <main class="console-carousel-center">
+        <div id="memory-card-carousel">
+          <div class="card-slot left-slot" id="card-left"></div>
+          <div class="card-slot center-slot" id="card-center"></div>
+          <div class="card-slot right-slot" id="card-right"></div>
+        </div>
+      </main>
+
+      <!-- RIGHT: Save Properties / Stats Panel -->
+      <aside class="console-stats-right">
+        <div class="stats-box">
+          <div class="stats-header">FILE PROPERTIES</div>
+          <div class="stats-grid">
+            <div class="stats-label">STATUS</div>
+            <div class="stats-value" id="stat-status">ACTIVE</div>
+            <div class="stats-label">FILE NO</div>
+            <div class="stats-value" id="stat-file">01</div>
+            <div class="stats-label">PLAY TIME</div>
+            <div class="stats-value" id="stat-time">00:00</div>
+            <div class="stats-label">PROGRESS</div>
+            <div class="stats-value" id="stat-completion">0%</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Bottom Panel: Track Info, Controls, Progress Bar -->
+    <footer id="playback-footer">
+      <div class="footer-layout">
+        <!-- Left half: Description -->
+        <div class="description-section">
+          <div class="footer-track-meta">
+            <span id="track-number">TRACK 01</span> · <span id="track-episode">EPISODE 01</span>
+          </div>
+          <h1 id="track-title" class="track-title-text">INITIALIZING...</h1>
+          <p id="track-description" class="track-description-text">
+            Accessing memory block... please wait.
+          </p>
+        </div>
+        
+        <!-- Right half: Seek bar and Playback controls -->
+        <div class="controls-section">
+          <!-- Seek Bar -->
+          <div class="progress-container">
+            <div class="progress-bar" id="seek-bar">
+              <div class="progress-fill" id="seek-fill"></div>
+            </div>
+            <div class="time-display">
+              <span id="time-current">00:00</span>
+              <span id="time-duration">00:00</span>
+            </div>
+          </div>
+          
+          <!-- Player Controls -->
+          <div class="playback-controls">
+            <button class="playback-btn" id="ctrl-prev" title="Previous Track">⏮</button>
+            <button class="playback-btn play-pause-btn" id="ctrl-play" title="Play/Pause">▶</button>
+            <button class="playback-btn" id="ctrl-next" title="Next Track">⏭</button>
+          </div>
+          <!-- Controller prompt guides -->
+          <div class="controller-prompt-row">
+            <div class="prompt-badge"><span class="prompt-btn cross">✖</span> SELECT</div>
+            <div class="prompt-badge"><span class="prompt-btn circle">●</span> BACK</div>
+            <div class="prompt-badge"><span class="prompt-btn triangle">▲</span> OPTIONS</div>
+            <div class="prompt-badge"><span class="prompt-btn square">■</span> EXTRAS</div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Instruction Hint overlay -->
+  <div id="user-hint">
+    DRAG to rotate case · CLICK case to open/play · SCROLL to change tracks
+  </div>
+
+  <!-- Error display -->
+  <div id="error-console"></div>
+
+  <!-- Script Imports -->
+  <!-- Three.js (Core 3D Engine) -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <!-- Album Track Database -->
+  <script src="../js/covers.js"></script>
+  <!-- Application Entry Point -->
+  <script src="app.js"></script>
+</body>
+</html>
