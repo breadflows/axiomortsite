@@ -162,6 +162,7 @@
 </div>
 
 <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="js/youtube-tracks.js?v=1"></script>
 <script src="js/covers.js"></script>
 <script>
 (function(){
@@ -520,6 +521,15 @@ const nextBtn = document.getElementById('next');
 const curEl   = document.getElementById('cur');
 const durEl   = document.getElementById('dur');
 const errEl   = document.getElementById('err');
+const ytPanel = document.createElement('div');
+ytPanel.style.cssText = 'position:fixed;right:18px;bottom:18px;width:min(420px,42vw);aspect-ratio:16/9;z-index:8;border:1px solid rgba(255,255,255,.18);background:#020308;box-shadow:0 18px 50px rgba(0,0,0,.45);display:none';
+const ytFrame = document.createElement('iframe');
+ytFrame.style.cssText = 'width:100%;height:100%;border:0;display:block';
+ytFrame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+ytFrame.allowFullscreen = true;
+ytPanel.appendChild(ytFrame);
+document.body.appendChild(ytPanel);
+let ytPlaying = false;
 
 function fmt(s){
   if (!isFinite(s) || s<0) return '0:00';
@@ -545,10 +555,27 @@ function loadTrack(i, autoplay){
     labelMat.map = covers[current].material.map; labelMat.needsUpdate = true;
   }
 
-  if (t.audioURL){
+  const ytSrc = window.AXYT ? AXYT.embedUrlForTrack(t, { autoplay: !!autoplay, mute: false, controls: true, loop: true }) : '';
+  if (ytSrc) {
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    ytFrame.src = ytSrc;
+    ytPanel.style.display = 'block';
+    ytPlaying = !!autoplay;
+    fillEl.style.width = '0%';
+    curEl.textContent = 'YT';
+    durEl.textContent = 'LIVE';
+  } else if (t.audioURL){
+    ytFrame.src = '';
+    ytPanel.style.display = 'none';
+    ytPlaying = false;
     audio.src = t.audioURL;
     if (autoplay) audio.play().catch(function(e){ showErr('Playback blocked: ' + e.message); });
   } else {
+    ytFrame.src = '';
+    ytPanel.style.display = 'none';
+    ytPlaying = false;
     audio.removeAttribute('src'); audio.load();
   }
   updatePlayBtn();
@@ -559,12 +586,26 @@ function showErr(msg){
 }
 
 function updatePlayBtn(){
-  playBtn.textContent = (!audio.paused && !audio.ended && audio.src) ? '⏸' : '▶';
+  playBtn.textContent = (ytPlaying || (!audio.paused && !audio.ended && audio.src)) ? '⏸' : '▶';
 }
-function next(){ loadTrack(current+1, !audio.paused && !!audio.src); }
-function prev(){ loadTrack(current-1, !audio.paused && !!audio.src); }
+function next(){ loadTrack(current+1, ytPlaying || (!audio.paused && !!audio.src)); }
+function prev(){ loadTrack(current-1, ytPlaying || (!audio.paused && !!audio.src)); }
 
 playBtn.addEventListener('click', function(){
+  const t = TRACKS[current];
+  const ytSrc = window.AXYT ? AXYT.embedUrlForTrack(t, { autoplay: true, mute: false, controls: true, loop: true }) : '';
+  if (ytSrc) {
+    if (ytPlaying) {
+      ytFrame.src = '';
+      ytPlaying = false;
+    } else {
+      ytFrame.src = ytSrc;
+      ytPanel.style.display = 'block';
+      ytPlaying = true;
+    }
+    updatePlayBtn();
+    return;
+  }
   if (!audio.src) return;
   ensureAnalyser();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -574,7 +615,7 @@ playBtn.addEventListener('click', function(){
 audio.addEventListener('play', function(){ ensureAnalyser(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
 nextBtn.addEventListener('click', next);
 prevBtn.addEventListener('click', prev);
-audio.addEventListener('play', updatePlayBtn);
+audio.addEventListener('play', function(){ ytPlaying = false; updatePlayBtn(); });
 audio.addEventListener('pause', updatePlayBtn);
 audio.addEventListener('ended', next);
 audio.addEventListener('error', function(){
@@ -618,8 +659,9 @@ renderer.domElement.addEventListener('click', function(e){
     loadTrack(hits[0].object.userData.index, true);
   } else {
     const cdHits = ray.intersectObject(disc, false);
-    if (cdHits.length && audio.src){
-      if (audio.paused) audio.play().catch(function(err){ showErr('Playback blocked: ' + err.message); });
+    if (cdHits.length && (audio.src || (window.AXYT && AXYT.hasTrack(TRACKS[current])))){
+      if (!audio.src) playBtn.click();
+      else if (audio.paused) audio.play().catch(function(err){ showErr('Playback blocked: ' + err.message); });
       else audio.pause();
     }
   }
@@ -668,7 +710,7 @@ function tick(){
   }
   bassPulse = bassPulse * 0.85 + bass * 0.15;
 
-  const spinSpeed = (audio.src && !audio.paused) ? (1.8 + bass*2.5) : 0.35;
+  const spinSpeed = (ytPlaying || (audio.src && !audio.paused)) ? (1.8 + bass*2.5) : 0.35;
   cdGroup.rotation.y += dt * spinSpeed;
   cdGroup.position.y = 0.4 + Math.sin(t*0.8)*0.05 + bassPulse*0.18;
 

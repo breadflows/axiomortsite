@@ -114,7 +114,7 @@
             transition:right .55s cubic-bezier(.16,1,.3,1), opacity .4s; font-family:var(--font-mono); }
         #disc-reward.show { right:30px; }
         #disc-reward .dr-media { position:relative; width:100%; aspect-ratio:16/9; background:#04060c; }
-        #disc-reward .dr-media video, #disc-reward .dr-media img { width:100%; height:100%; object-fit:cover; display:block; }
+        #disc-reward .dr-media video, #disc-reward .dr-media img, #disc-reward .dr-media iframe { width:100%; height:100%; object-fit:cover; display:block; border:0; }
         #disc-reward .dr-media::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,transparent 45%,rgba(7,10,18,.92)); }
         #disc-reward .dr-body { padding:14px 22px 20px; position:relative; }
         #disc-reward .dr-k { font-weight:700; font-size:11px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
@@ -288,7 +288,8 @@
     </div>
 </div>
 
-<script src="js/loader.js?v=3"></script>
+<script src="js/youtube-tracks.js?v=1"></script>
+<script src="js/loader.js?v=4"></script>
 <script src="js/inventory.js?v=4"></script>
 <script src="js/Engine.js"></script>
 <script type="importmap">
@@ -359,6 +360,27 @@ const TRACKS = [
 ];
 const trackURL = (tr) => 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.audio);
 const coverURL = (tr) => 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.img);
+const hasYoutube = (idx) => !!(window.AXYT && AXYT.hasTrack(TRACKS[idx]));
+function youtubeLayer(idx, opts = {}) {
+    if (!hasYoutube(idx)) return null;
+    return {
+        type: 'youtube',
+        src: AXYT.embedUrlForTrack(TRACKS[idx], Object.assign({ autoplay: true, mute: true, controls: false, loop: true }, opts))
+    };
+}
+function appendTrackMedia(media, idx, opts = {}) {
+    const tr = TRACKS[idx];
+    media.innerHTML = '';
+    if (hasYoutube(idx)) {
+        const frame = AXYT.iframeForTrack(tr, Object.assign({ autoplay: true, mute: !!opts.mute, controls: opts.controls !== false, loop: !!opts.loop }, opts));
+        media.appendChild(frame);
+        return frame;
+    }
+    const img = document.createElement('img');
+    img.src = coverURL(tr);
+    media.appendChild(img);
+    return img;
+}
 
 /* Discs are archived on pickup. Bring an archived disc to the courier on the TV stage to run it:
    first play launches its course/dimension, cleared discs become stage playback. */
@@ -1325,14 +1347,14 @@ function setProjectionActive(active) {
     if (!active && robotScreenVid) robotScreenVid.pause();
 }
 function setProjectionPlayback(idx, fromNetwork = false) {
-    if (!robotScreenVid || !projectionRig || !VIDEO_IDX.has(idx)) {
+    if (!robotScreenVid || !projectionRig || !hasYoutube(idx)) {
         setProjectionActive(false);
         return;
     }
     const tr = TRACKS[idx];
-    robotScreenVid.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/video.mp4';
+    robotScreenVid.poster = coverURL(tr);
+    robotScreenVid.removeAttribute('src');
     robotScreenVid.load();
-    robotScreenVid.play().catch(()=>{});
     if (!fromNetwork && typeof MP !== 'undefined' && MP.connected()) MP.event('play', tr.t, idx);
     setProjectionActive(true);
 }
@@ -1499,7 +1521,7 @@ async function buildCourier(){
     robotScreenVid.style.pointerEvents = 'none';
     document.body.appendChild(robotScreenVid);
     robotScreenVid.muted = true; robotScreenVid.loop = true; robotScreenVid.playsInline = true;
-    robotScreenVid.src = 'media/tracks/' + encodeURIComponent(TRACKS[0].folder) + '/video.mp4';
+    robotScreenVid.poster = coverURL(TRACKS[0]);
     robotScreenTex = new THREE.VideoTexture(robotScreenVid);
     robotScreenTex.colorSpace = THREE.SRGBColorSpace;
     projectionRig = createBalconyProjectionRig();
@@ -1797,7 +1819,7 @@ function refreshAxiomortTab(root){
 AXInventory.init({
     title: 'STUDIO SOUNDS',
     subtitle: 'MEMORY CARD 1 — TOWER ARCHIVE',
-    tracks: TRACKS.map(tr => ({ t: tr.t, src: trackURL(tr), img: coverURL(tr), meta: 'STUDIO SOUNDS 2025 — BREADFLOWS' })),
+    tracks: TRACKS.map(tr => ({ t: tr.t, folder: tr.folder, src: trackURL(tr), img: coverURL(tr), meta: 'STUDIO SOUNDS 2025 — BREADFLOWS' })),
     isOwned: i => collected.has(i),
     footer: '&#9651; CLOSE&nbsp;&nbsp;&middot;&nbsp;&nbsp;I',
     extraTabs: [{ id: 'axiomort', label: 'AXIOMORT', html: renderAxiomortTab(), onShow: refreshAxiomortTab }],
@@ -1857,7 +1879,7 @@ function promptDiscCourse(d){
 }
 function playDiscOnStage(idx){
     const tr = TRACKS[idx];
-    music.src = trackURL(tr); music.play().catch(()=>{});
+    music.pause();
     if (robot) robot.playOnce('yes', 'dance');
     setProjectionPlayback(idx);                                  // the in-world balcony projection
     showProjectionPanel(idx);                                    // + an unmissable cinema panel
@@ -1866,17 +1888,8 @@ function playDiscOnStage(idx){
 // the courier's projection, mirrored into a clear side panel so it can't be missed
 function showProjectionPanel(idx){
     const tr = TRACKS[idx];
-    const media = $('dr-media'); media.innerHTML = '';
-    if (typeof VIDEO_IDX !== 'undefined' && VIDEO_IDX.has(idx)) {
-        const v = document.createElement('video');
-        v.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/video.mp4';
-        v.muted = true; v.autoplay = true; v.loop = true; v.playsInline = true; v.play().catch(()=>{});
-        media.appendChild(v);
-    } else {
-        const img = document.createElement('img');
-        img.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.img);
-        media.appendChild(img);
-    }
+    const media = $('dr-media');
+    appendTrackMedia(media, idx, { mute: false, controls: true, loop: true });
     $('dr-k').textContent = 'NOW PROJECTING ▸ COURIER';
     $('dr-ti').textContent = tr.t;
     const np = $('dr-np'); if (np) np.textContent = 'BALCONY PROJECTION';
@@ -1887,7 +1900,7 @@ function showProjectionPanel(idx){
     clearTimeout(rewardTimer);
     rewardTimer = setTimeout(() => {
         $('disc-reward').classList.remove('show');
-        const vv = media.querySelector('video'); if (vv) vv.pause();
+        media.innerHTML = '';
     }, 9000);
 }
 function launchAxiomortDisc(idx){
@@ -1903,7 +1916,7 @@ function grantDisc(d, opts = {}){
     const alreadyOwned = collected.has(d.idx);
     collected.add(d.idx); save(); hideDisc(d); updateHUD();
     const tr = TRACKS[d.idx];
-    if (opts.playPreview !== false) { music.src = trackURL(tr); music.play().catch(()=>{}); }
+    if (opts.playPreview !== false) { music.pause(); }
     showDiscReward(d.idx);
     // the courier reacts; full video projection only starts when the disc is given to him.
     if (robot) robot.playOnce('yes', 'dance');
@@ -1919,16 +1932,7 @@ let rewardTimer = null;
 function showDiscReward(idx){
     const tr = TRACKS[idx];
     const media = $('dr-media');
-    media.innerHTML = '';
-    if (typeof VIDEO_IDX !== 'undefined' && VIDEO_IDX.has(idx)) {
-        const v = document.createElement('video');
-        v.src = 'media/tracks/' + encodeURIComponent(tr.folder) + '/video.mp4';
-        v.muted = true; v.autoplay = true; v.loop = true; v.playsInline = true;
-        v.play().catch(()=>{});
-        media.appendChild(v);
-    } else {
-        const img = document.createElement('img'); img.src = trackURL ? 'media/tracks/' + encodeURIComponent(tr.folder) + '/' + encodeURIComponent(tr.img) : ''; media.appendChild(img);
-    }
+    appendTrackMedia(media, idx, { mute: true, controls: false, loop: true });
     $('dr-k').textContent = `DISC ACQUIRED ▸ ${String(collected.size).padStart(2,'0')} / 26`;
     $('dr-ti').textContent = tr.t;
     $('disc-reward').classList.add('show');
@@ -1939,7 +1943,7 @@ function showDiscReward(idx){
     clearTimeout(rewardTimer);
     rewardTimer = setTimeout(() => {
         $('disc-reward').classList.remove('show');
-        const vv = media.querySelector('video'); if (vv) vv.pause();
+        media.innerHTML = '';
     }, 5400);
 }
 let dimCleared = false;
@@ -1987,9 +1991,7 @@ $('dm-enter').addEventListener('click', () => {
     setClaimState(false);
     music.pause();
     // cinematic warp: play this disc's own clip while the course loads
-    const dvid = (typeof VIDEO_IDX !== 'undefined' && VIDEO_IDX.has(d.idx))
-        ? ['media/tracks/' + encodeURIComponent(TRACKS[d.idx].folder) + '/video.mp4']
-        : collectedVideoURLs();
+    const dvid = hasYoutube(d.idx) ? [youtubeLayer(d.idx)] : collectedVideoURLs();
     AXLoader.show({ videos: dvid, label: 'Loading ' + dim.name, sub: dim.kind === 'dim' ? 'Warping dimension' : 'Building the course' });
     let p = 0;
     const tk = setInterval(() => { p = Math.min(0.9, p + 0.07); AXLoader.set(p); }, 170);
@@ -2290,12 +2292,12 @@ addEventListener('resize', () => {
 });
 
 /* ════════════════ BOOT ════════════════ */
-// STUDIO SOUNDS indices that ship with a video.mp4 → montage source.
-const VIDEO_IDX = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,19,20,21,24]);
+// STUDIO SOUNDS indices with YouTube videos -> montage/projector source.
+const VIDEO_IDX = new Set(TRACKS.map((_, i) => i).filter(hasYoutube));
 function collectedVideoURLs(){
-    const owned = [...collected].filter(i => VIDEO_IDX.has(i));
+    const owned = [...collected].filter(hasYoutube);
     const src = owned.length ? owned : [0,2,5,11,12,21,24];   // default reel for new pilots
-    return src.map(i => 'media/tracks/' + encodeURIComponent(TRACKS[i].folder) + '/video.mp4');
+    return src.filter(hasYoutube).map(i => youtubeLayer(i));
 }
 
 async function boot(){

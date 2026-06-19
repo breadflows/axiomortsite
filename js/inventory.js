@@ -257,8 +257,20 @@
   function playTrack(i) {
     current = i;
     const tr = cfg.tracks[i];
-    audio.src = tr.src;
-    audio.play().catch(() => {});
+    const ytSrc = window.AXYT && tr.folder ? AXYT.embedUrlForTrack(tr, { autoplay: true, mute: false, controls: true, loop: true }) : '';
+    if (ytSrc) {
+      audio.pause();
+      audio.removeAttribute('src');
+      const frame = document.getElementById('ax-player-frame');
+      if (frame) {
+        frame.src = ytSrc;
+        playerLoaded = true;
+      }
+      selectTab('player');
+    } else {
+      audio.src = tr.src;
+      audio.play().catch(() => {});
+    }
     document.getElementById('axtt').textContent = tr.t;
     document.getElementById('axmm').textContent = tr.meta || 'BREADFLOWS';
     document.getElementById('axlbl').src = tr.img;
