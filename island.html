@@ -496,7 +496,8 @@ texLeaf.wrapS = texLeaf.wrapT = THREE.ClampToEdgeWrapping;
    RENDERER / SCENE
 ════════════════════════════════════════════ */
 // low-power path for phones/tablets: no MSAA, capped pixel ratio
-const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760;
+const AX_LITE = /[?&]lite=1/.test(location.search);
+const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760 || AX_LITE;
 const renderer = new THREE.WebGLRenderer({ antialias: !AX_MOBILE, powerPreference: 'high-performance', stencil: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, AX_MOBILE ? 1 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
@@ -998,7 +999,7 @@ addEventListener('contextmenu', (e) => { if (controls.isLocked) e.preventDefault
 addEventListener('keyup', (e) => keys[e.code] = false);
 
 /* touch */
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = matchMedia('(pointer: coarse)').matches || AX_LITE;
 let joyVec = { x: 0, y: 0 };
 let lookTouch = null, lookPrev = { x: 0, y: 0 };
 let yaw = Math.PI / 2, pitch = 0; // touch-look state

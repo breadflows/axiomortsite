@@ -391,7 +391,9 @@ const rng = mulberry32(0x70E32);
 
 /* ════════════════ RENDERER / SCENE ════════════════ */
 // low-power path for phones/tablets: no MSAA, capped pixel ratio (huge fill-rate saving)
-const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760;
+// touch/low-power devices, OR force it with ?lite=1 (a manual "lite mode" toggle)
+const AX_LITE = /[?&]lite=1/.test(location.search);
+const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760 || AX_LITE;
 const renderer = new THREE.WebGLRenderer({ antialias: !AX_MOBILE, powerPreference:'high-performance', stencil:false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, AX_MOBILE ? 1 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
@@ -1729,7 +1731,7 @@ document.addEventListener('contextmenu', (e) => {
 });
 
 /* touch (same scheme as island) */
-const isTouch = matchMedia('(pointer: coarse)').matches;
+const isTouch = matchMedia('(pointer: coarse)').matches || AX_LITE;
 let joyVec = { x:0, y:0 }, lookTouch = null, lookPrev = { x:0, y:0 }, yaw = Math.PI, pitch = 0;
 if (isTouch) {
     document.body.classList.add('touch');

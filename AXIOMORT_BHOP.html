@@ -301,7 +301,7 @@ const LEVELS = [
 
 // ========== THREE.JS SETUP ==========
 const canvas = document.getElementById('c');
-const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760;
+const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760 || /[?&]lite=1/.test(location.search);
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !AX_MOBILE });
 window.renderer = renderer;
 renderer.setPixelRatio(Math.min(devicePixelRatio, AX_MOBILE ? 1 : 1.5));
