@@ -963,46 +963,29 @@ function buildCity() {
     const haze = new THREE.Mesh(new THREE.CircleGeometry(1220,64).rotateX(-Math.PI/2), hazeMat);
     haze.position.y = hazeY;
     scene.add(haze);
-    const cloudMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.08, blending:THREE.AdditiveBlending, depthWrite:false });
-    dayNight.cloudMat = cloudMat;
-    for (let i=0;i<54;i++){
-        const p = new THREE.Mesh(new THREE.CircleGeometry(38+rng()*110, 22).rotateX(-Math.PI/2), cloudMat);
-        const a=rng()*Math.PI*2, r=105+rng()*900;
-        p.scale.set(1.8+rng()*2.8, 1, .55+rng()*.9);
-        p.rotation.z = rng()*Math.PI;
-        p.position.set(Math.cos(a)*r, hazeY + (rng()*12-6), Math.sin(a)*r);
-        scene.add(p);
-    }
-    // ── CLOUD SEA: a soft bank the skyline rises out of, hiding the flat ground far below ──
-    const cloudTex = makeTexture(128, (g, s) => {
-        const r = g.createRadialGradient(s/2, s/2, 4, s/2, s/2, s/2);
-        r.addColorStop(0, 'rgba(255,255,255,0.96)');
-        r.addColorStop(0.5, 'rgba(238,247,255,0.55)');
-        r.addColorStop(1, 'rgba(238,247,255,0)');
-        g.fillStyle = r; g.fillRect(0, 0, s, s);
+    // ── FOG SEA below the deck ──────────────────────────────────────────────
+    // A continuous smoke/fog layer the whole city floats above: it buries the ground and the
+    // bottoms of the skyscrapers so there's nothing to see "down there". It sits well BELOW the
+    // skydeck, so it never seeps up into the player's level — looking out you see the skyline
+    // rising from fog; looking down off the balcony you see fog, not the ground.
+    const fogTex = makeTexture(256, (g, s) => {
+        g.clearRect(0, 0, s, s);
+        for (let i = 0; i < 70; i++) {                 // soft overlapping blobs → smoky, continuous, non-uniform
+            const x = rng()*s, y = rng()*s, rad = 26 + rng()*74;
+            const rg = g.createRadialGradient(x, y, 0, x, y, rad);
+            rg.addColorStop(0, 'rgba(236,245,255,0.40)'); rg.addColorStop(1, 'rgba(236,245,255,0)');
+            g.fillStyle = rg; g.fillRect(0, 0, s, s);
+        }
     });
-    const cloudSeaMat = new THREE.SpriteMaterial({ map: cloudTex, transparent: true, opacity: .9, depthWrite: false, depthTest: true });
-    dayNight.cloudSeaMat = cloudSeaMat;
-    // (Removed the broad horizontal cloud-deck planes: being huge + horizontal, they passed THROUGH
-    //  the tall projection skyscraper and poked out its front. The vertical sprites below depth-test
-    //  against the building correctly, so they read as a cloud bank without clipping it.)
-
-    // is this xz inside the projection-skyscraper corridor (building at x -25..25, z -68..-96)?
-    const inProjectionCorridor = (x, z) => (z < -35 && Math.abs(x) < Math.max(80, -z * 0.7));
-
-    // dense white cloud SEA concentrated at the horizon → a solid bank the skyline rises out of,
-    // burying the flat ground. Layered close-in so it reads as mass even against a pale sky.
-    const cloudCount = AX_MOBILE ? 90 : 170;          // fewer draw calls; bigger sprites keep the bank dense
-    for (let i = 0; i < cloudCount; i++) {
-        const a = rng()*Math.PI*2, r = 180 + rng()*820;
-        const cx = Math.cos(a)*r, cz = Math.sin(a)*r;
-        if (inProjectionCorridor(cx, cz)) continue;   // keep clouds out of the skyscraper / screen sightline
-        const sp = new THREE.Sprite(cloudSeaMat);
-        const sc = 120 + rng()*340;
-        sp.scale.set(sc, sc*0.62, 1);
-        sp.position.set(cx, -8 - rng()*64, cz);       // tight horizon band ≈ -8..-72
-        sp.renderOrder = -1;
-        scene.add(sp);
+    const fogMat = new THREE.MeshBasicMaterial({ map: fogTex, color:0xeef6ff, transparent:true, opacity:.72, depthWrite:false, side:THREE.DoubleSide });
+    dayNight.cloudSeaMat = fogMat;                     // (day/night still tints it via this key)
+    const fogLayers = AX_MOBILE ? 3 : 5;               // stacked layers give the bank depth/volume
+    for (let L = 0; L < fogLayers; L++) {
+        const d = new THREE.Mesh(new THREE.CircleGeometry(1700, 40).rotateX(-Math.PI/2), fogMat);
+        d.position.y = -30 - L * 13;                   // band from -30 down to ~-82 (below the skydeck floor)
+        d.rotation.y = L * 1.7;                        // rotate each layer so the blob pattern doesn't repeat
+        d.renderOrder = -3;
+        scene.add(d);
     }
     // bright sun disk in the blue sky
     const sunTex = makeTexture(128,(g,s)=>{ const r=g.createRadialGradient(s/2,s/2,5,s/2,s/2,s/2);
