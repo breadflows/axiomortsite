@@ -861,6 +861,11 @@ async function buildAriaBar() {
 // procedural window-grid facade — lit windows + dark mullions, applied to any building material
 function applyWindowGrid(material, o = {}) {
     const cw = o.cw || 4.6, ch = o.ch || 5.2, bright = o.bright || 2.8, litFrac = o.litFrac || 0.70, mull = o.mull || 0.34;
+    // city towers: atmospheric vertical gradient — bases sink into the fog, crowns catch the light
+    const grad = o.tall ? `
+             float hgt = clamp((vWP.y + 60.0) / 380.0, 0.0, 1.0);
+             diffuseColor.rgb *= mix(0.60, 1.14, hgt);
+             totalEmissiveRadiance *= mix(0.45, 1.0, hgt);` : '';
     material.onBeforeCompile = (shader) => {
         material.userData.shader = shader;
         shader.vertexShader = 'varying vec3 vWP;\n' + shader.vertexShader.replace(
@@ -881,14 +886,28 @@ function applyWindowGrid(material, o = {}) {
              vec3 win = mix(vec3(0.20, 0.30, 0.46), vec3(1.0, 0.93, 0.74), lit);
              totalEmissiveRadiance += win * pane * (0.06 + lit * ${bright.toFixed(2)});
              diffuseColor.rgb *= mix(${mull.toFixed(2)}, 1.0, pane);
+             ${grad}
             `
         );
     };
 }
 function buildCity() {
-    const archetypes = (window.AXEngine && window.AXEngine.ArchitecturalGenerator) 
-        ? window.AXEngine.ArchitecturalGenerator.createCityBuildingArchetypes() 
-        : [new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0)];
+    // ── procedural skyscraper massing (setbacks, spires, antennas, ziggurats) ──
+    // Each archetype is a few boxes MERGED into one geometry, then instanced — so the skyline
+    // reads as varied, detailed towers instead of plain blobs, with no textures and ~5 draw calls.
+    // Boxes live in unit space (x,z in -.5..5, y in 0..1) and get scaled per building.
+    const tower3 = (steps) => BufferGeometryUtils.mergeGeometries(steps.map(s => {
+        const g = new THREE.BoxGeometry(s.w, s.y1 - s.y0, s.d);
+        g.translate(s.ox || 0, (s.y0 + s.y1) / 2, s.oz || 0);
+        return g;
+    }), false);
+    const archetypes = [
+        tower3([{y0:0,y1:.50,w:1,d:1},{y0:.50,y1:.78,w:.70,d:.70},{y0:.78,y1:.93,w:.42,d:.42},{y0:.93,y1:1,w:.10,d:.10}]),    // setback + spire
+        tower3([{y0:0,y1:.66,w:1,d:.82},{y0:.66,y1:1,w:.60,d:.50}]),                                                          // slab setback
+        tower3([{y0:0,y1:.90,w:.86,d:.86},{y0:.90,y1:1,w:.06,d:.06}]),                                                        // tower + antenna mast
+        tower3([{y0:0,y1:.36,w:1,d:1},{y0:.36,y1:.66,w:.76,d:.76},{y0:.66,y1:.88,w:.52,d:.52},{y0:.88,y1:1,w:.26,d:.26}]),    // ziggurat
+        tower3([{y0:0,y1:1,w:.74,d:.74},{y0:0,y1:.52,w:.42,d:.96}]),                                                          // cross-massing tower
+    ];
 
     const cityBaseY = -280;
     const hazeY = -58;
@@ -896,7 +915,7 @@ function buildCity() {
     // City material with a PROCEDURAL WINDOW-GRID facade — turns textureless boxes into
     // detailed skyscrapers (lit windows + mullions) for an AAA skyline read.
     const bMat = new THREE.MeshStandardMaterial({ color:0xeef3f9, roughness:.34, metalness:.06, emissive:0x0b1420, emissiveIntensity:1 });
-    applyWindowGrid(bMat, { cw:4.6, ch:5.2, bright:2.8, litFrac:0.70 });
+    applyWindowGrid(bMat, { cw:4.6, ch:5.2, bright:2.8, litFrac:0.70, tall:true });
     dayNight.cityMat = bMat;
     
     const cityMeshes = archetypes.map(geo => {
