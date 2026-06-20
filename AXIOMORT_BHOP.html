@@ -301,9 +301,10 @@ const LEVELS = [
 
 // ========== THREE.JS SETUP ==========
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760;
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !AX_MOBILE });
 window.renderer = renderer;
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, AX_MOBILE ? 1 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1585,13 +1586,15 @@ function accelerate(wishdir, wishspeed, accel, dt){
   player.vel.x += a * wishdir.x;
   player.vel.z += a * wishdir.z;
 }
+const mobileMove = { f: 0, s: 0 };   // analog joystick input (mobile)
 function getWishDir(){
   let f = 0, s = 0;
   if (keys['KeyW']) f += 1;
   if (keys['KeyS']) f -= 1;
   if (keys['KeyD']) s += 1;
   if (keys['KeyA']) s -= 1;
-  if (f === 0 && s === 0) return null;
+  f += mobileMove.f; s += mobileMove.s;
+  if (Math.abs(f) < 0.02 && Math.abs(s) < 0.02) return null;
   const cy = Math.cos(player.yaw), sy = Math.sin(player.yaw);
   const dx = -sy*f + cy*s;
   const dz = -cy*f - sy*s;
@@ -1876,6 +1879,31 @@ function start(){
   } else {
     startEl.style.display = 'grid';
   }
+}
+
+// ===== MOBILE TOUCH CONTROLS (joystick move, drag look, hold-to-jump) =====
+if (AX_MOBILE) {
+  const mk = (css, txt) => { const d=document.createElement('div'); d.style.cssText=css; if(txt)d.textContent=txt; document.body.appendChild(d); return d; };
+  const joy = mk('position:fixed;left:24px;bottom:30px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(124,255,178,.35);background:rgba(8,16,12,.28);z-index:60;touch-action:none;');
+  const knob = document.createElement('div'); knob.style.cssText='position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px;border-radius:50%;background:rgba(124,255,178,.42);'; joy.appendChild(knob);
+  const jumpBtn = mk('position:fixed;right:28px;bottom:42px;width:96px;height:96px;border-radius:50%;border:1px solid rgba(124,255,178,.5);background:rgba(124,255,178,.16);color:#7CFFB2;font:700 15px/96px "Space Grotesk",sans-serif;text-align:center;z-index:60;touch-action:none;user-select:none;', 'JUMP');
+
+  let joyId=null, jcx=0, jcy=0;
+  joy.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.changedTouches[0]; joyId=t.identifier; const r=joy.getBoundingClientRect(); jcx=r.left+r.width/2; jcy=r.top+r.height/2; }, {passive:false});
+  addEventListener('touchmove', e=>{ for(const t of e.changedTouches){ if(t.identifier===joyId){ let dx=t.clientX-jcx, dy=t.clientY-jcy; const m=Math.hypot(dx,dy)||1, cl=Math.min(m,55)/55; dx=dx/m*cl; dy=dy/m*cl; knob.style.transform=`translate(${dx*44}px,${dy*44}px)`; mobileMove.f=-dy; mobileMove.s=dx; } } }, {passive:false});
+  const joyEnd = e=>{ for(const t of e.changedTouches){ if(t.identifier===joyId){ joyId=null; mobileMove.f=mobileMove.s=0; knob.style.transform=''; } } };
+  addEventListener('touchend', joyEnd); addEventListener('touchcancel', joyEnd);
+
+  jumpBtn.addEventListener('touchstart', e=>{ e.preventDefault(); keys['Space']=true; }, {passive:false});
+  const jumpUp = e=>{ e.preventDefault(); keys['Space']=false; };
+  jumpBtn.addEventListener('touchend', jumpUp, {passive:false}); jumpBtn.addEventListener('touchcancel', jumpUp, {passive:false});
+
+  // drag anywhere on the canvas (outside the pads) to look around
+  let lookId=null, lpx=0, lpy=0;
+  canvas.addEventListener('touchstart', e=>{ const t=e.changedTouches[0]; lookId=t.identifier; lpx=t.clientX; lpy=t.clientY; }, {passive:true});
+  addEventListener('touchmove', e=>{ for(const t of e.changedTouches){ if(t.identifier===lookId){ player.yaw -= (t.clientX-lpx)*0.005; player.pitch -= (t.clientY-lpy)*0.005; const lim=Math.PI/2-0.05; if(player.pitch>lim)player.pitch=lim; if(player.pitch<-lim)player.pitch=-lim; lpx=t.clientX; lpy=t.clientY; } } }, {passive:true});
+  const lookEnd = e=>{ for(const t of e.changedTouches){ if(t.identifier===lookId) lookId=null; } };
+  addEventListener('touchend', lookEnd); addEventListener('touchcancel', lookEnd);
 }
 
 camera.fov = opt.fov;

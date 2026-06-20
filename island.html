@@ -171,7 +171,12 @@
         #joy { position: absolute; bottom: 56px; left: 36px; width: 110px; height: 110px; border-radius: 50%; border: 1px solid rgba(232,228,220,0.2); display: none; pointer-events: auto; touch-action: none; }
         #joy-knob { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px; border-radius: 50%; background: rgba(212,175,55,0.3); border: 1px solid var(--gold); }
         #btn-act { position: absolute; bottom: 78px; right: 40px; width: 70px; height: 70px; border-radius: 50%; border: 1px solid var(--gold); background: rgba(212,175,55,0.15); color: var(--gold); font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; display: none; pointer-events: auto; touch-action: manipulation; }
-        body.touch #joy, body.touch #btn-act { display: block; }
+        #btn-jump { position:absolute; bottom:170px; right:46px; width:84px; height:84px; border-radius:50%;
+            border:1px solid var(--blue,#2f9dff); background:rgba(47,157,255,0.16); color:var(--blue,#2f9dff);
+            font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:1px;
+            display:none; pointer-events:auto; touch-action:none; user-select:none; }
+        #btn-jump:active { background:rgba(47,157,255,0.34); }
+        body.touch #joy, body.touch #btn-act, body.touch #btn-jump { display: block; }
         #btn-pause-m { position: absolute; top: 16px; right: 18px; padding: 8px 14px; border: 1px solid rgba(232,228,220,0.2); background: rgba(5,5,7,0.5); color: var(--bone-dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; display: none; pointer-events: auto; }
         body.touch #btn-pause-m { display: block; }
 
@@ -219,6 +224,7 @@
     <div id="stamina-wrap"><div id="stamina"></div></div>
     <div id="joy"><div id="joy-knob"></div></div>
     <button id="btn-act">PICK UP</button>
+    <button id="btn-jump">JUMP</button>
     <button id="btn-pause-m">MENU</button>
 </div>
 
@@ -489,8 +495,10 @@ texLeaf.wrapS = texLeaf.wrapT = THREE.ClampToEdgeWrapping;
 /* ════════════════════════════════════════════
    RENDERER / SCENE
 ════════════════════════════════════════════ */
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// low-power path for phones/tablets: no MSAA, capped pixel ratio
+const AX_MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 760;
+const renderer = new THREE.WebGLRenderer({ antialias: !AX_MOBILE, powerPreference: 'high-performance', stencil: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, AX_MOBILE ? 1 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -505,7 +513,8 @@ const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 22
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.28, 0.6, 0.92);
+const _bs = AX_MOBILE ? 0.4 : 0.5;   // bloom at reduced resolution
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth * _bs, innerHeight * _bs), 0.28, 0.6, 0.92);
 composer.addPass(bloomPass);
 
 /* ─── lights ─── */
@@ -1028,6 +1037,15 @@ if (isTouch) {
         }
     }, { passive: true });
     document.getElementById('btn-act').addEventListener('click', tryCollect);
+    // hold-to-jump (auto-hop while held → mobile bunny-hopping)
+    const jb = document.getElementById('btn-jump');
+    if (jb) {
+        const jOn = (e) => { e.preventDefault(); keys['Space'] = true; };
+        const jOff = (e) => { e.preventDefault(); keys['Space'] = false; };
+        jb.addEventListener('touchstart', jOn, { passive:false });
+        jb.addEventListener('touchend', jOff, { passive:false });
+        jb.addEventListener('touchcancel', jOff, { passive:false });
+    }
     document.getElementById('btn-pause-m').addEventListener('click', togglePause);
 }
 
