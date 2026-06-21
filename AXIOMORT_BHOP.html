@@ -864,6 +864,16 @@ function createPlayerBody(){
 
 // createPlayerViewModel removed as requested to have a clean first-person POV without viewmodel overlays
 
+// tell the host page (tower/island loader) how the real asset load is going, so it
+// doesn't claim 100% until the FBX is actually downloaded.
+let _bhopReadySent = false;
+function signalBhopProgress(p){
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ axBhop:'progress', p: Math.max(0, Math.min(1, p)) }, '*'); } catch(e){}
+}
+function signalBhopReady(){
+  if (_bhopReadySent) return; _bhopReadySent = true;
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ axBhop:'ready' }, '*'); } catch(e){}
+}
 function loadRobotModel(){
   if (robotLoadStarted) return;
   robotLoadStarted = true;
@@ -880,15 +890,19 @@ function loadRobotModel(){
         }
       });
       console.log('[AXIOMORT] FBX Robot loaded successfully.');
-      
+
       // Initialize player body and first-person viewmodel hands
       createPlayerBody();
-      
+
       if (started) placeLevelRobots();
-    }, undefined, function(err){
+      signalBhopReady();                 // the model is really here → tell the host loader to hit 100%
+    }, function(xhr){                     // real download progress for the (large) FBX
+      if (xhr && xhr.lengthComputable) signalBhopProgress(xhr.loaded / xhr.total);
+    }, function(err){
       console.warn('robot fbx failed; using fallback NPC', err);
       robotTemplate = false;
       if (started) placeLevelRobots();
+      signalBhopReady();                 // even on failure, don't trap the loader
     });
   }
   startLoader(FBXLoader);

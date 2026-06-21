@@ -2015,22 +2015,27 @@ $('dm-enter').addEventListener('click', () => {
         ? ['media/tracks/' + encodeURIComponent(TRACKS[d.idx].folder) + '/video.mp4']
         : collectedVideoURLs();
     AXLoader.show({ videos: dvid, label: 'Loading ' + dim.name, sub: dim.kind === 'dim' ? 'Warping dimension' : 'Building the course' });
-    let p = 0;
-    const tk = setInterval(() => { p = Math.min(0.9, p + 0.07); AXLoader.set(p); }, 170);
     const ifr = $('df-iframe');
-    ifr.onload = () => {
-        clearInterval(tk); AXLoader.set(1);
-        AXLoader.hide().then(() => {
-            try {
-                ifr.focus();
-                ifr.contentWindow.focus();
-            } catch (e) {}
-        });
-        ifr.onload = null;
-    };
+    const isBhop = /AXIOMORT_BHOP/i.test(dim.src);   // bhop reports REAL asset progress + a ready signal
+    let p = 0, done = false, gotProgress = false;
+    // gentle indeterminate creep until we hear real progress / a ready signal — never reaches 100%
+    const tk = setInterval(() => { if (!gotProgress && !done) { p = Math.min(0.85, p + 0.045); AXLoader.set(p); } }, 180);
+    function finishLoad() {
+        if (done) return; done = true;
+        clearInterval(tk); removeEventListener('message', onLoadMsg);
+        AXLoader.set(1);
+        AXLoader.hide().then(() => { try { ifr.focus(); ifr.contentWindow.focus(); } catch (e) {} });
+    }
+    function onLoadMsg(e) {
+        if (!e || !e.data) return;
+        if (e.data.axBhop === 'progress' && typeof e.data.p === 'number') { gotProgress = true; AXLoader.set(Math.min(0.97, Math.max(p, e.data.p * 0.97))); }
+        else if (e.data.axBhop === 'ready') finishLoad();   // 100% ONLY once the FBX + course are actually loaded
+    }
+    addEventListener('message', onLoadMsg);
+    ifr.onload = () => { ifr.onload = null; if (!isBhop) finishLoad(); };  // non-bhop dimensions are ready once their page loads
     ifr.src = dim.src;
-    // safety: never hang the loader if onload never fires
-    setTimeout(() => { clearInterval(tk); if (document.querySelector('#ax-load.on')) AXLoader.hide(); }, 9000);
+    // hard safety so a stalled download can't trap the player on the loader forever
+    setTimeout(finishLoad, 30000);
 });
 $('dm-leave').addEventListener('click', () => {
     $('dim-modal').classList.remove('open'); pendingDim=null; uiOpen=false;
