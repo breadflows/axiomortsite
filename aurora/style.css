@@ -719,7 +719,7 @@ html, body {
 /* Animations */
 @keyframes logo-shimmer {
   0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.3)); }
-  50% { filter: drop-shadow(0 0 25px rgba(189, 43, 218, 0.6)); }
+  50% { filter: drop-shadow(0 0 22px rgba(0, 240, 255, 0.55)); }
 }
 
 @keyframes boot-pulse {

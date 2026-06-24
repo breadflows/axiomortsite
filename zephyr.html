@@ -163,19 +163,19 @@
         .glowing-shrine-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
-            border: 1px solid rgba(139, 92, 246, 0.5);
-            border-radius: 10px;
+            background: rgba(212, 175, 55, 0.12);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
             color: #fff;
             cursor: pointer;
             font-size: 0.95rem;
-            transition: all 0.3s ease;
+            transition: background 0.2s, border-color 0.2s;
             margin-bottom: 10px;
         }
-        
+
         .glowing-shrine-btn:hover {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(59, 130, 246, 0.5));
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+            background: rgba(212, 175, 55, 0.22);
+            border-color: rgba(212, 175, 55, 0.5);
         }
         
         .tip-jar-btn {
@@ -240,7 +240,7 @@
         .game-title {
             font-size: 4rem;
             color: #fff;
-            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(139, 92, 246, 0.3);
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
             margin-bottom: 10px;
             letter-spacing: 0.2em;
         }
@@ -290,9 +290,8 @@
             position: absolute;
             top: 50px;
             left: 20px;
-            color: #a78bfa;
+            color: rgba(255, 255, 255, 0.65);
             font-size: 1rem;
-            text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
             font-weight: 600;
         }
 
@@ -319,7 +318,6 @@
             letter-spacing: 8px;
             font-weight: bold;
             color: #fff;
-            text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
             margin-bottom: 8px;
         }
         #levelBanner .track {
@@ -389,11 +387,11 @@
             
             <div class="monetization-section">
                 <div class="glowing-shrine-btn ui-element" id="shrineBtn">
-                    ✨ Visit the Glowing Shrine<br>
+                    Visit the Glowing Shrine<br>
                     <small>Double your Starlight (Simulated Ad)</small>
                 </div>
                 <button class="tip-jar-btn ui-element" id="tipJarBtn">
-                    ☕ Support the Developer<br>
+                    Support the Developer<br>
                     <small>Unlock Exclusive Wisp Trail</small>
                 </button>
             </div>
@@ -1213,7 +1211,7 @@
         // Simulate ad watching
         const btn = document.getElementById('shrineBtn');
         btn.disabled = true;
-        btn.innerHTML = '✨ Watching...<br><small>Please wait</small>';
+        btn.innerHTML = 'Watching...<br><small>Please wait</small>';
         
         setTimeout(() => {
             const bonus = Math.floor(gameState.starlight * 0.5);
@@ -1221,14 +1219,14 @@
             updateStarlightCounter();
             updateShopUI();
             
-            btn.innerHTML = `✨ Received ${bonus} ✦!<br><small>Visit again later</small>`;
+            btn.innerHTML = `Received ${bonus} ✦!<br><small>Visit again later</small>`;
             
             // TODO: Hook up reward chime sound
             // const reward = new Audio('reward-chime.mp3'); reward.play();
             
             setTimeout(() => {
                 btn.disabled = false;
-                btn.innerHTML = '✨ Visit the Glowing Shrine<br><small>Double your Starlight (Simulated Ad)</small>';
+                btn.innerHTML = 'Visit the Glowing Shrine<br><small>Double your Starlight (Simulated Ad)</small>';
             }, 3000);
         }, 2000);
     });
