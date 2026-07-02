@@ -271,7 +271,7 @@
         }
     </style>
     <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.170.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/" } }
+        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
     </script>
 </head>
 <body>
@@ -391,15 +391,8 @@
         function dismissBoot(){document.getElementById('boot-screen').classList.add('dismissed');setTimeout(()=>document.getElementById('main-menu').classList.add('visible'),400);}
     </script>
 
-    <script src="js/Engine.js"></script>
     <script type="module">
         import * as THREE from 'three';
-        
-        window.AXEngine = window.AXEngine || {};
-        window.AXEngine.ecs = new window.AXEngine.ECSManager(2000);
-        window.AXEngine.physicsSys = new window.AXEngine.Systems.PhysicsSystem();
-        window.AXEngine.syncSys = new window.AXEngine.Systems.TransformSyncSystem();
-        window.AXEngine.stateBus = new window.AXEngine.StateBus();
 
         /* ═══ PERFORMANCE DETECTION ═══ */
         function detectPerformanceTier(){
@@ -708,6 +701,41 @@
         }
         function updateGameUI(){document.getElementById('level-display').innerText=currentLevel;document.getElementById('points-display').innerText=playerData.gold;}
 
+        /* ═══ PROCEDURAL SURFACE TEXTURES ═══ */
+        // 'wall' = dark brushed panels with a seam at each block edge, 'floor' = light tiles on the maze grid.
+        function makeSurfaceTexture(kind,tiles=1){
+            const s=256,c=document.createElement('canvas');c.width=c.height=s;
+            const g=c.getContext('2d');
+            if(kind==='wall'){
+                g.fillStyle='#585c66';g.fillRect(0,0,s,s);
+                for(let i=0;i<2600;i++){
+                    g.fillStyle=['#4c5059','#63676f','#41454e','#6d717a'][i&3];
+                    g.globalAlpha=0.16+Math.random()*0.2;
+                    g.fillRect(Math.random()*s,Math.random()*s,1+Math.random()*2.4,1+Math.random()*2.4);
+                }
+                g.globalAlpha=0.4;g.strokeStyle='#33363d';g.lineWidth=5;
+                g.strokeRect(3,3,s-6,s-6);
+                g.globalAlpha=0.14;g.strokeStyle='#8b8f98';g.lineWidth=1;
+                for(let i=0;i<26;i++){const y=Math.random()*s;g.beginPath();g.moveTo(0,y);g.lineTo(s,y);g.stroke();}
+            }else{
+                g.fillStyle='#e6e3dc';g.fillRect(0,0,s,s);
+                for(let i=0;i<2200;i++){
+                    g.fillStyle=['#dcd8cf','#efece5','#d2cec5'][i%3];
+                    g.globalAlpha=0.18+Math.random()*0.2;
+                    g.fillRect(Math.random()*s,Math.random()*s,1+Math.random()*2,1+Math.random()*2);
+                }
+                g.globalAlpha=0.3;g.strokeStyle='#b9b5ac';g.lineWidth=2;
+                g.strokeRect(1,1,s-2,s-2);
+            }
+            g.globalAlpha=1;
+            const tx=new THREE.CanvasTexture(c);
+            tx.colorSpace=THREE.SRGBColorSpace;
+            tx.wrapS=tx.wrapT=THREE.RepeatWrapping;
+            tx.repeat.set(tiles,tiles);
+            tx.anisotropy=4;
+            return tx;
+        }
+
         /* ═══ INIT — WebGL + FIXED LIGHTING ═══ */
         function init(){
             const container=document.getElementById('canvas-container');
@@ -747,19 +775,15 @@
             const fillLight=new THREE.DirectionalLight(0xddeeff,0.4);
             fillLight.position.set(-6,12,-8);scene.add(fillLight);
 
-            // Materials — walls lighter for mobile visibility
-            wallMaterial=new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:0.5,metalness:0.05});
+            // Materials — procedural canvas textures so the board doesn't read as flat plastic
+            wallMaterial=new THREE.MeshStandardMaterial({map:makeSurfaceTexture('wall'),color:0x6a6e78,roughness:0.55,metalness:0.05});
             wallTopMaterial=new THREE.MeshStandardMaterial({color:0x666666,roughness:0.3,metalness:0.1,emissive:0x111111});
-            if (window.AXEngine && window.AXEngine.ProceduralFactory) {
-                window.AXEngine.ProceduralFactory.injectPremiumMaterial(wallMaterial, { color: 0x00ffcc, scale: 0.5 });
-                window.AXEngine.ProceduralFactory.injectPremiumMaterial(wallTopMaterial, { color: 0xff00ff, scale: 1.0 });
-            }
             ballMaterial=new THREE.MeshStandardMaterial({color:0xee4444,metalness:0.4,roughness:0.3,emissive:0x222222});
 
             mazeContainer=new THREE.Group();scene.add(mazeContainer);
 
             const floorSize=CONFIG.gridSize*CONFIG.cellSize+1;
-            const floor=new THREE.Mesh(new THREE.BoxGeometry(floorSize,0.5,floorSize),new THREE.MeshStandardMaterial({color:0xdddad0,roughness:0.4,metalness:0.05}));
+            const floor=new THREE.Mesh(new THREE.BoxGeometry(floorSize,0.5,floorSize),new THREE.MeshStandardMaterial({map:makeSurfaceTexture('floor',CONFIG.gridSize),color:0xe8e4da,roughness:0.45,metalness:0.05}));
             floor.position.y=-0.25;floor.receiveShadow=PERF.shadows;mazeContainer.add(floor);
 
             ball=new THREE.Mesh(new THREE.SphereGeometry(CONFIG.ballRadius,PERF.sphereDetail,PERF.sphereDetail),ballMaterial);
@@ -826,14 +850,6 @@
             requestAnimationFrame(animate);
             const now=performance.now();let dt=(now-lastFrameTime)/1000;lastFrameTime=now;
             if(dt>0.1)dt=0.1;
-            
-            if (window.AXEngine && window.AXEngine.ecs) {
-                window.AXEngine.physicsSys.update(dt, window.AXEngine.ecs);
-                window.AXEngine.syncSys.update(window.AXEngine.ecs);
-                if (window.AXEngine.ProceduralFactory) {
-                    window.AXEngine.ProceduralFactory.updateTime(dt);
-                }
-            }
 
             if(gameState==='PLAYING'){
                 checkTimer();

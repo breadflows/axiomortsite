@@ -182,9 +182,9 @@
     <script type="importmap">
         {
             "imports": {
-                "three/webgpu": "https://unpkg.com/three@latest/build/three.webgpu.js",
-                "three": "https://unpkg.com/three@latest/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
+                "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.webgpu.js",
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
             }
         }
     </script>
@@ -297,18 +297,11 @@
         </div>
     </div>
 
-    <script src="js/Engine.js"></script>
     <script type="module">
-        import * as THREE from 'three';
-        
-        window.AXEngine = window.AXEngine || {};
-        window.AXEngine.ecs = new window.AXEngine.ECSManager(2000);
-        window.AXEngine.physicsSys = new window.AXEngine.Systems.PhysicsSystem();
-        window.AXEngine.syncSys = new window.AXEngine.Systems.TransformSyncSystem();
-        window.AXEngine.stateBus = new window.AXEngine.StateBus();
-        
-        import * as THREE_WEBGPU from 'three/webgpu';
-        
+        // The WebGPU build re-exports the whole three.js core PLUS WebGPURenderer.
+        // (Importing plain 'three' here used to crash at boot: core has no WebGPURenderer.)
+        import * as THREE from 'three/webgpu';
+
         // --- Configuration ---
         const CONFIG = {
             gridSize: 11, cellSize: 2, wallHeight: 1.2,
@@ -758,11 +751,47 @@
             document.getElementById('points-display').innerText = playerData.gold;
         }
 
+        // Procedural surface texture so the board doesn't read as flat untextured plastic:
+        // 'wall' = dark brushed panels with worn edges, 'floor' = light tiles on the maze grid.
+        function makeSurfaceTexture(kind, tiles = 1) {
+            const s = 256, c = document.createElement('canvas'); c.width = c.height = s;
+            const g = c.getContext('2d');
+            if (kind === 'wall') {
+                g.fillStyle = '#585c66'; g.fillRect(0, 0, s, s);
+                for (let i = 0; i < 2600; i++) {
+                    g.fillStyle = ['#4c5059', '#63676f', '#41454e', '#6d717a'][i & 3];
+                    g.globalAlpha = 0.16 + Math.random() * 0.2;
+                    g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2.4, 1 + Math.random() * 2.4);
+                }
+                g.globalAlpha = 0.4; g.strokeStyle = '#33363d'; g.lineWidth = 5;
+                g.strokeRect(3, 3, s - 6, s - 6);                    // panel seam at the block edge
+                g.globalAlpha = 0.14; g.strokeStyle = '#8b8f98'; g.lineWidth = 1;
+                for (let i = 0; i < 26; i++) { const y = Math.random() * s; g.beginPath(); g.moveTo(0, y); g.lineTo(s, y); g.stroke(); }  // brushed grain
+            } else {
+                g.fillStyle = '#e6e3dc'; g.fillRect(0, 0, s, s);
+                for (let i = 0; i < 2200; i++) {
+                    g.fillStyle = ['#dcd8cf', '#efece5', '#d2cec5'][i % 3];
+                    g.globalAlpha = 0.18 + Math.random() * 0.2;
+                    g.fillRect(Math.random() * s, Math.random() * s, 1 + Math.random() * 2, 1 + Math.random() * 2);
+                }
+                g.globalAlpha = 0.3; g.strokeStyle = '#b9b5ac'; g.lineWidth = 2;
+                g.strokeRect(1, 1, s - 2, s - 2);                    // tile grout lines
+            }
+            g.globalAlpha = 1;
+            const tx = new THREE.CanvasTexture(c);
+            tx.colorSpace = THREE.SRGBColorSpace;
+            tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+            tx.repeat.set(tiles, tiles);
+            tx.anisotropy = 4;
+            return tx;
+        }
+
         async function init() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xe8ebf2);
-            scene.fog = new THREE.FogExp2(0xe8ebf2, 0.02);
+            // gentle depth haze only — 0.02 buried the whole board in milk at the ~40u camera distance
+            scene.fog = new THREE.FogExp2(0xe8ebf2, 0.006);
             camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
             
             renderer = new THREE.WebGPURenderer({ antialias: true, alpha: false });
@@ -795,20 +824,17 @@
             camera.add(dl);
             scene.add(camera);
 
-            wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.1 });
-            if (window.AXEngine && window.AXEngine.ProceduralFactory) {
-                window.AXEngine.ProceduralFactory.injectPremiumMaterial(wallMaterial, { color: 0x00ffcc, scale: 0.5 });
-            }
+            wallMaterial = new THREE.MeshStandardMaterial({ map: makeSurfaceTexture('wall'), color: 0x565a63, roughness: 0.55, metalness: 0.1 });
             ballMaterial = new THREE.MeshStandardMaterial({ color: 0xee4444, metalness: 0.4, roughness: 0.3 });
-            
+
             mazeContainer = new THREE.Group();
             scene.add(mazeContainer);
 
             const floorSize = CONFIG.gridSize * CONFIG.cellSize;
             // Highly optimized solid floor replacing the heavy transmission glass
             const floor = new THREE.Mesh(
-                new THREE.BoxGeometry(floorSize, 0.5, floorSize), 
-                new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.1, metalness: 0.2 })
+                new THREE.BoxGeometry(floorSize, 0.5, floorSize),
+                new THREE.MeshStandardMaterial({ map: makeSurfaceTexture('floor', CONFIG.gridSize), color: 0xe4e1da, roughness: 0.35, metalness: 0.1 })
             );
             floor.position.y = -0.5; floor.receiveShadow = true;
             mazeContainer.add(floor);
@@ -931,14 +957,6 @@
             lastFrameTime = now;
             
             if (dt > 0.1) dt = 0.1;
-            
-            if (window.AXEngine && window.AXEngine.ecs) {
-                window.AXEngine.physicsSys.update(dt, window.AXEngine.ecs);
-                window.AXEngine.syncSys.update(window.AXEngine.ecs);
-                if (window.AXEngine.ProceduralFactory) {
-                    window.AXEngine.ProceduralFactory.updateTime(dt);
-                }
-            }
 
             if (gameState === 'PLAYING') {
                 checkTimer();

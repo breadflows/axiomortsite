@@ -402,13 +402,10 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 
-// Initialize Phase 2: Global ECS Architecture
+// AXEngine: the ECS drives the security-drone swarm patrolling the skyline;
+// the StateBus decouples the day/night cycle from the lighting rig.
 window.AXEngine = window.AXEngine || {};
-window.AXEngine.ecs = new window.AXEngine.ECSManager(5000); // Massive flat array buffer
-window.AXEngine.physicsSys = new window.AXEngine.Systems.PhysicsSystem();
-window.AXEngine.syncSys = new window.AXEngine.Systems.TransformSyncSystem();
-
-// Initialize Phase 3: Global Data-Driven State Bus
+window.AXEngine.ecs = new window.AXEngine.ECSManager(600);
 window.AXEngine.stateBus = new window.AXEngine.StateBus();
 
 scene.background = new THREE.Color(0xb9dcff);
@@ -510,12 +507,6 @@ function makeSurfaces() {
   matSlab = new THREE.MeshStandardMaterial({ map: texConcrete, color:0xdce6ec, roughness: .58, metalness:.04 });
   matCarpet = new THREE.MeshStandardMaterial({ map: texCarpet, color:0xc8d9e3, roughness: .68, metalness:.02 });
   matCeil = new THREE.MeshStandardMaterial({ map: texCeil, color:0xd7e2e9, roughness: .62, side: THREE.DoubleSide });
-
-  if (window.AXEngine && window.AXEngine.ProceduralFactory) {
-      window.AXEngine.ProceduralFactory.injectPremiumMaterial(matSlab, { color: 0x00ffcc, scale: 0.5 });
-      window.AXEngine.ProceduralFactory.injectPremiumMaterial(matCarpet, { color: 0xff00ff, scale: 2.0 });
-      window.AXEngine.ProceduralFactory.injectPremiumMaterial(matCeil, { color: 0x00aaff, scale: 0.25 });
-  }
 }
 
 /* ════════════════ TOWER GEOMETRY ════════════════ */
@@ -2089,19 +2080,6 @@ function initPhysics() {
         }
     });
     
-    // Pass global geometry to ECS PhysicsSystem
-    if (window.AXEngine && window.AXEngine.ecs) {
-        window.AXEngine.ecs.collisionBoxes = boxes;
-        // Map the existing complex floor generation logic into the generic ECS system
-        window.AXEngine.ecs.collisionFloorCallback = (x, z, checkY) => {
-            const g = groundAt(x, z, checkY - 1.75 + 0.6); // player offset math mapped
-            if (g < -1e8) {
-                // over the atrium void
-                return 1.75; // ground at lobby floor
-            }
-            return g + 1.75;
-        };
-    }
     console.log(`[AXIOMORT] Initialized ${boxes.length} physical colliders in the vault.`);
 }
     
@@ -2110,15 +2088,6 @@ const clock = new THREE.Clock();
 const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3();
 let started = false;
 let worldReady = false;
-
-// Register player in ECS
-let playerEcsId = -1;
-function initPlayerECS() {
-    if (window.AXEngine && window.AXEngine.ecs) {
-        playerEcsId = window.AXEngine.ecs.addEntity(player, 0, 1.75, 18);
-        window.AXEngine.playerCtrl = new window.AXEngine.Systems.PlayerControllerSystem();
-    }
-}
 
 function step(dt){
     /* lift animation */
@@ -2146,7 +2115,6 @@ function step(dt){
     playerMoving = moving;
     if (moving) wish.normalize();
 
-    const wishSpeed = sprinting ? 12 : 7.5;
     const wantJump = keys['Space'];
 
     // direct bhop movement (gravity, accel, air-strafe, AABB + floor collision)
@@ -2221,8 +2189,6 @@ function step(dt){
         }
     }
 
-    $('prompt').textContent = nearDisc ? (nearDisc.dim ? '[E] ENTER DIMENSION DISC' : '[E] PLAY THIS COURSE')
-        : (Math.abs(player.pos.x-lift.x)<2.2 && Math.abs(player.pos.z-lift.z)<2.2 ? '[E] LIFT UP — [Q] DOWN' : '');
     const nearLift = Math.abs(player.pos.x-lift.x)<2.2 && Math.abs(player.pos.z-lift.z)<2.2;
     $('prompt').textContent = nearDisc ? '[E] ARCHIVE DISC'
         : nearRobot ? '[E] GIVE DISC TO COURIER'
@@ -2231,51 +2197,88 @@ function step(dt){
     $('hint-ind').textContent = nearest ? `NEAREST DISC - ${skydeckLabel(nearest.floor)}` : 'ARCHIVE COMPLETE';
 }
 
+/* ── SECURITY-DRONE SWARM — sleek black patrol units circling the tower exterior.
+   Boids in the ECS buffer: each drone chases a drifting orbit waypoint, avoids its
+   neighbours, and is drawn as one InstancedMesh (a single draw call). ── */
 let swarmMesh = null;
-const SWARM_COUNT = 1000;
+const SWARM_COUNT = AX_MOBILE ? 110 : 240;
+const droneIds = [];
+const _droneM = new THREE.Matrix4();
+const _droneQ = new THREE.Quaternion();
+const _droneV = new THREE.Vector3();
+const _droneS = new THREE.Vector3(1, 1, 1);
+let swarmClock = 0;
 
 function buildSwarmDrones() {
     if (!window.AXEngine || !window.AXEngine.ecs) return;
-    
-    // Low poly security drone geometry
-    const geo = new THREE.TetrahedronGeometry(0.3, 0);
-    // Sleek Mirror's Edge black/gloss material to contrast the white city
-    const mat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2, metalness: 0.8 });
-    
+
+    // Low poly drone body + a faint blinking-light emissive so they read at night
+    const geo = new THREE.TetrahedronGeometry(0.42, 0);
+    const mat = new THREE.MeshStandardMaterial({ color: 0x14181f, roughness: 0.25, metalness: 0.85, emissive: 0x2f9dff, emissiveIntensity: 0.35 });
+
     swarmMesh = new THREE.InstancedMesh(geo, mat, SWARM_COUNT);
     swarmMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    
+    swarmMesh.frustumCulled = false;   // the flock spans the whole skyline; skip per-frame bounds churn
+
     for (let i = 0; i < SWARM_COUNT; i++) {
-        // Spawn drones swirling around the tower
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 20 + Math.random() * 40;
+        // spawn in a loose ring outside the glass, above the skydeck
+        const angle = rng() * Math.PI * 2;
+        const radius = 52 + rng() * 60;
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
-        const y = 30 + Math.random() * 200;
-        
-        // Add to ECS (Type 2 = SwarmDrone)
+        const y = 18 + rng() * 110;
+
         const id = window.AXEngine.ecs.addEntity(null, x, y, z, 0.3, 0.3, 2);
-        
-        // Initial velocity (circling)
-        const ecsIdx = id * 16;
-        window.AXEngine.ecs.buffer[ecsIdx + 3] = -Math.sin(angle) * 10; // vx
-        window.AXEngine.ecs.buffer[ecsIdx + 5] = Math.cos(angle) * 10; // vz
-        window.AXEngine.ecs.buffer[ecsIdx + 10] = 18.0; // speed limit
+        if (id < 0) break;
+        const idx = id * window.AXEngine.ecs.stride;
+        const buf = window.AXEngine.ecs.buffer;
+        buf[idx + 3] = -Math.sin(angle) * 10;      // initial circling velocity
+        buf[idx + 5] = Math.cos(angle) * 10;
+        buf[idx + 10] = 13 + rng() * 8;            // per-drone cruise speed
+        droneIds.push(id);
+        _droneM.makeTranslation(x, y, z);
+        swarmMesh.setMatrixAt(i, _droneM);
     }
-    
+    swarmMesh.count = droneIds.length;
     scene.add(swarmMesh);
     window.AXEngine.swarmSys = new window.AXEngine.Systems.SwarmSystem();
 }
 
+function updateSwarmDrones(dt) {
+    if (!swarmMesh || !window.AXEngine.swarmSys) return;
+    const ecs = window.AXEngine.ecs, buf = ecs.buffer, stride = ecs.stride;
+    swarmClock += dt;
+    // each drone chases its own waypoint slowly orbiting the tower (golden-angle spread
+    // keeps the flock distributed instead of clumping on one point)
+    for (let k = 0; k < droneIds.length; k++) {
+        const idx = droneIds[k] * stride;
+        const a = swarmClock * 0.12 + k * 2.399963;
+        const r = 60 + 30 * Math.sin(k * 1.7 + swarmClock * 0.05);
+        buf[idx + 6] = Math.cos(a) * r;
+        buf[idx + 7] = 26 + 60 * (0.5 + 0.5 * Math.sin(k * 0.61 + swarmClock * 0.07));
+        buf[idx + 8] = Math.sin(a) * r;
+    }
+    window.AXEngine.swarmSys.update(dt, ecs);       // seek + separation
+    window.AXEngine.swarmSys.integrate(dt, ecs);    // drones fly — no gravity/collision pass
+    for (let k = 0; k < droneIds.length; k++) {
+        const idx = droneIds[k] * stride;
+        // orient each drone along its velocity so the flock reads as flying, not floating
+        _droneV.set(buf[idx + 3], buf[idx + 4], buf[idx + 5]);
+        const sp = _droneV.length();
+        if (sp > 0.01) { _droneV.divideScalar(sp); _droneQ.setFromUnitVectors(UP_Y, _droneV); }
+        _droneM.compose(_droneV.set(buf[idx], buf[idx + 1], buf[idx + 2]), _droneQ, _droneS);
+        swarmMesh.setMatrixAt(k, _droneM);
+    }
+    swarmMesh.instanceMatrix.needsUpdate = true;
+}
+const UP_Y = new THREE.Vector3(0, 1, 0);
+
 function animate(){
     requestAnimationFrame(animate);
     const dt = Math.min(clock.getDelta(), .05);
-    
-    // keep the procedural "smart material" shaders animating (noise/dirt/edge-wear over time)
-    if (window.AXEngine && window.AXEngine.ProceduralFactory && window.AXEngine.proceduralMats) {
-        window.AXEngine.ProceduralFactory.updateTime(dt);
-    }
-    
+
+    if (worldReady) updateSwarmDrones(dt);
+
     if (started && !uiOpen && !AXInventory.isOpen()) step(dt);
     if (started) MP.update(dt);
     
@@ -2336,6 +2339,7 @@ async function boot(){
         ['Lighting the city',      buildCity],
         ['Pressing the discs',     buildDiscs],
         ['Waking the courier',     buildCourier],
+        ['Launching the patrol',   buildSwarmDrones],
     ], {
         videos: collectedVideoURLs(),
         label: 'Entering the Vault',

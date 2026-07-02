@@ -157,12 +157,11 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
   }
 }
 </script>
-<script src="js/Engine.js"></script>
 <script type="module">
 import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
@@ -170,13 +169,6 @@ import { Reflector } from 'three/addons/objects/Reflector.js';
 
 (function(){
 'use strict';
-
-window.AXEngine = window.AXEngine || {};
-window.AXEngine.ecs = new window.AXEngine.ECSManager(2000);
-window.AXEngine.physicsSys = new window.AXEngine.Systems.PhysicsSystem();
-window.AXEngine.syncSys = new window.AXEngine.Systems.TransformSyncSystem();
-window.AXEngine.stateBus = new window.AXEngine.StateBus();
-
 
 // ========== AUDIO TRACKS (one per level) ==========
 const TRACKS = [
@@ -576,14 +568,6 @@ function addBox(x, y, z, w, h, d, color, opts){
     emissive: opts.emissive || 0x000000,
     emissiveIntensity: opts.emissiveIntensity || 0
   });
-  
-  if (window.AXEngine && window.AXEngine.ProceduralFactory && !isMirrorWall) {
-      window.AXEngine.ProceduralFactory.injectPremiumMaterial(mat, {
-          color: opts.emissive ? opts.emissive : (color !== undefined ? color : 0x00ffcc),
-          scale: 0.5
-      });
-  }
-  
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
@@ -1804,13 +1788,6 @@ function frame(now){
     }
   }
   
-  if (window.AXEngine && window.AXEngine.ecs) {
-      window.AXEngine.physicsSys.update(dt, window.AXEngine.ecs);
-      window.AXEngine.syncSys.update(window.AXEngine.ecs);
-      if (window.AXEngine.ProceduralFactory) {
-          window.AXEngine.ProceduralFactory.updateTime(dt);
-      }
-  }
   if (started && videoEl.src && videoEl.paused) playBillboardVideo();
 
   const targetEye = player.crouching ? cfg.crouchEyeHeight : cfg.eyeheight;
