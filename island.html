@@ -277,8 +277,8 @@
 <script src="js/inventory.js?v=4"></script>
 <script type="importmap">
 { "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    "three": "./vendor/three/three.module.js",
+    "three/addons/": "./vendor/three/jsm/"
 } }
 </script>
 
@@ -608,7 +608,7 @@ function buildWater() {
 water = new Water(new THREE.PlaneGeometry(4000, 4000), {
     textureWidth: 512, textureHeight: 512,
     waterNormals: new THREE.TextureLoader().load(
-        'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/waternormals.jpg',
+        'assets/textures/waternormals.jpg',
         (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
     ),
     sunDirection: new THREE.Vector3(),
