@@ -9,7 +9,7 @@ temp.js
 todo.html
 
 # unused minified VRM build (the game imports the .module.js one)
-js/three-vrm.min.js
+shelf/js/three-vrm.min.js
 
 # dev-only preview config (Claude Code launch settings)
 .claude/
@@ -19,3 +19,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# shelved runner demo audio: 198MB of mp3s, stays local-only in shelf/audio/
+shelf/audio/

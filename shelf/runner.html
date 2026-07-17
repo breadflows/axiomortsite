@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>AXIOMORT RUNNER</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0e17; overflow: hidden;
+               font-family: 'Segoe UI', system-ui, sans-serif; }
+  #wrap { display: flex; align-items: center; justify-content: center; height: 100%; }
+  canvas { max-width: 100vw; max-height: 100vh; aspect-ratio: 16/9;
+           touch-action: none; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="c" width="960" height="540"></canvas></div>
+<script src="audio/runner/tracks.js"></script>
+<script>
+"use strict";
+
+// ---------------------------------------------------------------------------
+// Each level IS a song: it runs for the track's full length, is colored to
+// match it, and is procedurally generated from a seed (same level every run).
+//
+// Floating CDs are RIFTS: jump into one and it tears you into the paired
+// level from the other album — different song, different color — at the
+// same fraction of progress, with the music seeked to match.
+//
+// duration = track length in seconds (level length derives from it).
+// rift = { p: packIndex, l: levelIndex } — where this level's CDs lead.
+// ---------------------------------------------------------------------------
+// Track lists live in audio/runner/tracks.js (generated from the album
+// folders). Each track becomes a level: color and speed are derived from the
+// track name, so every song gets its own consistent identity. Rift CDs cycle
+// to the next level within the same album — packs never cross.
+function makeLevel(t) {
+  const h = hashStr(t.file);
+  return {
+    name: t.name.toUpperCase(),
+    track: t.file,
+    duration: t.duration,
+    speed: 1 + (h % 13) / 100,                    // 1.00 - 1.12
+    color: "hsl(" + (h % 360) + " 75% 62%)",
+    rift: null,                                    // wired below
+  };
+}
+
+const PACKS = [
+  { name: "AXIOMORT", label: "PLAY THE AXIOMORT", color: "#37d6ff", levels: TRACKS.axiomort.map(makeLevel) },
+  { name: "PROJECT THE RIFT", label: "BONUS: PROJECT THE RIFT", color: "#e13df0", levels: TRACKS.rift.map(makeLevel) },
+];
+PACKS.forEach((pk, pi) => pk.levels.forEach((lv, li) => {
+  lv.rift = { p: pi, l: (li + 1) % pk.levels.length };
+}));
+
+const TILE = 48, W = 960, H = 540, GROUND = 440;
+const BASE_SPEED = 360, GRAV = 3400, JUMP = 820, SIZE = 40, PX = 180;
+
+// --- procedural level generation ---------------------------------------------
+// Obstacle vocabulary, tiered by difficulty. Every pattern is padded so any
+// two can join safely; the whole level still gets solver-verified in dev.
+const CHUNKS = [
+  [0, "........"], [0, "....^....."], [0, "...^^....."], [0, "....#....."],
+  [1, "...^..^....."], [1, "...^^^......"], [1, "...##......"], [1, "...#.^......"],
+  [2, "...^^..^....."], [2, "...#.#......"], [2, "...^.^......"], [2, "..^^^...^^...."],
+];
+
+function hashStr(s) {
+  let h = 1779033703;
+  for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  return h >>> 0;
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function genMap(lvl) {
+  const rng = mulberry32(hashStr(lvl.track));
+  const speed = BASE_SPEED * (lvl.speed || 1);
+  const tiles = Math.max(80, Math.round(lvl.duration * speed / TILE));
+  let map = "............";
+  let sinceRift = 0;
+  while (map.length < tiles - 14) {
+    const prog = map.length / tiles;
+    const maxTier = prog < 0.15 ? 0 : prog < 0.45 ? 1 : 2;
+    const pool = CHUNKS.filter(c => c[0] <= maxTier);
+    const chunk = pool[Math.floor(rng() * pool.length)][1];
+    map += chunk;
+    sinceRift += chunk.length;
+    // a rift CD roughly every ~18% of the level
+    if (sinceRift > tiles * 0.18 && map.length < tiles - 60) { map += "...o...."; sinceRift = 0; }
+  }
+  return map + "..............";
+}
+
+// ---------------------------------------------------------------------------
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+
+let state = "menu";          // menu | play | dead | complete
+let packIndex = 0, levelIndex = 0, attempts = 1;
+let spikeSet = new Set(), blockSet = new Set(), discs = [], levelLen = 0, lvlSpeed = BASE_SPEED;
+let p = {}, held = false, deadTimer = 0, shake = 0, riftFlash = 0, riftCount = 0;
+let trail = [], particles = [];
+
+const curPack = () => PACKS[packIndex];
+const curLevel = () => curPack().levels[levelIndex];
+const riftTarget = () => { const r = curLevel().rift; return PACKS[r.p].levels[r.l]; };
+
+function parseLevel(pi, li) {
+  packIndex = pi; levelIndex = li;
+  const lvl = curLevel();
+  if (!lvl.mapCache) lvl.mapCache = genMap(lvl);
+  const map = lvl.mapCache;
+  spikeSet = new Set(); blockSet = new Set(); discs = [];
+  for (let x = 0; x < map.length; x++) {
+    if (map[x] === "^") spikeSet.add(x);
+    if (map[x] === "#") blockSet.add(x);
+    if (map[x] === "o") discs.push({ gx: x, taken: false });
+  }
+  levelLen = map.length * TILE;
+  lvlSpeed = BASE_SPEED * (lvl.speed || 1);
+}
+
+function loadLevel(pi, li) {
+  parseLevel(pi, li);
+  resetPlayer();
+}
+
+function resetPlayer() {
+  p = { wx: 0, y: GROUND - SIZE, vy: 0, grounded: true, rot: 0 };
+  trail = []; particles = []; riftCount = 0;
+  for (const d of discs) d.taken = false;
+}
+
+// --- rift: jump into a CD, land in the paired level --------------------------
+function riftTo(frac) {
+  const r = curLevel().rift;
+  parseLevel(r.p, r.l);
+  // find a safe grounded column near the same fraction of progress
+  const mapLen = Math.floor(levelLen / TILE);
+  let t = Math.min(mapLen - 20, Math.max(2, Math.floor(frac * mapLen)));
+  const clear = i => !spikeSet.has(i) && !blockSet.has(i);
+  while (t < mapLen - 20 && !(clear(t) && clear(t + 1) && clear(t + 2) && clear(t + 3))) t++;
+  p = { wx: t * TILE, y: GROUND - SIZE, vy: 0, grounded: true, rot: 0 };
+  trail = []; particles = [];
+  riftCount++; riftFlash = 1; shake = 0.6;
+  sfxRift();
+  startMusic(frac * curLevel().duration);
+}
+
+// --- tiny sound effects (WebAudio, no assets) ------------------------------
+let ac = null;
+function audio() { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); return ac; }
+function blip(freq0, freq1, dur, type, vol) {
+  try {
+    const a = audio(), o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq0, a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(freq1, a.currentTime + dur);
+    g.gain.setValueAtTime(vol, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + dur);
+  } catch (e) {}
+}
+const sfxJump = () => blip(280, 520, 0.09, "square", 0.12);
+const sfxDeath = () => blip(300, 40, 0.35, "sawtooth", 0.2);
+const sfxSelect = () => blip(440, 660, 0.08, "triangle", 0.1);
+const sfxRift = () => { blip(200, 1400, 0.4, "sawtooth", 0.1); blip(1400, 200, 0.4, "sine", 0.1); };
+
+// --- music: one track per level, restarts from 0:00 on death (GD-style) ------
+const MUSIC_VOL = 0.8;
+let curTrack = null, fadeTimer = null;
+
+function startMusic(seekTo = 0) {
+  if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+  const src = "audio/runner/" + curLevel().track;
+  if (!curTrack || curTrack.dataset.src !== src) {
+    if (curTrack) curTrack.pause();
+    curTrack = new Audio(src);
+    curTrack.dataset.src = src;
+  }
+  curTrack.loop = true;
+  curTrack.volume = MUSIC_VOL;
+  const t = curTrack;
+  if (t.readyState >= 1) t.currentTime = seekTo;
+  else t.addEventListener("loadedmetadata", () => { t.currentTime = seekTo; }, { once: true });
+  t.play().catch(() => {});
+}
+
+function stopMusic() {
+  if (!curTrack) return;
+  const t = curTrack;
+  if (fadeTimer) clearInterval(fadeTimer);
+  fadeTimer = setInterval(() => {
+    t.volume = Math.max(0, t.volume - 0.15);
+    if (t.volume <= 0) { t.pause(); clearInterval(fadeTimer); fadeTimer = null; }
+  }, 40);
+}
+
+// --- menu layout -------------------------------------------------------------
+const CASE_W = 260, CASE_H = 260, CASE_Y = 150;
+function caseRects() {
+  const gap = 80, total = PACKS.length * CASE_W + (PACKS.length - 1) * gap;
+  const x0 = (W - total) / 2;
+  return PACKS.map((_, i) => ({ x: x0 + i * (CASE_W + gap), y: CASE_Y, w: CASE_W, h: CASE_H }));
+}
+let menuSel = 0;
+
+// --- input ------------------------------------------------------------------
+function startSelectedPack() {
+  attempts = 1;
+  loadLevel(menuSel, 0);
+  state = "play";
+  startMusic();
+}
+
+function press() {
+  audio();
+  if (state === "menu") { startSelectedPack(); return; }
+  if (state === "complete") {
+    if (levelIndex + 1 < curPack().levels.length) {
+      attempts = 1; loadLevel(packIndex, levelIndex + 1); state = "play"; startMusic();
+    } else {
+      state = "menu"; stopMusic();
+    }
+    return;
+  }
+  held = true;
+}
+
+addEventListener("keydown", e => {
+  if (e.code === "Escape" && state !== "menu") { state = "menu"; stopMusic(); return; }
+  if (state === "menu" && (e.code === "ArrowLeft" || e.code === "ArrowRight")) {
+    menuSel = (menuSel + (e.code === "ArrowRight" ? 1 : PACKS.length - 1)) % PACKS.length;
+    sfxSelect();
+    return;
+  }
+  if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); if (!e.repeat) press(); held = true; }
+});
+addEventListener("keyup", e => { if (e.code === "Space" || e.code === "ArrowUp") held = false; });
+
+cv.addEventListener("pointerdown", e => {
+  e.preventDefault();
+  if (state === "menu") {
+    const r = cv.getBoundingClientRect();
+    const mx = (e.clientX - r.left) * (W / r.width), my = (e.clientY - r.top) * (H / r.height);
+    const rects = caseRects();
+    for (let i = 0; i < rects.length; i++) {
+      const c = rects[i];
+      if (mx >= c.x && mx <= c.x + c.w && my >= c.y && my <= c.y + c.h + 60) {
+        menuSel = i; press(); return;
+      }
+    }
+    return;
+  }
+  press();
+});
+addEventListener("pointerup", () => held = false);
+
+// --- update -----------------------------------------------------------------
+function die() {
+  state = "dead"; deadTimer = 0; shake = 1; stopMusic(); sfxDeath();
+  for (let i = 0; i < 26; i++) {
+    particles.push({
+      x: PX + SIZE / 2, y: p.y + SIZE / 2,
+      vx: (Math.random() - 0.5) * 700, vy: (Math.random() - 0.9) * 600,
+      life: 0.9 + Math.random() * 0.4,
+    });
+  }
+}
+
+function update(dt) {
+  shake = Math.max(0, shake - dt * 3);
+  riftFlash = Math.max(0, riftFlash - dt * 2);
+  for (const pt of particles) {
+    pt.x += pt.vx * dt; pt.vy += 1400 * dt; pt.y += pt.vy * dt; pt.life -= dt;
+  }
+  particles = particles.filter(pt => pt.life > 0);
+
+  if (state === "dead") {
+    deadTimer += dt;
+    if (deadTimer > 0.9) { attempts++; resetPlayer(); state = "play"; startMusic(); }
+    return;
+  }
+  if (state !== "play") return;
+
+  p.wx += lvlSpeed * dt;
+
+  if (held && p.grounded) { p.vy = -JUMP; p.grounded = false; sfxJump(); }
+
+  const prevBottom = p.y + SIZE;
+  p.vy += GRAV * dt;
+  p.y += p.vy * dt;
+  p.grounded = false;
+
+  // ground
+  if (p.y + SIZE >= GROUND) { p.y = GROUND - SIZE; p.vy = 0; p.grounded = true; }
+
+  // nearby grid cells only (levels are thousands of tiles long)
+  const g0 = Math.floor((p.wx - TILE) / TILE), g1 = Math.floor((p.wx + SIZE + TILE) / TILE);
+
+  // blocks
+  for (let gx = g0; gx <= g1; gx++) {
+    if (!blockSet.has(gx)) continue;
+    const bx = gx * TILE, bTop = GROUND - TILE;
+    if (p.wx + SIZE > bx + 6 && p.wx < bx + TILE - 6) {
+      if (prevBottom <= bTop + 8 && p.y + SIZE >= bTop) {
+        p.y = bTop - SIZE; p.vy = 0; p.grounded = true;   // land on top
+      } else if (p.y + SIZE > bTop + 16) {
+        die(); return;                                    // hit the side
+      }
+    }
+  }
+
+  if (!p.grounded) p.rot += 7 * dt;
+  else p.rot = Math.round(p.rot / (Math.PI / 2)) * (Math.PI / 2);
+
+  // spikes (forgiving hitbox: middle of the triangle)
+  for (let gx = g0; gx <= g1; gx++) {
+    if (!spikeSet.has(gx)) continue;
+    const sx = gx * TILE + TILE * 0.3, sw = TILE * 0.4;
+    const sy = GROUND - TILE * 0.6;
+    if (p.wx + SIZE - 8 > sx && p.wx + 8 < sx + sw && p.y + SIZE - 4 > sy) { die(); return; }
+  }
+
+  // rift CDs (float 1.5 tiles up — you must jump into one to take it)
+  for (const d of discs) {
+    if (d.taken) continue;
+    const dx = d.gx * TILE + TILE / 2, dy = GROUND - TILE * 1.5;
+    const cx = p.wx + SIZE / 2, cy = p.y + SIZE / 2;
+    if ((cx - dx) ** 2 + (cy - dy) ** 2 < 44 ** 2) {
+      d.taken = true;
+      riftTo(p.wx / levelLen);
+      return;
+    }
+  }
+
+  trail.push({ x: p.wx, y: p.y, rot: p.rot });
+  if (trail.length > 14) trail.shift();
+
+  if (p.wx > levelLen + TILE * 2) { state = "complete"; stopMusic(); }
+}
+
+// --- draw -------------------------------------------------------------------
+function drawCase(r, pack, selected) {
+  ctx.fillStyle = "#141a2b";
+  ctx.fillRect(r.x, r.y, r.w, r.h);
+  ctx.strokeStyle = selected ? pack.color : "#2a3248";
+  ctx.lineWidth = selected ? 4 : 2;
+  ctx.strokeRect(r.x, r.y, r.w, r.h);
+  ctx.fillStyle = selected ? pack.color : "#2a3248";
+  ctx.fillRect(r.x, r.y, 14, r.h);
+  const cx = r.x + r.w / 2 + 7, cy = r.y + r.h / 2 - 14;
+  ctx.fillStyle = "#f5f7ff";
+  ctx.beginPath(); ctx.arc(cx, cy, 78, 0, 7); ctx.fill();
+  ctx.strokeStyle = pack.color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, 78, 0, 7); ctx.stroke();
+  for (const rad of [58, 40]) {
+    ctx.strokeStyle = "rgba(42,50,72,0.5)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7); ctx.stroke();
+  }
+  ctx.fillStyle = "#0b0e17";
+  ctx.beginPath(); ctx.arc(cx, cy, 14, 0, 7); ctx.fill();
+  ctx.strokeStyle = pack.color; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, 14, 0, 7); ctx.stroke();
+  ctx.fillStyle = "#f5f7ff"; ctx.font = "bold 20px 'Segoe UI', sans-serif"; ctx.textAlign = "center";
+  ctx.fillText(pack.name, r.x + r.w / 2 + 7, r.y + r.h - 24);
+  ctx.font = "16px 'Segoe UI', sans-serif";
+  ctx.fillStyle = selected ? pack.color : "rgba(245,247,255,0.55)";
+  ctx.fillText(pack.label, r.x + r.w / 2, r.y + r.h + 30);
+  ctx.font = "13px 'Segoe UI', sans-serif";
+  ctx.fillStyle = "rgba(245,247,255,0.4)";
+  ctx.fillText(pack.levels.length + (pack.levels.length === 1 ? " track" : " tracks"), r.x + r.w / 2, r.y + r.h + 52);
+}
+
+function draw() {
+  ctx.save();
+  if (shake > 0) ctx.translate((Math.random() - 0.5) * 14 * shake, (Math.random() - 0.5) * 14 * shake);
+
+  ctx.fillStyle = "#0b0e17"; ctx.fillRect(-20, -20, W + 40, H + 40);
+  const cam = state === "menu" ? 0 : p.wx - PX;
+
+  ctx.strokeStyle = "rgba(255,255,255,0.045)"; ctx.lineWidth = 1;
+  for (let x = -(cam * 0.5 % TILE); x < W; x += TILE) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = GROUND % TILE; y < H; y += TILE) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  if (state === "menu") {
+    ctx.fillStyle = "#f5f7ff"; ctx.font = "bold 44px 'Segoe UI', sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("AXIOMORT RUNNER", W / 2, 90);
+    const rects = caseRects();
+    for (let i = 0; i < PACKS.length; i++) drawCase(rects[i], PACKS[i], i === menuSel);
+    ctx.font = "16px 'Segoe UI', sans-serif"; ctx.fillStyle = "rgba(245,247,255,0.5)";
+    ctx.fillText("click an album — or use arrows + SPACE", W / 2, H - 28);
+    ctx.restore();
+    return;
+  }
+
+  const col = curLevel().color;
+
+  // ground
+  ctx.strokeStyle = col; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, GROUND); ctx.lineTo(W, GROUND); ctx.stroke();
+  ctx.globalAlpha = 0.05; ctx.fillStyle = col;
+  ctx.fillRect(0, GROUND, W, H - GROUND);
+  ctx.globalAlpha = 1;
+
+  const t0v = Math.floor(cam / TILE) - 1, t1v = t0v + Math.ceil(W / TILE) + 2;
+
+  // blocks
+  for (let gx = t0v; gx <= t1v; gx++) {
+    if (!blockSet.has(gx)) continue;
+    const x = gx * TILE - cam;
+    ctx.fillStyle = "#141a2b"; ctx.strokeStyle = col; ctx.lineWidth = 2;
+    ctx.fillRect(x, GROUND - TILE, TILE, TILE);
+    ctx.strokeRect(x + 1, GROUND - TILE + 1, TILE - 2, TILE - 2);
+  }
+  // spikes
+  for (let gx = t0v; gx <= t1v; gx++) {
+    if (!spikeSet.has(gx)) continue;
+    const x = gx * TILE - cam;
+    ctx.fillStyle = "#ff4d6d";
+    ctx.beginPath();
+    ctx.moveTo(x + 4, GROUND); ctx.lineTo(x + TILE / 2, GROUND - TILE + 6); ctx.lineTo(x + TILE - 4, GROUND);
+    ctx.closePath(); ctx.fill();
+  }
+  // rift CDs — drawn in the color of the level they lead to
+  const rcol = riftTarget().color;
+  for (const d of discs) {
+    if (d.taken || d.gx < t0v || d.gx > t1v) continue;
+    const x = d.gx * TILE + TILE / 2 - cam, y = GROUND - TILE * 1.5;
+    const bob = Math.sin(performance.now() / 300 + d.gx) * 4;
+    const pulse = 2 + Math.sin(performance.now() / 200) * 2;
+    ctx.strokeStyle = rcol; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.arc(x, y + bob, 20 + pulse, 0, 7); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#f5f7ff";
+    ctx.beginPath(); ctx.arc(x, y + bob, 14, 0, 7); ctx.fill();
+    ctx.fillStyle = "#0b0e17";
+    ctx.beginPath(); ctx.arc(x, y + bob, 5, 0, 7); ctx.fill();
+    ctx.strokeStyle = rcol; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y + bob, 14, 0, 7); ctx.stroke();
+  }
+  // trail
+  for (let i = 0; i < trail.length; i++) {
+    const t = trail[i], a = (i / trail.length) * 0.25;
+    ctx.save();
+    ctx.translate(t.x - cam + SIZE / 2, t.y + SIZE / 2); ctx.rotate(t.rot);
+    ctx.globalAlpha = a; ctx.fillStyle = col;
+    ctx.fillRect(-SIZE / 2, -SIZE / 2, SIZE, SIZE);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  // player: CRT television head — silver body, color-bar test pattern screen
+  if (state !== "dead") {
+    ctx.save();
+    ctx.translate(PX + SIZE / 2, p.y + SIZE / 2); ctx.rotate(p.rot);
+    ctx.fillStyle = "#c8cfdd";
+    ctx.fillRect(-SIZE / 2, -SIZE / 2, SIZE, SIZE);
+    ctx.strokeStyle = "#8892a6"; ctx.lineWidth = 3;
+    ctx.strokeRect(-SIZE / 2 + 1, -SIZE / 2 + 1, SIZE - 2, SIZE - 2);
+    const sx0 = -SIZE / 2 + 6, sy0 = -SIZE / 2 + 6, sw = SIZE - 12, sh = SIZE - 16;
+    ctx.fillStyle = "#0b0e17"; ctx.fillRect(sx0 - 1, sy0 - 1, sw + 2, sh + 2);
+    const bars = ["#f5f7ff", "#f7e13d", "#37d6ff", "#3de17a", "#e13df0", "#ff4d6d"];
+    const bw = sw / bars.length;
+    for (let i = 0; i < bars.length; i++) {
+      ctx.fillStyle = bars[i];
+      ctx.fillRect(sx0 + i * bw, sy0, bw, sh);
+    }
+    ctx.fillStyle = "#4a5266";
+    ctx.fillRect(-SIZE / 2 + 8, SIZE / 2 - 8, 6, 4);
+    ctx.fillRect(-SIZE / 2 + 18, SIZE / 2 - 8, 6, 4);
+    ctx.restore();
+  }
+  // particles
+  ctx.fillStyle = col;
+  for (const pt of particles) {
+    ctx.globalAlpha = Math.max(0, pt.life);
+    ctx.fillRect(pt.x - 4, pt.y - 4, 8, 8);
+  }
+  ctx.globalAlpha = 1;
+
+  // HUD
+  const prog = Math.min(1, p.wx / levelLen);
+  ctx.fillStyle = "rgba(255,255,255,0.12)"; ctx.fillRect(W / 2 - 150, 18, 300, 8);
+  ctx.fillStyle = col; ctx.fillRect(W / 2 - 150, 18, 300 * prog, 8);
+  ctx.fillStyle = "#f5f7ff"; ctx.font = "16px 'Segoe UI', sans-serif"; ctx.textAlign = "left";
+  ctx.fillText(`${curLevel().name}   attempt ${attempts}`, 20, 32);
+  ctx.textAlign = "right";
+  ctx.fillText(riftCount > 0 ? `rifts ${riftCount}` : "", W - 20, 32);
+
+  // rift flash
+  if (riftFlash > 0) {
+    ctx.globalAlpha = riftFlash * 0.85;
+    ctx.fillStyle = "#f5f7ff";
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.textAlign = "center";
+  if (state === "complete") {
+    const lastLvl = levelIndex + 1 >= curPack().levels.length;
+    ctx.fillStyle = "rgba(11,14,23,0.75)"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = col; ctx.font = "bold 44px 'Segoe UI', sans-serif";
+    ctx.fillText(lastLvl ? "ALBUM COMPLETE" : "TRACK COMPLETE", W / 2, H / 2 - 30);
+    ctx.fillStyle = "#f5f7ff"; ctx.font = "20px 'Segoe UI', sans-serif";
+    ctx.fillText(`${curLevel().name} — attempts: ${attempts}   rifts: ${riftCount}`, W / 2, H / 2 + 10);
+    ctx.fillStyle = "rgba(245,247,255,0.6)";
+    ctx.fillText(lastLvl ? "press SPACE for the menu" : "press SPACE for the next track", W / 2, H / 2 + 46);
+  }
+  ctx.restore();
+}
+
+// --- main loop ---------------------------------------------------------------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - last) / 1000);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

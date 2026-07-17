@@ -1,354 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AXIOMORT™ | Pilot Login</title>
-    <meta name="description" content="AXIOMORT — pilot authentication terminal. BreadFlows Studios.">
-    <meta name="theme-color" content="#050507">
-    <meta property="og:title" content="AXIOMORT">
-    <meta property="og:description" content="The fundamental laws of existence have collapsed. Log in, pilot.">
-    <meta property="og:url" content="https://axiomort.com">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Ctext x='16' y='24' font-size='22' font-family='serif' fill='%23d4af37' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Space+Mono:wght@400;700&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --void:#04040a; --bone:#e8e4dc; --bone-dim:#8d94ad; --gold:#d4af37;
-            --blue:#aebfe8; --line:rgba(174,191,232,.16);
-        }
-        * { box-sizing:border-box; margin:0; padding:0; }
-        html,body { width:100%; height:100%; overflow:hidden;
-            font-family:'Jost',sans-serif; color:var(--bone);
-            background:
-                radial-gradient(ellipse 90% 70% at 50% 115%, rgba(28,42,90,.5), transparent 60%),
-                radial-gradient(ellipse 60% 45% at 50% -10%, rgba(42,26,58,.55), transparent 70%),
-                linear-gradient(180deg,#04040a 0%,#06081a 55%,#0a1026 100%);
-        }
-        ::selection { background:var(--gold); color:var(--void); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIOMORT™ — The Death of Fundamental Laws</title>
+<meta name="description" content="AXIOMORT is a universe by BreadFlows Studios — a story of reality collapsing from a parasitic infection. Watch Teaser 1. Chapter One in development.">
+<meta property="og:title" content="AXIOMORT™">
+<meta property="og:description" content="Axiom — the fundamental laws of existence. Mort — the death of those laws.">
+<meta property="og:image" content="https://axiomort.com/assets/stills/teaser-thumbnail.jpg">
+<style>
+  :root {
+    --bg: #070908;
+    --bg-raised: #0e1210;
+    --line: #1d2420;
+    --text: #e7ece9;
+    --muted: #8a948e;
+    --faint: #5a635e;
+    --accent: #79dfa5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; text-decoration: none; }
 
-        .motes { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
-        .mote { position:absolute; bottom:-20px; width:3px; height:3px; border-radius:50%;
-            background:rgba(170,195,255,.7); filter:blur(1px); animation:rise linear infinite; }
-        @keyframes rise { to { transform:translateY(-110vh); } }
-        .scan { position:fixed; inset:0; pointer-events:none; opacity:.5;
-            background:repeating-linear-gradient(to bottom, rgba(255,255,255,.018) 0 1px, transparent 1px 4px); }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
 
-        .wrap { position:relative; z-index:2; height:100%; display:flex;
-            flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+  /* ---- nav ---- */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 28px;
+    background: linear-gradient(rgba(7,9,8,0.92), rgba(7,9,8,0));
+  }
+  .mark {
+    font-weight: 300; letter-spacing: 0.42em; font-size: 15px;
+    color: var(--text); white-space: nowrap;
+  }
+  nav ul { display: flex; gap: 28px; list-style: none; }
+  nav ul a {
+    font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted); transition: color 0.2s;
+  }
+  nav ul a:hover { color: var(--text); }
+  @media (max-width: 760px) { nav ul { display: none; } }
 
-        .boot { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:5px;
-            color:var(--blue); text-transform:uppercase; margin-bottom:26px; opacity:.8; }
-        h1 { font-family:'Cinzel',serif; font-weight:900; font-size:clamp(40px,8vw,84px);
-            letter-spacing:.14em; color:var(--gold); }
-        h1 span { color:inherit; }
-        .tag { font-weight:200; font-size:13px; letter-spacing:7px; color:var(--bone-dim);
-            text-transform:uppercase; margin-top:10px; }
+  /* ---- hero ---- */
+  header {
+    position: relative; min-height: 100svh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; overflow: hidden; padding: 0 20px;
+  }
+  header .bg {
+    position: absolute; inset: 0;
+    background: url("assets/stills/teaser-thumbnail.jpg") center 30% / cover no-repeat;
+    filter: brightness(0.5) saturate(0.9);
+  }
+  header .fade {
+    position: absolute; inset: 0;
+    background: linear-gradient(rgba(7,9,8,0.55) 0%, rgba(7,9,8,0.15) 45%, var(--bg) 96%);
+  }
+  header > div.inner { position: relative; z-index: 1; }
+  .studio-line {
+    font-size: 12px; letter-spacing: 0.5em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 26px;
+  }
+  h1 {
+    font-size: clamp(3rem, 11vw, 7.5rem);
+    font-weight: 200; letter-spacing: 0.28em;
+    text-indent: 0.28em; /* optically recenter the tracked-out wordmark */
+    line-height: 1.05;
+  }
+  .tagline {
+    margin: 30px auto 0; max-width: 560px;
+    color: var(--text); font-size: 15px; letter-spacing: 0.06em;
+  }
+  .tagline b { font-weight: 600; color: var(--accent); }
+  .hero-cta { margin-top: 44px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 14px 34px;
+    font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase;
+    border: 1px solid var(--faint); color: var(--text);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn:hover { border-color: var(--text); }
+  .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+  .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
 
-        .panel { margin-top:52px; width:min(380px,92vw); border:1px solid var(--line);
-            background:linear-gradient(170deg, rgba(24,32,64,.38), rgba(6,8,20,.65));
-            padding:34px 30px 28px; box-shadow:0 20px 70px rgba(0,0,10,.55);
-            animation:panelin .8s cubic-bezier(.16,1,.3,1) both .25s; }
-        @keyframes panelin { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
-        .panel .ph { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:4px;
-            color:var(--gold); text-transform:uppercase; margin-bottom:22px; }
-        .field { margin-bottom:18px; }
-        .field label { display:block; font-size:10px; letter-spacing:3px; color:var(--bone-dim);
-            text-transform:uppercase; margin-bottom:7px; font-weight:300; }
-        .field input { width:100%; background:rgba(0,0,10,.45); border:1px solid var(--line);
-            color:#fff; font-family:'Space Mono',monospace; font-size:14px; letter-spacing:2px;
-            padding:12px 14px; outline:none; transition:border-color .3s; }
-        .field input:focus { border-color:rgba(212,175,55,.55); }
-        button.go { width:100%; margin-top:8px; padding:15px; background:transparent;
-            border:1px solid var(--gold); color:var(--gold); font-family:'Cinzel',serif;
-            font-size:14px; letter-spacing:5px; cursor:pointer; transition:all .35s; text-transform:uppercase; }
-        button.go:hover { background:var(--gold); color:var(--void); }
-        .hint { margin-top:16px; font-size:10px; letter-spacing:2px; color:rgba(141,148,173,.6);
-            text-align:center; font-weight:300; }
-        .status { margin-top:14px; font-family:'Space Mono',monospace; font-size:10px;
-            letter-spacing:3px; text-align:center; min-height:14px; color:var(--gold); }
+  /* ---- sections ---- */
+  section { padding: 110px 0; }
+  .kicker {
+    font-size: 12px; letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 14px;
+  }
+  h2 {
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    font-weight: 300; letter-spacing: 0.12em; margin-bottom: 28px;
+  }
+  .lede { color: var(--muted); max-width: 640px; }
 
-        .links { position:fixed; bottom:30px; left:0; right:0; display:flex; gap:26px;
-            justify-content:center; z-index:2; }
-        .links a { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px;
-            color:rgba(141,148,173,.55); text-decoration:none; text-transform:uppercase; transition:color .3s; }
-        .links a:hover { color:var(--gold); }
-        .trademark { position:fixed; bottom:10px; left:20px; right:20px; text-align:center; z-index:2;
-            font-family:'Space Mono',monospace; font-size:7px; letter-spacing:1px;
-            color:rgba(141,148,173,.32); text-transform:uppercase; pointer-events:none; }
+  /* ---- teaser ---- */
+  .frame {
+    margin-top: 44px; position: relative; aspect-ratio: 16 / 9;
+    background: var(--bg-raised); border: 1px solid var(--line);
+  }
+  .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
-        /* granted overlay */
-        #granted { position:fixed; inset:0; z-index:50; background:var(--void); display:none;
-            align-items:center; justify-content:center; flex-direction:column; }
-        #granted.show { display:flex; }
-        #granted .big { font-family:'Cinzel',serif; font-size:clamp(22px,4.5vw,40px); letter-spacing:8px;
-            color:var(--gold); animation:blink 1s steps(2) infinite; }
-        #granted .sm { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:4px;
-            color:var(--bone-dim); margin-top:18px; }
-        @keyframes blink { 50% { opacity:.35; } }
+  /* ---- concept ---- */
+  .concept-grid {
+    margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+  }
+  @media (max-width: 760px) { .concept-grid { grid-template-columns: 1fr; } }
+  .concept-grid p { color: var(--muted); margin-bottom: 18px; }
+  .concept-grid p:last-child { margin-bottom: 0; }
+  .deffn { border-top: 1px solid var(--line); padding-top: 22px; margin-top: 6px; }
+  .deffn dt {
+    font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 600;
+  }
+  .deffn dd { color: var(--muted); margin: 4px 0 22px; }
 
-        .username-in { margin-top:46px; width:min(330px,86vw); text-align:center; background:rgba(0,0,12,.5);
-            border:1.5px solid var(--line); border-radius:4px; color:#fff; font-family:'Space Mono',monospace;
-            font-size:15px; font-weight:700; letter-spacing:2px; padding:15px 22px; outline:none;
-            transition:border-color .3s; }
-        .username-in:focus { border-color:rgba(212,175,55,.55); }
-        .username-in::placeholder { color:rgba(141,148,173,.55); font-weight:600; letter-spacing:1px; }
-        .play { margin-top:18px; padding:20px 76px; border:none; border-radius:4px; cursor:pointer;
-            font-family:'Cinzel',serif; font-weight:700; font-size:19px; letter-spacing:5px; text-transform:uppercase;
-            color:var(--void); background:var(--gold); transition:background-color .25s;
-            display:inline-flex; align-items:center; gap:13px; }
-        .play span { font-size:15px; }
-        .play:hover { background:#c49b28; }
-        .play:active { transform:scale(.99); }
-        .resume-line { margin-top:20px; font-family:'Space Mono',monospace; font-weight:700; font-size:11px;
-            letter-spacing:2px; color:var(--bone-dim); min-height:14px; text-transform:uppercase; }
-        .menu-row { display:flex; gap:14px; margin-top:22px; flex-wrap:wrap; justify-content:center; }
-        .menu-sec { display:inline-flex; align-items:center; gap:9px; padding:13px 24px; border-radius:4px; cursor:pointer;
-            font-family:'Space Mono',monospace; font-weight:700; font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
-            color:var(--bone); background:rgba(255,255,255,.04); border:1px solid var(--line); transition:border-color .25s, color .25s, background-color .25s; }
-        .menu-sec span { color:var(--gold); font-size:13px; }
-        .menu-sec:hover { border-color:var(--gold); color:#fff; background:rgba(212,175,55,.08); }
-        .menu-sec em { font-style:normal; font-size:9px; padding:2px 7px; border-radius:2px; letter-spacing:1px;
-            background:rgba(212,175,55,.18); color:var(--gold); }
-        .menu-sec.soon { opacity:.85; }
+  /* ---- world / lore ---- */
+  .epoch { border-top: 1px solid var(--line); padding: 44px 0; }
+  .epoch:last-of-type { border-bottom: 1px solid var(--line); }
+  .epoch-head { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: baseline; }
+  .epoch-label { font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); }
+  .clearance { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
+  .epoch h3 { font-size: 1.5rem; font-weight: 400; letter-spacing: 0.08em; margin: 10px 0 16px; }
+  .epoch p { color: var(--muted); max-width: 720px; margin-bottom: 14px; }
+  .epoch img { margin-top: 26px; border: 1px solid var(--line); }
+  .epoch figcaption { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint); margin-top: 10px; }
 
-        #series { position:fixed; inset:0; z-index:70; display:none; align-items:center; justify-content:center; padding:20px;
-            background:rgba(4,4,10,.92); overflow-y:auto; }
-        #series.open { display:flex; }
-        .series-card { width:min(760px,96vw); margin:auto; border:1.5px solid rgba(212,175,55,.3); border-radius:4px;
-            background:rgba(10,10,18,.98); box-shadow:0 30px 90px rgba(0,0,0,.65);
-            padding:30px 32px 34px; animation:panelin .6s cubic-bezier(.16,1,.3,1) both; }
-        .series-card .sc-tag { font-family:'Space Mono',monospace; font-weight:700; font-size:11px; letter-spacing:3px; color:var(--gold); text-transform:uppercase; }
-        .series-card h2 { font-family:'Cinzel',serif; font-weight:700; font-size:30px; color:#fff; margin:8px 0 18px; letter-spacing:2px; }
-        .series-vid { position:relative; width:100%; padding-top:56.25%; border-radius:2px; overflow:hidden; background:#000; border:1px solid rgba(212,175,55,.18); }
-        .series-vid iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
-        .series-lore { margin-top:22px; font-family:'Jost',sans-serif; font-weight:300; font-size:15px; line-height:1.85; color:#cdd2dd; }
-        .series-lore p { margin:0 0 14px; }
-        .series-lore b { color:#f3e6c0; font-weight:600; }
-        .series-actions { display:flex; gap:14px; margin-top:24px; flex-wrap:wrap; }
-        .series-card .sc-close { position:absolute; }
-        #series .sc-x { position:fixed; top:20px; right:24px; width:42px; height:42px; border-radius:50%; cursor:pointer;
-            border:1px solid var(--line); background:rgba(8,10,20,.5); color:var(--bone); font-size:18px; z-index:2; }
-        #series .sc-x:hover { color:var(--gold); border-color:var(--gold); }
-        .sc-btn { font-family:'Space Mono',monospace; font-weight:700; font-size:12px; letter-spacing:2px; text-transform:uppercase;
-            text-decoration:none; padding:13px 26px; border-radius:4px; cursor:pointer; transition:background-color .25s, border-color .25s, color .25s; }
-        .sc-btn.primary { color:var(--void); background:var(--gold); border:none; }
-        .sc-btn.primary:hover { background:#c49b28; }
-        .sc-btn.ghost { color:var(--bone-dim); background:transparent; border:1px solid var(--line); }
-        .sc-btn.ghost:hover { border-color:var(--gold); color:var(--bone); }
-        .resume-line b { color:var(--gold); }
-        .owner { position:fixed; top:18px; right:20px; z-index:5; width:42px; height:42px; border-radius:50%;
-            border:1px solid var(--line); background:rgba(8,10,20,.45); color:var(--bone-dim); font-size:17px;
-            cursor:pointer; transition:all .3s; }
-        .owner:hover { color:var(--gold); border-color:var(--gold); transform:rotate(45deg); }
+  /* ---- characters ---- */
+  .cast-grid {
+    margin-top: 44px; display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 28px;
+  }
+  .cast { background: var(--bg-raised); border: 1px solid var(--line); }
+  .cast img { aspect-ratio: 3 / 4; object-fit: cover; width: 100%; filter: saturate(0.85); transition: filter 0.25s; }
+  .cast:hover img { filter: saturate(1); }
+  .cast .info { padding: 16px 16px 18px; }
+  .cast .tag { font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--accent); }
+  .cast h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.04em; margin: 6px 0 2px; }
+  .cast .role { font-size: 13px; color: var(--muted); }
+  .cast p { font-size: 13px; color: var(--faint); margin-top: 10px; line-height: 1.55; }
 
-        #wip { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:24px;
-            background:rgba(4,4,10,.92); transition:opacity .5s, visibility .5s; }
-        #wip.gone { opacity:0; visibility:hidden; }
-        .wip-card { max-width:480px; border:1.5px solid rgba(212,175,55,.3); border-radius:4px; padding:38px 36px;
-            background:rgba(10,10,18,.98); box-shadow:0 30px 80px rgba(0,0,0,.6);
-            text-align:center; animation:panelin .7s cubic-bezier(.16,1,.3,1) both; }
-        .wip-tag { font-family:'Space Mono',monospace; font-weight:700; font-size:12px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
-        .wip-card h2 { font-family:'Cinzel',serif; font-weight:700; font-size:26px; color:#fff; margin:14px 0 12px; letter-spacing:1px; }
-        .wip-card p { font-family:'Jost',sans-serif; font-weight:300; font-size:15px; line-height:1.7; color:#c2c9da; margin-bottom:28px; }
-        .wip-card button { font-family:'Space Mono',monospace; font-weight:700; font-size:12px; letter-spacing:2px; text-transform:uppercase;
-            padding:14px 30px; border:none; border-radius:4px; cursor:pointer; color:var(--void);
-            background:var(--gold); transition:background-color .25s; }
-        .wip-card button:hover { background:#c49b28; }
-    </style>
+  /* ---- chapters ---- */
+  .chapter {
+    margin-top: 44px; border: 1px solid var(--line); background: var(--bg-raised);
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 760px) { .chapter { grid-template-columns: 1fr; } }
+  .chapter .art { min-height: 260px; background: url("assets/stills/green-portal.jpg") center / cover; filter: brightness(0.75); }
+  .chapter .body { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+  .status {
+    display: inline-block; align-self: flex-start; margin-bottom: 18px; padding: 6px 14px;
+    font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 600;
+    color: var(--accent); border: 1px solid var(--accent);
+  }
+  .status.done { color: var(--muted); border-color: var(--faint); }
+  .chapter h3 { font-size: 1.6rem; font-weight: 300; letter-spacing: 0.14em; margin-bottom: 14px; }
+  .chapter p { color: var(--muted); }
+  .chapter .body a { color: var(--text); border-bottom: 1px solid var(--faint); transition: border-color 0.2s; }
+  .chapter .body a:hover { border-color: var(--accent); }
+
+  /* ---- film ---- */
+  .film-cols { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  @media (max-width: 760px) { .film-cols { grid-template-columns: 1fr; } }
+  .film-cols h3 { font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 600; margin-bottom: 14px; }
+  .film-cols p { color: var(--muted); margin-bottom: 16px; }
+  .pipeline { list-style: none; }
+  .pipeline li { border-top: 1px solid var(--line); padding: 14px 0; color: var(--muted); font-size: 15px; }
+  .pipeline li strong { color: var(--text); font-weight: 600; display: block; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 2px; }
+
+  /* ---- music ---- */
+  .music-links { margin-top: 36px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+  /* ---- footer ---- */
+  footer { border-top: 1px solid var(--line); padding: 54px 0 64px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: center; }
+  footer .mark { font-size: 13px; }
+  footer p { font-size: 12px; letter-spacing: 0.12em; color: var(--faint); }
+  footer ul { display: flex; gap: 22px; list-style: none; }
+  footer ul a { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  footer ul a:hover { color: var(--text); }
+</style>
 </head>
 <body>
-    <!-- work-in-progress disclaimer -->
-    <div id="wip">
-        <div class="wip-card">
-            <div class="wip-tag">&#9888; Proof of Concept</div>
-            <h2>AXIOMORT is a work in progress</h2>
-            <p>The following demo is a proof of concept in early stages. The game is subject to
-               change drastically to fit the creative vision in future updates.</p>
-            <button id="wip-ok">I Understand &mdash; Continue</button>
-        </div>
+
+<nav>
+  <a class="mark" href="#top">AXIOMORT™</a>
+  <ul>
+    <li><a href="#teaser">Teaser</a></li>
+    <li><a href="#world">World</a></li>
+    <li><a href="#characters">Characters</a></li>
+    <li><a href="#chapters">Chapters</a></li>
+    <li><a href="#film">Film</a></li>
+    <li><a href="#music">Music</a></li>
+  </ul>
+</nav>
+
+<header id="top">
+  <div class="bg"></div>
+  <div class="fade"></div>
+  <div class="inner">
+    <p class="studio-line">BreadFlows Studios Presents</p>
+    <h1>AXIOMORT</h1>
+    <p class="tagline"><b>Axiom</b> — the fundamental laws of existence. <b>Mort</b> — the death of those laws.</p>
+    <div class="hero-cta">
+      <a class="btn primary" href="#teaser">Watch Teaser 1</a>
+      <a class="btn" href="#chapters">Chapter One</a>
+    </div>
+  </div>
+</header>
+
+<section id="teaser">
+  <div class="wrap">
+    <p class="kicker">Official Teaser</p>
+    <h2>AXIOMORT — Teaser 1</h2>
+    <p class="lede">The first transmission from a universe in collapse.</p>
+    <div class="frame">
+      <iframe src="https://www.youtube.com/embed/hs5fbREGA9o?rel=0" title="AXIOMORT — Teaser 1"
+        loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+
+<section id="concept">
+  <div class="wrap">
+    <p class="kicker">The Concept</p>
+    <h2>When a universe catches an infection</h2>
+    <div class="concept-grid">
+      <div>
+        <p>In the beginning there was a black lion — a god to some, the universe itself to others. After one ordinary day, it becomes host to a parasite.</p>
+        <p>But this is no ordinary lion. When a being that carries the laws of existence falls ill, those laws fall with it. Gravity forgets its direction. Cause stops preceding effect. Reality restructures itself into the Maze — a world that follows rules no one wrote.</p>
+        <p>AXIOMORT follows the people left inside: pilots, architects, and stranger things, each navigating the aftermath of the collapse and deciding whether reality should be reconstructed — or whether it should stay broken.</p>
+      </div>
+      <dl class="deffn">
+        <dt>Format</dt>
+        <dd>Episodic story universe — game chapters, a companion film, and an original soundtrack.</dd>
+        <dt>Genre</dt>
+        <dd>Experimental sci-fi. Dimensional collapse, living architecture, cosmic parasites.</dd>
+        <dt>Status</dt>
+        <dd>In development. Teaser 1 out now; Chapter One details to be revealed.</dd>
+        <dt>Studio</dt>
+        <dd>BreadFlows Studios — story, direction, music, and visual pipeline.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="world">
+  <div class="wrap">
+    <p class="kicker">The World</p>
+    <h2>Recovered records of the collapse</h2>
+    <p class="lede">Fragments decrypted from the archive, in the order the world fell apart.</p>
+
+    <div style="margin-top: 44px;">
+      <article class="epoch">
+        <div class="epoch-head"><span class="epoch-label">Epoch Zero — Before the Collapse</span><span class="clearance">Clearance Level 1</span></div>
+        <h3>The Axioms</h3>
+        <p>Before time was measured in fractures, reality operated on a set of immutable laws — the Axioms. Gravity fell downward. Light traveled forward. Cause preceded effect. These weren't just physics — they were the architecture of existence itself, maintained by a framework most inhabitants never knew existed.</p>
+        <p>The Axioms were self-sustaining. They required no oversight, no correction. For eons, the dimensional fabric held. Until it didn't.</p>
+      </article>
+
+      <article class="epoch">
+        <div class="epoch-head"><span class="epoch-label">Epoch One — The Fracture</span><span class="clearance">Clearance Level 2</span></div>
+        <h3>The Collapse</h3>
+        <p>It began at the edges. Corridors that should have led somewhere folded back into themselves. Gravity reversed in isolated pockets. Pilots reported seeing rooms from the inside and outside simultaneously.</p>
+        <p>The Axioms began to fail — not all at once, but in cascading sequences, like dominos falling through dimensions that shouldn't have been connected. Within cycles, the entire framework unraveled. What remained was the Maze: a restructured reality that follows rules no one wrote.</p>
+        <figure>
+          <img src="assets/stills/green-portal.jpg" alt="A rift — a green-lit tear in the fabric of the Maze" loading="lazy">
+          <figcaption>Recovered still — the Rift</figcaption>
+        </figure>
+      </article>
+
+      <article class="epoch">
+        <div class="epoch-head"><span class="epoch-label">Epoch One — Post-Collapse</span><span class="clearance">Clearance Level 2</span></div>
+        <h3>Data Shards</h3>
+        <p>When the Axioms shattered, their source code didn't vanish — it scattered. Fragments of the old world's operating logic crystallized into physical form: Data Shards. Each shard contains a piece of what reality used to be — a gravity constant, a spatial coordinate, a causal sequence.</p>
+        <p>Collected individually, they're curiosities. Assembled in the right configuration, they hint at something far more significant: the possibility of reconstruction. Or something beyond it.</p>
+      </article>
+
+      <article class="epoch">
+        <div class="epoch-head"><span class="epoch-label">Epoch Two — The Living System</span><span class="clearance">Clearance Level 3</span></div>
+        <h3>The Maze</h3>
+        <p>The Maze is not a structure — it's an organism. Born from the wreckage of collapsed dimensional law, it reconfigures itself in response to the movement of those inside it. Walk forward and the path behind you may no longer exist. Stand still and new corridors form around you.</p>
+        <p>Some pilots believe the Maze is what remains of the mind that once maintained the Axioms — a consciousness fragmented into architecture. If that's true, navigating the Maze isn't exploration. It's conversation.</p>
+        <figure>
+          <img src="assets/stills/attic-interior.jpg" alt="Attic interior crossed by beams of eerie green light" loading="lazy">
+          <figcaption>Recovered still — the Attic</figcaption>
+        </figure>
+      </article>
+
+      <article class="epoch">
+        <div class="epoch-head"><span class="epoch-label">Epoch Three — The Protocol</span><span class="clearance">Clearance Level 4 — Partial Decrypt</span></div>
+        <h3>Axiomort</h3>
+        <p>The word itself is a compound: Axiom, a fundamental law of existence — and Mort, death. The death of fundamental laws. But the Axiomort Protocol predates the collapse — it was encoded before the fracture, as if someone knew what was coming.</p>
+        <p>What's been recovered suggests the Protocol wasn't designed to prevent the collapse, but to respond to it: a procedure for inverting the inversion itself — not restoring the old reality, but using the collapse as raw material for something new. Whether that something is salvation or something far more dangerous is the question every pilot in the Maze is trying to answer.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="characters">
+  <div class="wrap">
+    <p class="kicker">The Cast</p>
+    <h2>Those left inside</h2>
+    <p class="lede">Pilots, architects, guardians, and the things the collapse made.</p>
+    <div class="cast-grid">
+      <article class="cast"><img src="assets/characters/evander-questborne.jpg" alt="Evander Questborne" loading="lazy"><div class="info"><span class="tag">Protagonist</span><h3>Evander Questborne</h3><p class="role">The Seeker</p><p>The last pilot to enter the Maze willingly, chasing fragments of a memory he cannot fully reconstruct.</p></div></article>
+      <article class="cast"><img src="assets/characters/kara-oriefel.jpg" alt="Kara Oriefel" loading="lazy"><div class="info"><span class="tag">Ally</span><h3>Kara Oriefel</h3><p class="role">The Strategist</p><p>Former systems architect of the dimensional grid. Her maps died in the collapse — her mind did not.</p></div></article>
+      <article class="cast"><img src="assets/characters/nyther-solis.jpg" alt="Nyther Solis" loading="lazy"><div class="info"><span class="tag">Enigma</span><h3>Nyther Solis</h3><p class="role">The Shadow</p><p>No one remembers when he arrived. His knowledge of the collapse's origin runs deeper than anyone suspects.</p></div></article>
+      <article class="cast"><img src="assets/characters/black-lion.jpg" alt="The Black Lion" loading="lazy"><div class="info"><span class="tag">Guardian</span><h3>Black Lion</h3><p class="role">The Cosmic Beast</p><p>Older than the framework itself. It guards the threshold between what was and what became.</p></div></article>
+      <article class="cast"><img src="assets/characters/malik-creed.jpg" alt="Malik Creed" loading="lazy"><div class="info"><span class="tag">Ally</span><h3>Malik Creed</h3><p class="role">The Enforcer</p><p>Built for a war that already ended. Beneath the hardcoded protocols is a conscience that questions every order.</p></div></article>
+      <article class="cast"><img src="assets/characters/orion-vale.jpg" alt="Orion Vale" loading="lazy"><div class="info"><span class="tag">Ally</span><h3>Orion Vale</h3><p class="role">The Navigator</p><p>The only pilot who reads shifting gravity in real time — at the cost of the boundary between self and Maze.</p></div></article>
+      <article class="cast"><img src="assets/characters/cosmic-jerry.jpg" alt="Cosmic Jerry" loading="lazy"><div class="info"><span class="tag">Enigma</span><h3>Cosmic Jerry</h3><p class="role">The Wildcard</p><p>Laughs at gravity and seems delighted by the collapse. His chaos may be calculated.</p></div></article>
+      <article class="cast"><img src="assets/characters/mara.jpg" alt="Mara" loading="lazy"><div class="info"><span class="tag">Ally</span><h3>Mara</h3><p class="role">The Anchor</p><p>The still point in the storm. She stabilizes local reality — and each stabilization leaves its mark.</p></div></article>
+      <article class="cast"><img src="assets/characters/maya.jpg" alt="Maya" loading="lazy"><div class="info"><span class="tag">Enigma</span><h3>Maya</h3><p class="role">The Visionary</p><p>She experiences time out of sequence — consequences before causes, endings before beginnings.</p></div></article>
+      <article class="cast"><img src="assets/characters/death-knight.jpg" alt="The Death Knight" loading="lazy"><div class="info"><span class="tag">Threat</span><h3>Death Knight</h3><p class="role">The Reaper</p><p>Not a character but a force — an emergent consequence of broken dimensional law.</p></div></article>
+      <article class="cast"><img src="assets/characters/robot.jpg" alt="Warthorn" loading="lazy"><div class="info"><span class="tag">Guardian</span><h3>Warthorn</h3><p class="role">The Machine</p><p>A prototype dimensional guardian following rules that no longer apply — predictable, and dangerous.</p></div></article>
+      <article class="cast"><img src="assets/characters/priest.jpg" alt="The Priest" loading="lazy"><div class="info"><span class="tag">Enigma</span><h3>The Priest</h3><p class="role">The Oracle</p><p>Keeper of the old axioms. He speaks in equations and paradoxes that sound like prophecy.</p></div></article>
+      <article class="cast"><img src="assets/characters/zavion-kade.jpg" alt="Zavion Kade" loading="lazy"><div class="info"><span class="tag">Threat</span><h3>Zavion Kade</h3><p class="role">The Defector</p><p>He believes the collapse was a correction, not a catastrophe — and works to keep reality broken.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<section id="chapters">
+  <div class="wrap">
+    <p class="kicker">Chapters</p>
+    <h2>The story so far</h2>
+
+    <div class="chapter">
+      <div class="art" style="background-image: url('assets/stills/teaser-thumbnail.jpg');"></div>
+      <div class="body">
+        <span class="status done">Out Now</span>
+        <h3>TEASER 1</h3>
+        <p>The first look at the AXIOMORT universe — the signal that started everything. <a href="#teaser">Watch it above</a>, or <a href="https://youtu.be/hs5fbREGA9o" target="_blank" rel="noopener">open it on YouTube</a>.</p>
+      </div>
     </div>
 
-    <div class="motes" id="motes"></div>
-    <div class="scan"></div>
-
-    <div class="wrap">
-        <div class="boot">BreadFlows Studios — Signal Recovered</div>
-        <h1>AXIOMORT<sup style="font-size: 0.35em; position: relative; top: -1.2em; color: rgba(255,255,255,0.5); font-weight: 400;">&trade;</sup></h1>
-        <div class="tag">Recover the soundtrack. Restore the world.</div>
-        <div style="display:inline-block;margin-top:14px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:3px;color:#0a0a0a;background:#d4af37;padding:4px 12px;border-radius:2px;">BETA v0.9</div>
-
-        <input id="username" class="username-in" maxlength="18" placeholder="type your username" autocomplete="off" spellcheck="false">
-        <button class="play" id="play"><span>&#9654;</span> PLAY THE GAME</button>
-        <div class="resume-line" id="resume-line"></div>
-        <div class="menu-row">
-            <button class="menu-sec" id="watch"><span>&#9658;</span> Watch the Series</button>
-            <button class="menu-sec soon" id="mapedit"><span>&#9106;</span> Map Editor <em>soon</em></button>
-        </div>
+    <div class="chapter" style="margin-top: 28px; border-color: #2a352e;">
+      <div class="art"></div>
+      <div class="body">
+        <span class="status">In Development</span>
+        <h3>AXIOMORT — CHAPTER ONE</h3>
+        <p>The beginning of the story proper. Title, date, and first footage to be revealed. The world is still being built — what you see on this page is the concept as it stands, before it hardens into its final shape.</p>
+      </div>
     </div>
+  </div>
+</section>
 
-    <button class="owner" id="owner-btn" aria-label="Owner access" title="Owner access">&#9881;</button>
-
-    <div class="links">
-        <a href="https://breadflows.com" target="_blank" rel="noopener">BreadFlows</a>
-        <a href="https://www.youtube.com/playlist?list=OLAK5uy_kiKDg22GWozeichkwirezck_z8oc3fiq8" target="_blank" rel="noopener">Album</a>
-        <a href="https://youtube.com/@breadflows" target="_blank" rel="noopener">YouTube</a>
-        <a href="https://open.spotify.com/artist/3yobavZLdSYOHnAqCPN8AD" target="_blank" rel="noopener">Spotify</a>
+<section id="film">
+  <div class="wrap">
+    <p class="kicker">The Film</p>
+    <h2>A cinematic companion</h2>
+    <p class="lede">AXIOMORT is more than a game — it's a universe. The companion film expands the narrative beyond the Maze, following the characters whose stories intertwine with the collapse of reality itself.</p>
+    <div class="film-cols">
+      <div>
+        <h3>The Vision</h3>
+        <p>An experimental sci-fi narrative bridging game and cinema. While the game puts you inside the Maze, the film shows you the world around it — the people, the politics, the weight of living in a reality that no longer follows its own rules.</p>
+        <p>This isn't an adaptation. It's a parallel story: characters you meet in the game have histories that unfold on screen, and lore you collect becomes scenes you watch.</p>
+      </div>
+      <div>
+        <h3>Production</h3>
+        <ul class="pipeline">
+          <li><strong>Visual pipeline</strong>AI-generated cinematography, hand-curated frame by frame</li>
+          <li><strong>Audio</strong>Narration and atmospheric sound design</li>
+          <li><strong>Post-production</strong>Editing, color grading, and compositing in DaVinci Resolve</li>
+          <li><strong>Direction</strong>BreadFlows Studios — story, vision, and creative oversight</li>
+        </ul>
+      </div>
     </div>
+  </div>
+</section>
 
-    <div class="trademark">
-        AXIOMORT&trade;
+<section id="music">
+  <div class="wrap">
+    <p class="kicker">The Soundtrack</p>
+    <h2>Recover the soundtrack. Restore the world.</h2>
+    <p class="lede">The music of AXIOMORT is part of the story — original tracks from BreadFlows, released as the world takes shape.</p>
+    <div class="music-links">
+      <a class="btn" href="https://open.spotify.com/artist/3yobavZLdSYOHnAqCPN8AD" target="_blank" rel="noopener">Spotify</a>
+      <a class="btn" href="https://www.youtube.com/playlist?list=OLAK5uy_kiKDg22GWozeichkwirezck_z8oc3fiq8" target="_blank" rel="noopener">Album on YouTube</a>
+      <a class="btn" href="https://youtube.com/@breadflows" target="_blank" rel="noopener">YouTube Channel</a>
     </div>
+  </div>
+</section>
 
-    <!-- WATCH THE SERIES -->
-    <div id="series">
-        <button class="sc-x" id="series-x" aria-label="Close">&times;</button>
-        <div class="series-card">
-            <div class="sc-tag">Teaser Trailer // The Series</div>
-            <h2>AXIOMORT<sup style="font-size: 0.4em; position: relative; top: -0.8em; color: rgba(255,255,255,0.4); font-weight: 400;">&trade;</sup></h2>
-            <div class="series-vid">
-                <iframe id="series-frame" src="" title="AXIOMORT Teaser Trailer"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-            </div>
-            <div class="series-lore">
-                <p><b>AXIOMORT</b>&trade; is a pending trademark application in Ireland (currently in opposition period).</p>
-                <p>It is about a lion the size of a universe quantum-linked to a man in Ireland, <b>DARB</b>, who is the character based on my own likeness.</p>
-                <p>The cosmic Lion gets infected by a black ink parasite that consumes the main characters within the lion. The parasite consumes each Main Character <b>Wasteland_Woman, Cosmic Jerry, Zavion, Sylvara, Malik Creed, Nyther Solis</b> and <b>Maya</b>.</p>
-                <p>After he consumes the crystals he becomes human; his human alias is <b>Evander Questborne</b>. He must go to the lion's brain area to overthrow the mind throne using the power he consumed and become the man that is connected to the lion to gain the power of the lion.</p>
-                <p>However, throughout the series DARB is scammed 4 times, because the energy dissipates into DARB getting scammed instead of consumed, because he has the lion power.</p>
-                <p>But because Evander Questborne has the crystal souls, he's able to gain enough power to use the mind gate to manifest himself into DARB's real life. So he pulls off the 4th scam this time setting up a scam syndicate, a scam so big it could overthrow and destroy DARB's influence once and for all. DARB eventually has to conclude that after these scams, and after the Garda (Irish police) won't do anything about it, he must reconnect with his childhood self the one who has the knowledge of his inner ability.</p>
-                <p>Simultaneously the lion, in the above structure (as above, so below), this entire time was climbing a mountain. At this point in the series, the lion reaches the mountain top and releases the parasite. Evander Questborne's plans go down the gutter as his office space is consumed by a tribal force initiated by the lion, and sacrificed at the altar which means the Celtic curse of financial distress is finally broken. DARB finds himself rummaging through old notebooks of his childhood drawings, bringing old characters back to life in new cinematic forms for the pilot and episode 2.</p>
-            </div>
-            <div class="series-actions">
-                <a class="sc-btn primary" href="https://youtu.be/hs5fbREGA9o" target="_blank" rel="noopener">Watch on YouTube &nearr;</a>
-                <button class="sc-btn ghost" id="series-close2">Back</button>
-            </div>
-        </div>
-    </div>
+<footer>
+  <div class="wrap">
+    <span class="mark">AXIOMORT™</span>
+    <p>© 2026 BreadFlows Studios. A work in progress — everything here is subject to change as the vision develops.</p>
+    <ul>
+      <li><a href="https://youtube.com/@breadflows" target="_blank" rel="noopener">YouTube</a></li>
+      <li><a href="https://open.spotify.com/artist/3yobavZLdSYOHnAqCPN8AD" target="_blank" rel="noopener">Spotify</a></li>
+    </ul>
+  </div>
+</footer>
 
-    <!-- MAP EDITOR — coming soon -->
-    <div id="mapsoon" style="position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,4,10,.92);">
-        <div class="wip-card" style="text-align:center;">
-            <div class="wip-tag">&#9106; Map Editor</div>
-            <h2 style="font-family:'Cinzel',serif;font-weight:700;font-size:26px;color:#fff;margin:14px 0 12px;">Coming Soon</h2>
-            <p style="font-family:'Jost',sans-serif;font-weight:300;font-size:15px;line-height:1.7;color:#c2c9da;margin-bottom:28px;">
-                Build and share your own AXIOMORT levels — grid-snapped, multiplayer-ready. The map editor is in development and arrives in a future update.</p>
-            <button class="sc-btn primary" id="mapsoon-close">Got it</button>
-        </div>
-    </div>
-
-    <div id="granted">
-        <div class="big">ACCESS GRANTED</div>
-        <div class="sm" id="gline">ENTERING THE VAULT&hellip;</div>
-    </div>
-
-    <!-- owner / admin terminal -->
-    <div id="admin" style="position:fixed;inset:0;z-index:60;background:rgba(4,4,10,.96);display:none;align-items:center;justify-content:center;">
-        <div class="panel" style="margin-top:0;animation:none;">
-            <div class="ph" style="color:#ff5e7a;">// OWNER ACCESS — CLEARANCE OMEGA</div>
-            <div style="display:flex;flex-direction:column;gap:12px;">
-                <button class="go" onclick="location.href='tower.html'">THE VAULT</button>
-                <button class="go" onclick="location.href='island.html?dev'">THE ISLAND (BYPASS LOCK)</button>
-                <button class="go" id="adm-unlock" style="border-color:var(--blue);color:var(--blue);">UNLOCK ALL 44 DISCS</button>
-                <button class="go" id="adm-reset" style="border-color:rgba(232,228,220,.25);color:var(--bone-dim);">RESET ALL SAVES</button>
-            </div>
-            <div class="status" id="adm-status"></div>
-            <div class="hint">admin mode stays on until you reset &middot; gates are bypassed</div>
-        </div>
-    </div>
-
-    <script>
-        // WIP disclaimer — dismiss to reveal the home screen
-        document.getElementById('wip-ok').addEventListener('click', () => {
-            document.getElementById('wip').classList.add('gone');
-        });
-
-        // ambient motes
-        const motes = document.getElementById('motes');
-        for (let i = 0; i < 30; i++) {
-            const m = document.createElement('div'); m.className = 'mote';
-            m.style.left = Math.random() * 100 + '%';
-            m.style.animationDuration = (9 + Math.random() * 16) + 's';
-            m.style.animationDelay = -Math.random() * 20 + 's';
-            m.style.opacity = 0.2 + Math.random() * 0.5;
-            motes.appendChild(m);
-        }
-
-        // progress-aware resume line
-        const towerCount = (() => { try { return (JSON.parse(localStorage.getItem('ax_tower_v1')) || []).length; } catch (_) { return 0; } })();
-        const towerDone = towerCount >= 26;
-        const rl = document.getElementById('resume-line');
-        if (towerDone) rl.innerHTML = 'Archive complete &middot; <b>The Island awaits</b>';
-        else if (towerCount > 0) rl.innerHTML = 'Resume &middot; <b>' + towerCount + ' / 26</b> discs recovered';
-        else rl.textContent = 'New expedition';
-
-        // prefill the username for returning pilots
-        const userEl = document.getElementById('username');
-        const savedPilot = localStorage.getItem('ax_pilot');
-        if (savedPilot && savedPilot !== 'GUEST') userEl.value = savedPilot;
-
-        // random callsign generator (for players who don't type one)
-        function randomCallsign() {
-            const a = ['NEON','RIFT','NOVA','VOID','PULSE','GLITCH','AXIS','ORBIT','ECHO','ZERO','FLUX','HALO','VEX','ONYX','DRIFT','LUME'];
-            const b = ['RIDER','HUNTER','WALKER','GHOST','PILOT','SIGNAL','WARDEN','NOMAD','ENGINE','SEEKER'];
-            return a[Math.random()*a.length|0] + '_' + b[Math.random()*b.length|0] + (10 + Math.random()*89|0);
-        }
-
-        function play() {
-            if (!document.getElementById('wip').classList.contains('gone')) return;
-            // strip HTML-significant + control chars so a callsign can never inject markup
-            let name = userEl.value.trim().replace(/[<>&"']/g, '').replace(/\s+/g, '_').slice(0, 18);
-            if (!name) { name = randomCallsign(); userEl.value = name; }     // random if left blank
-            localStorage.setItem('ax_pilot', name);
-            document.getElementById('gline').textContent = towerDone
-                ? 'ARCHIVE COMPLETE — ROUTING TO THE ISLAND…'
-                : 'PILOT ' + name.toUpperCase() + ' — ENTERING THE VAULT…';
-            document.getElementById('granted').classList.add('show');
-            setTimeout(() => { window.location.href = towerDone ? 'island.html' : 'tower.html'; }, 1100);
-        }
-        document.getElementById('play').addEventListener('click', play);
-
-        // Watch the Series — lazy-load the trailer so it only plays when opened
-        const seriesEl = document.getElementById('series');
-        const seriesFrame = document.getElementById('series-frame');
-        function openSeries() { seriesFrame.src = 'https://www.youtube.com/embed/hs5fbREGA9o?rel=0&autoplay=1'; seriesEl.classList.add('open'); }
-        function closeSeries() { seriesEl.classList.remove('open'); seriesFrame.src = ''; }
-        document.getElementById('watch').addEventListener('click', openSeries);
-        document.getElementById('series-x').addEventListener('click', closeSeries);
-        document.getElementById('series-close2').addEventListener('click', closeSeries);
-        seriesEl.addEventListener('click', (e) => { if (e.target === seriesEl) closeSeries(); });
-
-        // Map Editor — coming soon
-        const mapsoonEl = document.getElementById('mapsoon');
-        document.getElementById('mapedit').addEventListener('click', () => mapsoonEl.style.display = 'flex');
-        document.getElementById('mapsoon-close').addEventListener('click', () => mapsoonEl.style.display = 'none');
-        mapsoonEl.addEventListener('click', (e) => { if (e.target === mapsoonEl) mapsoonEl.style.display = 'none'; });
-        addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSeries(); mapsoonEl.style.display = 'none'; } });
-        userEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') play(); });
-
-        // owner access — tucked behind the gear
-        const ADMIN_CODES = ['axiomort', 'admin', 'owner', 'breadflows', 'dev'];
-        document.getElementById('owner-btn').addEventListener('click', () => {
-            const code = (prompt('Owner access code:') || '').trim().toLowerCase();
-            if (ADMIN_CODES.includes(code)) {
-                localStorage.setItem('ax_admin', '1');
-                document.getElementById('admin').style.display = 'flex';
-            } else if (code) {
-                document.getElementById('owner-btn').style.borderColor = '#ff5e7a';
-            }
-        });
-
-        /* admin actions */
-        document.getElementById('adm-unlock').addEventListener('click', () => {
-            localStorage.setItem('ax_tower_v1', JSON.stringify([...Array(26).keys()]));
-            localStorage.setItem('axiomort_island_v1', JSON.stringify([...Array(18).keys()]));
-            document.getElementById('adm-status').textContent = 'ALL 44 DISCS UNLOCKED';
-        });
-        document.getElementById('adm-reset').addEventListener('click', () => {
-            localStorage.removeItem('ax_tower_v1');
-            localStorage.removeItem('axiomort_island_v1');
-            localStorage.removeItem('ax_admin');
-            document.getElementById('adm-status').textContent = 'ALL SAVES WIPED — ADMIN MODE OFF';
-        });
-    </script>
 </body>
 </html>
