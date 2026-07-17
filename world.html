@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AXIOMORT™ — The First Page</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #1a120a;
+  }
+  #stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; /* input goes to the canvas beneath */
+    z-index: 3;
+  }
+  #hello {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-size: clamp(2.4rem, 7vw, 5.5rem);
+    font-weight: 400;
+    /* iron-gall ink on parchment */
+    color: #33230f;
+    text-shadow:
+      0 0 1px rgba(51, 35, 15, 0.55),
+      0 0 6px rgba(51, 35, 15, 0.18);
+    user-select: none;
+    /* revealed by the ink bloom on load */
+    opacity: 0;
+    letter-spacing: 0.18em;
+    transition: opacity 2.6s ease, letter-spacing 3.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #hello.revealed {
+    opacity: 0.9;
+    letter-spacing: 0.05em;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #hello { transition: opacity 0.6s ease; letter-spacing: 0.05em; }
+  }
+  #hello.dimmed { opacity: 0.10 !important; }
+  body.w-crt #hello {
+    color: #e8dcc8;
+    text-shadow: 0 0 14px rgba(255, 40, 40, 0.45), 0 0 2px rgba(0, 0, 0, 0.8);
+  }
+  #place {
+    position: fixed;
+    left: 5vw;
+    bottom: 7vh;
+    z-index: 4;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: #6b543a;
+    opacity: 0;
+    transition: opacity 1.8s ease;
+    pointer-events: none;
+  }
+  #place.show { opacity: 0.8; }
+  body.w-crt #place { color: #e6ddd0; text-shadow: 0 0 10px rgba(255, 255, 255, 0.22); }
+  #pen {
+    position: fixed;
+    left: 0; top: 0;
+    width: 26px; height: 52px;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    transform-origin: 13px 50px; /* the nib tip */
+    filter: drop-shadow(0 2px 3px rgba(20, 12, 4, 0.35));
+  }
+  #pen.live { opacity: 0.92; }
+  body.penlive, body.penlive canvas { cursor: none; }
+  canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 1;
+  }
+  #gpuc {
+    z-index: 2;
+    pointer-events: none; /* input stays on the world canvas */
+  }
+</style>
+</head>
+<body>
+<div id="stage"><div id="hello">Axiomort</div></div>
+<canvas id="c"></canvas>
+<canvas id="gpuc"></canvas>
+<div id="place"></div>
+<div id="pen" aria-hidden="true">
+  <svg width="26" height="52" viewBox="0 0 26 52">
+    <path d="M13 50 C7 38 6 27 13 4 C20 27 19 38 13 50 Z" fill="#241708"/>
+    <path d="M13 47 L13 22" stroke="#0d0803" stroke-width="1.3"/>
+    <circle cx="13" cy="21" r="2" fill="#0d0803"/>
+    <path d="M11.2 44 C9.6 38 9.4 33 10.6 27" stroke="#5a4120" stroke-width="0.8" fill="none" opacity="0.8"/>
+  </svg>
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   Real-time Navier-Stokes fluid simulation (GPU / WebGL)
+   Black ink on a white page. No assets, no libraries.
+   Technique after Stam's "Stable Fluids" & P. Dobryakov's
+   well-known WebGL implementation, restyled for ink.
+   ============================================================ */
+
+const config = {
+  SIM_RESOLUTION: 128,      // velocity field resolution
+  DYE_RESOLUTION: 1024,     // ink resolution (sharpness of tendrils)
+  DENSITY_DISSIPATION: 0.42,// how fast ink fades (lower = lingers)
+  VELOCITY_DISSIPATION: 0.55,
+  PRESSURE: 0.8,
+  PRESSURE_ITERATIONS: 20,
+  CURL: 32,                 // vorticity: swirling tendrils
+  SPLAT_RADIUS: 0.22,
+  SPLAT_FORCE: 4200,
+  TRAIL_RADIUS: 0.10,       // cursor trail: small
+  TRAIL_MAX_INK: 0.10,      // cursor trail: whisper-quiet
+};
+
+const canvas = document.getElementById('c');
+resizeCanvas();
+
+// ---------- WebGL context & capability detection ----------
+function getWebGLContext (canvas) {
+  const params = { alpha: false, depth: false, stencil: false, antialias: false, preserveDrawingBuffer: false };
+  let gl = canvas.getContext('webgl2', params);
+  const isWebGL2 = !!gl;
+  if (!isWebGL2)
+    gl = canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params);
+
+  let halfFloat;
+  let supportLinearFiltering;
+  if (isWebGL2) {
+    gl.getExtension('EXT_color_buffer_float');
+    supportLinearFiltering = gl.getExtension('OES_texture_float_linear');
+  } else {
+    halfFloat = gl.getExtension('OES_texture_half_float');
+    supportLinearFiltering = gl.getExtension('OES_texture_half_float_linear');
+  }
+
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
+
+  const halfFloatTexType = isWebGL2 ? gl.HALF_FLOAT : halfFloat.HALF_FLOAT_OES;
+  let formatRGBA, formatRG, formatR;
+
+  if (isWebGL2) {
+    formatRGBA = getSupportedFormat(gl, gl.RGBA16F, gl.RGBA, halfFloatTexType);
+    formatRG   = getSupportedFormat(gl, gl.RG16F, gl.RG, halfFloatTexType);
+    formatR    = getSupportedFormat(gl, gl.R16F, gl.RED, halfFloatTexType);
+  } else {
+    formatRGBA = getSupportedFormat(gl, gl.RGBA, gl.RGBA, halfFloatTexType);
+    formatRG   = formatRGBA;
+    formatR    = formatRGBA;
+  }
+
+  return {
+    gl,
+    ext: {
+      formatRGBA, formatRG, formatR,
+      halfFloatTexType,
+      supportLinearFiltering: !!supportLinearFiltering || isWebGL2 // 16F linear is core in WebGL2
+    }
+  };
+}
+
+function getSupportedFormat (gl, internalFormat, format, type) {
+  if (!supportRenderTextureFormat(gl, internalFormat, format, type)) {
+    switch (internalFormat) {
+      case gl.R16F:  return getSupportedFormat(gl, gl.RG16F, gl.RG, type);
+      case gl.RG16F: return getSupportedFormat(gl, gl.RGBA16F, gl.RGBA, type);
+      default: return null;
+    }
+  }
+  return { internalFormat, format };
+}
+
+function supportRenderTextureFormat (gl, internalFormat, format, type) {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  gl.deleteFramebuffer(fbo);
+  gl.deleteTexture(texture);
+  return status === gl.FRAMEBUFFER_COMPLETE;
+}
+
+const { gl, ext } = getWebGLContext(canvas);
+if (!ext.supportLinearFiltering) {
+  config.DYE_RESOLUTION = 512;
+}
+// Mobile: 512 dye res is visually identical at phone size, half the GPU cost
+if (Math.min(screen.width, screen.height) < 768) {
+  config.DYE_RESOLUTION = Math.min(config.DYE_RESOLUTION, 512);
+  config.SIM_RESOLUTION = 96;
+}
+
+// ---------- Shader plumbing ----------
+function compileShader (type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+    console.trace(gl.getShaderInfoLog(shader));
+  return shader;
+}
+
+function createProgram (vs, fs) {
+  const program = gl.createProgram();
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS))
+    console.trace(gl.getProgramInfoLog(program));
+  return program;
+}
+
+function getUniforms (program) {
+  const uniforms = {};
+  const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < count; i++) {
+    const name = gl.getActiveUniform(program, i).name;
+    uniforms[name] = gl.getUniformLocation(program, name);
+  }
+  return uniforms;
+}
+
+class Program {
+  constructor (vs, fsSource) {
+    this.program = createProgram(vs, compileShader(gl.FRAGMENT_SHADER, fsSource));
+    this.uniforms = getUniforms(this.program);
+  }
+  bind () { gl.useProgram(this.program); }
+}
+
+const baseVertexShader = compileShader(gl.VERTEX_SHADER, `
+  precision highp float;
+  attribute vec2 aPosition;
+  varying vec2 vUv;
+  varying vec2 vL;
+  varying vec2 vR;
+  varying vec2 vT;
+  varying vec2 vB;
+  uniform vec2 texelSize;
+  void main () {
+    vUv = aPosition * 0.5 + 0.5;
+    vL = vUv - vec2(texelSize.x, 0.0);
+    vR = vUv + vec2(texelSize.x, 0.0);
+    vT = vUv + vec2(0.0, texelSize.y);
+    vB = vUv - vec2(0.0, texelSize.y);
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+  }
+`);
+
+const clearShader = `
+  precision mediump float;
+  precision mediump sampler2D;
+  varying highp vec2 vUv;
+  uniform sampler2D uTexture;
+  uniform float value;
+  void main () { gl_FragColor = value * texture2D(uTexture, vUv); }
+`;
+
+const splatShader = `
+  precision highp float;
+  precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uTarget;
+  uniform float aspectRatio;
+  uniform vec3 color;
+  uniform vec2 point;
+  uniform float radius;
+  void main () {
+    vec2 p = vUv - point.xy;
+    p.x *= aspectRatio;
+    vec3 splat = exp(-dot(p, p) / radius) * color;
+    vec3 base = texture2D(uTarget, vUv).xyz;
+    gl_FragColor = vec4(base + splat, 1.0);
+  }
+`;
+
+const advectionShader = `
+  precision highp float;
+  precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uVelocity;
+  uniform sampler2D uSource;
+  uniform vec2 texelSize;
+  uniform vec2 dyeTexelSize;
+  uniform float dt;
+  uniform float dissipation;
+  uniform bool uManualFilter;
+
+  vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {
+    vec2 st = uv / tsize - 0.5;
+    vec2 iuv = floor(st);
+    vec2 fuv = fract(st);
+    vec4 a = texture2D(sam, (iuv + vec2(0.5, 0.5)) * tsize);
+    vec4 b = texture2D(sam, (iuv + vec2(1.5, 0.5)) * tsize);
+    vec4 c = texture2D(sam, (iuv + vec2(0.5, 1.5)) * tsize);
+    vec4 d = texture2D(sam, (iuv + vec2(1.5, 1.5)) * tsize);
+    return mix(mix(a, b, fuv.x), mix(c, d, fuv.x), fuv.y);
+  }
+
+  void main () {
+    vec4 result;
+    if (uManualFilter) {
+      vec2 coord = vUv - dt * bilerp(uVelocity, vUv, texelSize).xy * texelSize;
+      result = bilerp(uSource, coord, dyeTexelSize);
+    } else {
+      vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize;
+      result = texture2D(uSource, coord);
+    }
+    float decay = 1.0 + dissipation * dt;
+    gl_FragColor = result / decay;
+  }
+`;
+
+const divergenceShader = `
+  precision mediump float;
+  precision mediump sampler2D;
+  varying highp vec2 vUv;
+  varying highp vec2 vL;
+  varying highp vec2 vR;
+  varying highp vec2 vT;
+  varying highp vec2 vB;
+  uniform sampler2D uVelocity;
+  void main () {
+    float L = texture2D(uVelocity, vL).x;
+    float R = texture2D(uVelocity, vR).x;
+    float T = texture2D(uVelocity, vT).y;
+    float B = texture2D(uVelocity, vB).y;
+    vec2 C = texture2D(uVelocity, vUv).xy;
+    if (vL.x < 0.0) { L = -C.x; }
+    if (vR.x > 1.0) { R = -C.x; }
+    if (vT.y > 1.0) { T = -C.y; }
+    if (vB.y < 0.0) { B = -C.y; }
+    float div = 0.5 * (R - L + T - B);
+    gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
+  }
+`;
+
+const curlShader = `
+  precision mediump float;
+  precision mediump sampler2D;
+  varying highp vec2 vUv;
+  varying highp vec2 vL;
+  varying highp vec2 vR;
+  varying highp vec2 vT;
+  varying highp vec2 vB;
+  uniform sampler2D uVelocity;
+  void main () {
+    float L = texture2D(uVelocity, vL).y;
+    float R = texture2D(uVelocity, vR).y;
+    float T = texture2D(uVelocity, vT).x;
+    float B = texture2D(uVelocity, vB).x;
+    float vorticity = R - L - T + B;
+    gl_FragColor = vec4(0.5 * vorticity, 0.0, 0.0, 1.0);
+  }
+`;
+
+const vorticityShader = `
+  precision highp float;
+  precision highp sampler2D;
+  varying vec2 vUv;
+  varying vec2 vL;
+  varying vec2 vR;
+  varying vec2 vT;
+  varying vec2 vB;
+  uniform sampler2D uVelocity;
+  uniform sampler2D uCurl;
+  uniform float curl;
+  uniform float dt;
+  void main () {
+    float L = texture2D(uCurl, vL).x;
+    float R = texture2D(uCurl, vR).x;
+    float T = texture2D(uCurl, vT).x;
+    float B = texture2D(uCurl, vB).x;
+    float C = texture2D(uCurl, vUv).x;
+
+    vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
+    force /= length(force) + 0.0001;
+    force *= curl * C;
+    force.y *= -1.0;
+
+    vec2 velocity = texture2D(uVelocity, vUv).xy;
+    velocity += force * dt;
+    velocity = min(max(velocity, -1000.0), 1000.0);
+    gl_FragColor = vec4(velocity, 0.0, 1.0);
+  }
+`;
+
+const pressureShader = `
+  precision mediump float;
+  precision mediump sampler2D;
+  varying highp vec2 vUv;
+  varying highp vec2 vL;
+  varying highp vec2 vR;
+  varying highp vec2 vT;
+  varying highp vec2 vB;
+  uniform sampler2D uPressure;
+  uniform sampler2D uDivergence;
+  void main () {
+    float L = texture2D(uPressure, vL).x;
+    float R = texture2D(uPressure, vR).x;
+    float T = texture2D(uPressure, vT).x;
+    float B = texture2D(uPressure, vB).x;
+    float divergence = texture2D(uDivergence, vUv).x;
+    float pressure = (L + R + B + T - divergence) * 0.25;
+    gl_FragColor = vec4(pressure, 0.0, 0.0, 1.0);
+  }
+`;
+
+const gradientSubtractShader = `
+  precision mediump float;
+  precision mediump sampler2D;
+  varying highp vec2 vUv;
+  varying highp vec2 vL;
+  varying highp vec2 vR;
+  varying highp vec2 vT;
+  varying highp vec2 vB;
+  uniform sampler2D uPressure;
+  uniform sampler2D uVelocity;
+  void main () {
+    float L = texture2D(uPressure, vL).x;
+    float R = texture2D(uPressure, vR).x;
+    float T = texture2D(uPressure, vT).x;
+    float B = texture2D(uPressure, vB).x;
+    vec2 velocity = texture2D(uVelocity, vUv).xy;
+    velocity.xy -= vec2(R - L, T - B);
+    gl_FragColor = vec4(velocity, 0.0, 1.0);
+  }
+`;
+
+/* Procedural parchment: domain-warped fBM tanning, foxing,
+   mildew, burnt leather edges, ring stain, fibers.
+   Rendered ONCE into a texture — costs nothing per frame. */
+const parchmentShader = `
+  precision highp float;
+  varying vec2 vUv;
+  uniform vec2 uResolution;
+  uniform float uSeed;
+  uniform vec3 uTint;
+
+  float hash (vec2 p) {
+    p = fract(p * vec2(123.34, 456.21) + uSeed);
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+  }
+  float noise (vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+  }
+  float fbm (vec2 p) {
+    float v = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i < 6; i++) {
+      v += amp * noise(p);
+      p = p * 2.03 + vec2(17.3, 9.1);
+      amp *= 0.5;
+    }
+    return v;
+  }
+  float ridged (vec2 p) { return 1.0 - abs(fbm(p) * 2.0 - 1.0); }
+
+  void main () {
+    vec2 uv = vUv;
+    float aspect = uResolution.x / uResolution.y;
+    vec2 p = vec2(uv.x * aspect, uv.y);
+
+    // domain warp: decades of uneven moisture, not perlin-on-a-rectangle
+    vec2 q = vec2(fbm(p * 3.0), fbm(p * 3.0 + vec2(5.2, 1.3)));
+    vec2 r = vec2(fbm(p * 3.0 + 4.0 * q + vec2(1.7, 9.2)),
+                  fbm(p * 3.0 + 4.0 * q + vec2(8.3, 2.8)));
+    float mottle = fbm(p * 3.0 + 4.0 * r);
+
+    vec3 paleFlesh = vec3(0.898, 0.815, 0.641);
+    vec3 tanned    = vec3(0.760, 0.630, 0.420);
+    vec3 deepTan   = vec3(0.580, 0.440, 0.265);
+    vec3 col = mix(paleFlesh, tanned, smoothstep(0.25, 0.75, mottle));
+    col = mix(col, deepTan, smoothstep(0.62, 0.95, mottle) * 0.7);
+
+    float grain = noise(p * 300.0) * 0.055 - 0.0275;
+    float fibers = noise(vec2(p.x * 340.0, p.y * 48.0)) * 0.05 - 0.025;
+    col += grain + fibers;
+
+    // foxing: rusty spots in clusters
+    float foxField = ridged(p * 7.0 + r * 2.0);
+    float foxSpots = smoothstep(0.78, 0.94, foxField)
+                   * smoothstep(0.35, 0.65, fbm(p * 2.2 + 13.7));
+    col = mix(col, vec3(0.42, 0.24, 0.10), foxSpots * 0.55);
+
+    // mildew: grey-green blooms near edges
+    float edgeDist = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+    float mildewMask = smoothstep(0.30, 0.02, edgeDist);
+    float mildewField = fbm(p * 5.5 + vec2(31.4, 27.2) + q * 3.0);
+    float mildew = smoothstep(0.58, 0.85, mildewField) * mildewMask;
+    col = mix(col, vec3(0.36, 0.40, 0.30), mildew * 0.5);
+    col = mix(col, vec3(0.62, 0.64, 0.55), smoothstep(0.78, 0.95, mildewField) * mildewMask * 0.35);
+
+    // burnt leather edge, noise-distorted
+    float edgeNoise = (fbm(p * 14.0) - 0.5) * 0.10 + (fbm(p * 45.0) - 0.5) * 0.03;
+    float burn = smoothstep(0.16, 0.010, edgeDist + edgeNoise);
+    col = mix(col, vec3(0.16, 0.095, 0.045), burn * 0.92);
+    float char = smoothstep(0.022, 0.0, edgeDist + edgeNoise * 0.6);
+    col = mix(col, vec3(0.055, 0.035, 0.02), char);
+
+    // ring stain
+    vec2 ringC = vec2(0.72 * aspect, 0.30);
+    float rd = abs(length(p - ringC) - 0.13) + (noise(p * 60.0) - 0.5) * 0.012;
+    float ring = smoothstep(0.014, 0.002, rd);
+    float ringInner = smoothstep(0.13, 0.13 * 0.3, length(p - ringC));
+    col = mix(col, col * vec3(0.72, 0.63, 0.50), ring * 0.8);
+    col = mix(col, col * vec3(0.93, 0.90, 0.84), ringInner * 0.25);
+
+    // key light, top-left
+    col *= 1.0 - length(uv - vec2(0.38, 0.62)) * 0.28;
+    col *= uTint; // each world-page has its own cast
+
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+
+/* ---- Guardian shaders ----
+   maskForce: pulls the velocity field toward the lion
+   silhouette (gradient ascent on a blurred mask).
+   maskEmit: breathes dye into the silhouette so the ink
+   "arrives" as fluid, never as a stamped image. */
+const maskForceShader = `
+  precision highp float;
+  precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uVelocity;
+  uniform sampler2D uMask;
+  uniform vec2 uFit;
+  uniform float uScale;
+  uniform float strength;
+  uniform float damp;
+  uniform float dt;
+
+  float maskAt (vec2 uv) {
+    vec2 muv = (uv - 0.5) * uFit / uScale + 0.5;
+    if (muv.x < 0.0 || muv.x > 1.0 || muv.y < 0.0 || muv.y > 1.0) return 0.0;
+    return texture2D(uMask, muv).r;
+  }
+
+  void main () {
+    float off = 0.007;
+    float mL = maskAt(vUv - vec2(off, 0.0));
+    float mR = maskAt(vUv + vec2(off, 0.0));
+    float mB = maskAt(vUv - vec2(0.0, off));
+    float mT = maskAt(vUv + vec2(0.0, off));
+    vec2 grad = vec2(mR - mL, mT - mB);
+    float gm = length(grad);
+    vec2 dir = grad / (gm + 1e-4);
+    vec2 v = texture2D(uVelocity, vUv).xy;
+    v += dir * strength * smoothstep(0.0, 0.015, gm) * dt;
+    v *= damp;
+    gl_FragColor = vec4(v, 0.0, 1.0);
+  }
+`;
+
+const maskEmitShader = `
+  precision highp float;
+  precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uTarget;
+  uniform sampler2D uMask;
+  uniform vec2 uFit;
+  uniform float uScale;
+  uniform float rate;
+  uniform float uTime;
+  uniform float dt;
+  void main () {
+    vec2 muv = (vUv - 0.5) * uFit / uScale + 0.5;
+    float m = (muv.x < 0.0 || muv.x > 1.0 || muv.y < 0.0 || muv.y > 1.0)
+              ? 0.0 : texture2D(uMask, muv).r;
+    m = smoothstep(0.35, 0.8, m);
+    vec3 base = texture2D(uTarget, vUv).rgb;
+    // dithered breathing so the fill looks organic, not printed
+    float n = fract(sin(dot(vUv * 417.3 + uTime, vec2(12.9898, 78.233))) * 43758.5453);
+    float add = m * rate * dt * (0.45 + 0.55 * n);
+    add *= max(0.0, 1.25 - base.r); // don't blow out dense cores
+    gl_FragColor = vec4(base + add, 1.0);
+  }
+`;
+
+/* Composite: iron-gall ink multiplied into the parchment,
+   plus five soul crystals inlaid in the page — SDF shards
+   with a slow inner pulse, ogham notches engraved on their
+   axes, and a colour stain bleeding into the parchment
+   around each one so they sit IN the page, not on it. */
+const displayShader = `
+  precision highp float;
+  precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uTexture;
+  uniform sampler2D uPaper;
+  uniform float uTime;
+  uniform float uAspect;
+  uniform float uWake[5];
+  uniform float uRift;
+  uniform float uReach;
+  uniform float uFlare;
+  uniform float uWorld;
+  uniform vec3 uWorldColor;
+  uniform float uTVSeed[12];
+  uniform float uDgTV;
+  uniform float uDgT;
+  uniform vec3 uRiftColor;
+  uniform vec2 uRiftA;
+  uniform vec2 uRiftB;
+  uniform vec2 uPointer;
+
+  vec2 rot (vec2 p, float a) {
+    float c = cos(a), s = sin(a);
+    return vec2(c * p.x - s * p.y, s * p.x + c * p.y);
+  }
+
+  /* ---- Soul stones: miniature weathered standing stones ----
+     Dark monoliths with ogham carved vertically down the face
+     (as on real ogham stones), the soul burning through
+     fracture veins as flowing light. Stone, not gemstone. */
+  float hashD (vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+  }
+  float noiseD (vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hashD(i), hashD(i + vec2(1.0, 0.0)), u.x),
+               mix(hashD(i + vec2(0.0, 1.0)), hashD(i + vec2(1.0, 1.0)), u.x), u.y);
+  }
+  float fbmD (vec2 p) {
+    float v = 0.0, a = 0.5;
+    for (int i = 0; i < 4; i++) { v += a * noiseD(p); p = p * 2.07 + 11.3; a *= 0.5; }
+    return v;
+  }
+
+  /* ============ THE CRT CHAMBER ============
+     A tower of dead-channel televisions in a red void,
+     vertical ogham raining down the walls. Every screen is a
+     full CRT simulation: barrel distortion, scanlines, phosphor
+     triads, glass reflection, rolling glitches, flicker. */
+  float rbox (vec2 q, vec2 b, float r) {
+    vec2 d = abs(q) - b + r;
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;
+  }
+
+  vec3 tvScreen (vec2 s, float seed) {
+    // s in [-1,1]; barrel distortion of the tube
+    vec2 w = s * (1.0 + 0.13 * dot(s, s));
+    if (abs(w.x) > 1.0 || abs(w.y) > 1.0) return vec3(0.0);
+    vec2 q = w * 0.5 + 0.5;
+    float ch = hashD(vec2(seed, 5.0));
+    float tt = uTime * (0.5 + seed);
+    vec3 img;
+    if (ch < 0.32) {            // dead channel static
+      img = vec3(hashD(q * vec2(310.0, 240.0) + floor(uTime * 24.0) * 7.1));
+      img *= vec3(0.9, 0.95, 1.1);
+    } else if (ch < 0.55) {     // rolling broadcast bars
+      float b = fract(q.y * 3.0 - uTime * (0.15 + seed * 0.3));
+      img = mix(vec3(0.05, 0.09, 0.28), vec3(0.65, 0.7, 0.85), smoothstep(0.35, 0.65, b));
+      img += vec3(hashD(q * 200.0 + uTime)) * 0.14;
+    } else if (ch < 0.80) {     // oscilloscope trace
+      float wav = sin(q.x * 18.0 + tt * 3.0) * 0.22 + sin(q.x * 47.0 - tt * 5.0) * 0.07;
+      float line = exp(-abs(q.y - 0.5 - wav) * 55.0);
+      img = vec3(0.0, 0.045, 0.02) + vec3(0.25, 1.0, 0.5) * line;
+    } else {                    // something watching
+      float blob = exp(-length((q - vec2(0.5, 0.55)) * vec2(1.5, 1.9)) * 3.2);
+      img = mix(vec3(0.05, 0.02, 0.09), vec3(0.85, 0.72, 0.55), blob);
+      float eye = exp(-length((q - vec2(0.44, 0.58)) * vec2(9.0, 12.0)) * 3.0)
+                + exp(-length((q - vec2(0.56, 0.58)) * vec2(9.0, 12.0)) * 3.0);
+      img *= 1.0 - eye * 0.8;
+      img += vec3(hashD(q * 180.0 + uTime * 3.0)) * 0.10;
+    }
+    // vertical roll glitch, occasionally
+    float roll = step(0.94, hashD(vec2(floor(uTime * 1.7), seed)));
+    img *= 1.0 - 0.45 * roll * step(fract(q.y + uTime * 7.0), 0.16);
+    // scanlines
+    img *= 0.75 + 0.25 * sin(q.y * 260.0 + seed * 30.0);
+    // phosphor triads
+    float sub = mod(floor(q.x * 190.0), 3.0);
+    vec3 mask = mix(vec3(1.25, 0.8, 0.8),
+                    mix(vec3(0.8, 1.25, 0.8), vec3(0.8, 0.8, 1.25), step(1.5, sub)),
+                    step(0.5, sub));
+    img *= mask;
+    // tube vignette + power flicker
+    img *= smoothstep(1.55, 0.55, dot(w, w));
+    img *= 0.90 + 0.10 * hashD(vec2(floor(uTime * 30.0), seed));
+    return img;
+  }
+
+  float segD (vec2 p, vec2 a, vec2 b) {
+    vec2 pa = p - a, ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h);
+  }
+  /* a sagging cable: two segments through a dropped midpoint */
+  float cable (vec2 p, vec2 a, vec2 b, float sag) {
+    vec2 m = (a + b) * 0.5 - vec2(0.0, sag);
+    return min(segD(p, a, m), segD(p, m, b));
+  }
+
+  vec3 drawTV (vec3 col, vec2 p, vec2 c, vec2 b, float seed, float idx) {
+    vec2 q = p - c;
+    if (abs(q.x) > b.x * 2.2 || abs(q.y) > b.y * 2.2) return col;
+    float dBez = rbox(q, b, b.y * 0.14);
+    vec2 sInner = b * vec2(0.80, 0.72);
+    float dScr = rbox(q - vec2(0.0, b.y * 0.06), sInner, sInner.y * 0.18);
+
+    if (dBez >= 0.0) {
+      // screen light haze spilling into the room
+      float chB = hashD(vec2(seed, 5.0));
+      vec3 spill = chB < 0.32 ? vec3(0.5, 0.55, 0.65) :
+                   chB < 0.55 ? vec3(0.25, 0.3, 0.6) :
+                   chB < 0.80 ? vec3(0.15, 0.6, 0.3) : vec3(0.5, 0.4, 0.3);
+      return col + spill * exp(-dBez * 55.0) * 0.16;
+    }
+
+    // plastic body: near-black, faint room light on top edges
+    float bevel = smoothstep(b.y * 0.05, 0.0, abs(dBez + b.y * 0.05));
+    vec3 tvbody = vec3(0.035, 0.028, 0.030);
+    tvbody += uWorldColor * 0.22 * bevel * clamp(-q.y / b.y + 0.6, 0.0, 1.0);
+    tvbody += vec3(0.02) * hashD(q * 300.0 + seed); // plastic grain
+    col = tvbody;
+
+    if (dScr < 0.0) {
+      vec2 sq = (q - vec2(0.0, b.y * 0.06)) / sInner;
+      // degauss wobble when this set was just retuned
+      float dg = 0.0;
+      if (abs(uDgTV - idx) < 0.5) {
+        float el = max(uTime - uDgT, 0.0);
+        dg = exp(-el * 2.5);
+        sq.x += sin(sq.y * 22.0 + el * 45.0) * dg * 0.12;
+        sq.y += sin(sq.x * 17.0 - el * 38.0) * dg * 0.07;
+      }
+      if (idx > 10.5) {
+        // the crown set broadcasts the First Page: the way home
+        vec2 w2 = sq * (1.0 + 0.13 * dot(sq, sq));
+        if (abs(w2.x) <= 1.0 && abs(w2.y) <= 1.0) {
+          vec2 pq = w2 * 0.5 + 0.5;
+          vec3 img = texture2D(uPaper, pq).rgb;
+          img *= 0.75 + 0.25 * sin(pq.y * 260.0);
+          float sub2 = mod(floor(pq.x * 190.0), 3.0);
+          img *= mix(vec3(1.2, 0.85, 0.85),
+                     mix(vec3(0.85, 1.2, 0.85), vec3(0.85, 0.85, 1.2), step(1.5, sub2)),
+                     step(0.5, sub2));
+          img *= smoothstep(1.55, 0.55, dot(w2, w2));
+          img += vec3(hashD(pq * 250.0 + uTime * 5.0)) * 0.06;
+          col = img;
+        } else {
+          col = vec3(0.0);
+        }
+      } else {
+        col = tvScreen(sq, seed);
+      }
+      col *= 1.0 + dg * 1.2; // degauss brightness pop
+      // curved glass catching the room's light
+      float refl = pow(clamp(1.0 - abs(sq.x * 0.8 + sq.y * 0.45 - 0.25), 0.0, 1.0), 7.0);
+      col += uWorldColor * 0.55 * refl * 0.5;
+      // inner shadow where tube meets bezel
+      col *= 0.55 + 0.45 * smoothstep(0.0, -sInner.y * 0.35, dScr);
+    }
+    return col;
+  }
+
+  vec3 crtWorld (vec2 p, vec2 uv) {
+    // the void, breathing slowly — coloured by the soul that opened it
+    float smoke = fbmD(p * 2.6 + vec2(0.0, uTime * 0.012));
+    vec3 col = uWorldColor * 0.42 * (0.30 + 0.95 * smoke);
+    col += uWorldColor * 0.55 * exp(-length(p - vec2(uAspect * 0.62, 0.50)) * 1.5);
+    // stage-black falloff on the left, like the frame of a film
+    col *= smoothstep(-0.10, 0.42, uv.x);
+
+    // vertical ogham rain
+    float colW = 0.048;
+    float ci = floor(p.x / colW);
+    float colOn = step(0.35, hashD(vec2(ci, 42.0)));
+    if (colOn > 0.5) {
+      float fx = fract(p.x / colW);
+      float drift = uTime * (0.010 + 0.022 * hashD(vec2(ci, 3.1)));
+      float yy = fract(uv.y * (1.4 + 1.2 * hashD(vec2(ci, 7.0))) + drift + hashD(vec2(ci, 1.0)));
+      float rows = 26.0;
+      float ry = fract(yy * rows);
+      float cell = floor(yy * rows);
+      float have = step(0.42, hashD(vec2(ci, cell * 1.7)));
+      float side = step(0.5, hashD(vec2(cell, ci * 3.3))) * 2.0 - 1.0;
+      float stem = smoothstep(0.10, 0.045, abs(fx - 0.5));
+      float tick = step(0.25, ry) * step(ry, 0.46)
+                 * step(0.0, (fx - 0.5) * side) * step(abs(fx - 0.5), 0.33) * have;
+      float fade = smoothstep(0.05, 0.35, uv.x) * (0.5 + 0.5 * hashD(vec2(ci, cell)));
+      col += uWorldColor * 0.62 * (stem * 0.45 + tick) * fade;
+    }
+
+    // dust motes drifting through the light
+    vec2 mg = p * 13.0 + vec2(uTime * 0.03, -uTime * 0.05);
+    vec2 mid = floor(mg);
+    float mh = hashD(mid);
+    if (mh > 0.93) {
+      float md = length(fract(mg) - 0.5 - 0.3 * (vec2(hashD(mid + 1.7), hashD(mid + 3.1)) - 0.5));
+      col += uWorldColor * exp(-md * 30.0) * 0.35 * (0.4 + 0.6 * sin(uTime * 1.5 + mh * 40.0));
+    }
+
+    // ==== the tower: only in the chamber that has earned it ====
+    if (uWorld > 1.5) {
+      float A = uAspect;
+
+      // cables sagging between the sets, one trailing off-stage
+      float cd = 1e3;
+      cd = min(cd, cable(p, vec2(A * 0.545, 0.221), vec2(A * 0.660, 0.231), 0.030));
+      cd = min(cd, cable(p, vec2(A * 0.640, 0.356), vec2(A * 0.742, 0.352), 0.024));
+      cd = min(cd, cable(p, vec2(A * 0.590, 0.468), vec2(A * 0.700, 0.466), 0.020));
+      cd = min(cd, cable(p, vec2(A * 0.702, 0.573), vec2(A * 0.762, 0.559), 0.016));
+      cd = min(cd, cable(p, vec2(A * 0.905, 0.120), vec2(A * 1.05, 0.010), 0.055));
+      col = mix(col, vec3(0.020, 0.018, 0.020), smoothstep(0.0045, 0.0015, cd));
+      col += uWorldColor * 0.15 * smoothstep(0.0018, 0.0006, cd); // sheen along the top
+
+      col = drawTV(col, p, vec2(A * 0.50, 0.155), vec2(0.088, 0.066), uTVSeed[0], 0.0);
+      col = drawTV(col, p, vec2(A * 0.615, 0.150), vec2(0.092, 0.070), uTVSeed[1], 1.0);
+      col = drawTV(col, p, vec2(A * 0.735, 0.158), vec2(0.085, 0.063), uTVSeed[2], 2.0);
+      col = drawTV(col, p, vec2(A * 0.845, 0.150), vec2(0.078, 0.060), uTVSeed[3], 3.0);
+      col = drawTV(col, p, vec2(A * 0.555, 0.288), vec2(0.082, 0.061), uTVSeed[4], 4.0);
+      col = drawTV(col, p, vec2(A * 0.675, 0.292), vec2(0.086, 0.064), uTVSeed[5], 5.0);
+      col = drawTV(col, p, vec2(A * 0.790, 0.285), vec2(0.075, 0.056), uTVSeed[6], 6.0);
+      col = drawTV(col, p, vec2(A * 0.605, 0.412), vec2(0.075, 0.056), uTVSeed[7], 7.0);
+      col = drawTV(col, p, vec2(A * 0.725, 0.408), vec2(0.072, 0.054), uTVSeed[8], 8.0);
+      col = drawTV(col, p, vec2(A * 0.660, 0.520), vec2(0.068, 0.051), uTVSeed[9], 9.0);
+      col = drawTV(col, p, vec2(A * 0.762, 0.515), vec2(0.058, 0.044), uTVSeed[10], 10.0);
+      col = drawTV(col, p, vec2(A * 0.705, 0.615), vec2(0.056, 0.042), uTVSeed[11], 11.0);
+    }
+
+    return col;
+  }
+
+  /* ---- The Rift: the page tears, and beneath it — another page.
+     Torn fibres at the lip, ink scorch beyond it, soul light
+     leaking along the seam, and through the gap a void with
+     drifting embers that parallaxes with the pointer. ---- */
+  float segDist (vec2 p, vec2 a, vec2 b, out float t) {
+    vec2 pa = p - a, ba = b - a;
+    t = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * t);
+  }
+
+  vec3 rift (vec3 col, vec2 p) {
+    if (uRift < 0.004) return col;
+    float t;
+    float dist = segDist(p, uRiftA, uRiftB, t);
+
+    // the tear is jagged: two octaves of displacement along its length
+    float jag = (fbmD(vec2(t * 14.0, 3.7)) - 0.5) * 0.9
+              + (fbmD(vec2(t * 46.0, 9.1)) - 0.5) * 0.35;
+    // the rip PROPAGATES: only open where the tear has reached
+    // (once the rip completes, reached is 1 EVERYWHERE — including past the endpoints)
+    float reached = max(smoothstep(uReach, uReach - 0.10, t), step(0.999, uReach));
+    // as the rift engulfs, the profile flattens and the jag calms so the void takes the corners too
+    float engulfness = clamp((uRift - 1.5) / 6.0, 0.0, 1.0);
+    float profile = mix(pow(max(sin(3.14159 * t), 0.0), 0.6), 1.0, engulfness);
+    float halfW = uRift * 0.052 * profile * (1.0 + jag * (1.0 - engulfness * 0.8)) * reached;
+    float edge = dist - halfW;
+
+    // the burning rip-point where the paper is tearing right now
+    float rp = exp(-abs(t - uReach) * 26.0) * exp(-dist * 40.0) * step(uReach, 0.995) * step(0.01, uReach);
+    col += (uRiftColor * 0.7 + vec3(0.5, 0.42, 0.28)) * rp * (1.2 + uFlare * 2.0);
+
+    if (edge > 0.04) return col;
+
+    float fib = fbmD(vec2(t * 90.0, dist * 160.0));
+
+    if (edge < 0.0) {
+      // the world beneath: void, soul nebula, drifting embers — with parallax
+      vec2 vp = p + (uPointer - 0.5) * 0.045;
+      float neb = fbmD(vp * 4.0 + uTime * 0.02);
+      vec3 deep = vec3(0.012, 0.010, 0.016);
+      deep += uRiftColor * neb * neb * 0.38;
+      vec2 sp2 = vp * 42.0 + vec2(0.0, uTime * 0.55);
+      float star = step(0.982, hashD(floor(sp2))) * (0.4 + 0.6 * hashD(floor(sp2) + 7.0));
+      star *= smoothstep(0.5, 0.0, length(fract(sp2) - 0.5));
+      deep += (uRiftColor * 0.6 + vec3(0.4)) * star * 0.9;
+      // page thickness: darker right under the lip
+      deep *= mix(0.22, 1.0, smoothstep(0.0, -0.018, edge));
+      col = deep;
+    }
+
+    // torn fibre lip: ragged pale paper fibres at the rim
+    float lipBand = smoothstep(0.014, 0.002, abs(edge - 0.004));
+    col = mix(col, vec3(0.88, 0.82, 0.68) * (0.6 + 0.65 * fib), lipBand * 0.85);
+
+    // ink scorch soaking outward from the wound
+    float scorch = smoothstep(0.034, 0.006, edge) * step(0.0, edge) * (0.4 + 0.5 * fib);
+    col = mix(col, vec3(0.09, 0.06, 0.04), scorch * 0.55);
+
+    // soul light leaking along the seam; flares when the guardian roars
+    col += uRiftColor * exp(-abs(edge) * 55.0) * (0.45 + uFlare * 1.6) * min(uRift, 1.0);
+
+    return col;
+  }
+
+  float stoneSDF (vec2 q, float seed) {
+    // tapered monolith, narrower toward the crown
+    float w = 0.34 * (1.0 - 0.35 * smoothstep(-0.2, 0.85, q.y));
+    float d = max(abs(q.x) - w, abs(q.y) - 0.85);
+    // each stone's crown is broken at its own angle
+    d = max(d, dot(q - vec2(0.0, 0.85), normalize(vec2(0.25 + seed * 0.5, 1.0))));
+    // weathered, eroded edges
+    d += (fbmD(q * 6.0 + seed * 37.0) - 0.5) * 0.10;
+    return d;
+  }
+
+  vec3 crystal (vec3 col, vec2 p, vec2 pos, float ang, float scale, vec3 soul, float wake, float seed) {
+    vec2 cp = rot(p - pos, ang) / scale;
+    vec2 q = vec2(cp.x, cp.y * 0.5);
+    if (dot(q, q) > 1.4) return col;    // cheap early out
+
+    float d = stoneSDF(q, seed);
+
+    // shadow pressed into the page (key light top-left)
+    float ds = stoneSDF(q + vec2(-0.10, 0.14), seed);
+    col *= 1.0 - smoothstep(0.12, -0.05, ds) * step(0.0, d) * 0.26;
+
+    // soul colour soaked faintly into the fibres around the base
+    float stain = exp(-max(d, 0.0) * 5.0) * 0.10 * (0.5 + 0.6 * wake);
+    col = mix(col, col * mix(vec3(1.0), soul, 0.5), stain);
+
+    float inside = smoothstep(0.02, -0.02, d);
+    if (inside <= 0.001) return col;
+
+    // weathered basalt body with grain
+    float rock = fbmD(q * 9.0 + seed * 13.0);
+    vec3 body = mix(vec3(0.085, 0.075, 0.065), vec3(0.165, 0.150, 0.125), rock);
+
+    // one-sided light from the page's key light: cheap SDF-gradient shading
+    float dl = stoneSDF(q + vec2(-0.05, 0.06), seed);
+    body *= 1.0 + clamp((d - dl) * 12.0, -0.5, 0.9) * 0.4;
+
+    // the soul: fracture veins of flowing light
+    float vr = 1.0 - abs(fbmD(q * 5.5 + seed * 51.0) * 2.0 - 1.0);
+    float flow = 0.55 + 0.45 * sin(uTime * 0.5 + fbmD(q * 3.0 + seed * 7.0) * 12.0 + seed * 20.0);
+    float vein = smoothstep(0.86, 0.97, vr) * flow * (0.75 + 1.1 * wake);
+    body += soul * vein * 1.5;
+    // ember bloom around the cracks
+    body += soul * smoothstep(0.70, 0.95, vr) * flow * 0.14 * (0.6 + 0.9 * wake);
+
+    // ogham chiselled vertically down the face, strokes alternating sides
+    float stemMask = smoothstep(0.030, 0.012, abs(q.x)) * step(abs(q.y), 0.62);
+    float row = floor(q.y * 7.0 + seed * 10.0);
+    float side = mix(-1.0, 1.0, step(0.5, hashD(vec2(row, seed * 3.7))));
+    float tickRow = smoothstep(0.45, 0.20, abs(fract(q.y * 7.0 + seed * 10.0) - 0.5));
+    float tickMask = tickRow * step(0.0, q.x * side) * step(abs(q.x), 0.20) * step(abs(q.y), 0.58);
+    float carve = clamp(stemMask + tickMask, 0.0, 1.0);
+    body *= 1.0 - carve * 0.45;                 // the incision's shadow
+    body += soul * carve * 0.20 * flow * (0.7 + 0.9 * wake); // soul light seeping through the cuts
+
+    // weathered dark rim
+    body *= 1.0 - smoothstep(0.05, 0.0, abs(d)) * 0.4;
+
+    return mix(col, body, inside);
+  }
+
+  void main () {
+    vec2 p = vec2(vUv.x * uAspect, vUv.y);
+    vec3 paper = (uWorld < 0.5) ? texture2D(uPaper, vUv).rgb : crtWorld(p, vUv);
+    float dd = clamp(texture2D(uTexture, vUv).r, 0.0, 1.0);
+    float ink = 1.0 - pow(1.0 - dd, 1.6);
+    vec3 stainInk = mix(vec3(0.52, 0.42, 0.30), vec3(0.07, 0.055, 0.04), smoothstep(0.12, 0.85, ink));
+    vec3 col = paper * mix(vec3(1.0), stainInk, ink);
+
+    col = rift(col, p);
+    col = crystal(col, p, vec2(0.085 * uAspect, 0.210),  0.10, 0.034, vec3(0.78, 0.10, 0.10), uWake[0], 0.13); // Malik red
+    col = crystal(col, p, vec2(0.915 * uAspect, 0.250), -0.14, 0.031, vec3(0.05, 0.60, 0.58), uWake[1], 0.37); // Nyther teal
+    col = crystal(col, p, vec2(0.075 * uAspect, 0.760), -0.07, 0.030, vec3(0.46, 0.16, 0.62), uWake[2], 0.55); // Maya purple
+    col = crystal(col, p, vec2(0.925 * uAspect, 0.780),  0.12, 0.032, vec3(0.82, 0.60, 0.12), uWake[3], 0.72); // gold
+    col = crystal(col, p, vec2(0.500 * uAspect, 0.085),  0.03, 0.031, vec3(0.12, 0.55, 0.22), uWake[4], 0.91); // green
+
+    gl_FragColor = vec4(col, 1.0);
+  }
+`;
+
+// ---------- Programs ----------
+const clearProgram      = new Program(baseVertexShader, clearShader);
+const splatProgram      = new Program(baseVertexShader, splatShader);
+const advectionProgram  = new Program(baseVertexShader, advectionShader);
+const divergenceProgram = new Program(baseVertexShader, divergenceShader);
+const curlProgram       = new Program(baseVertexShader, curlShader);
+const vorticityProgram  = new Program(baseVertexShader, vorticityShader);
+const pressureProgram   = new Program(baseVertexShader, pressureShader);
+const gradSubtractProgram = new Program(baseVertexShader, gradientSubtractShader);
+const displayProgram    = new Program(baseVertexShader, displayShader);
+const parchmentProgram  = new Program(baseVertexShader, parchmentShader);
+const maskForceProgram  = new Program(baseVertexShader, maskForceShader);
+const maskEmitProgram   = new Program(baseVertexShader, maskEmitShader);
+
+// ---------- Fullscreen quad ----------
+const blit = (() => {
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  return (target) => {
+    if (target == null) {
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    } else {
+      gl.viewport(0, 0, target.width, target.height);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
+    }
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+  };
+})();
+
+// ---------- Framebuffers ----------
+let dye, velocity, divergence, curl, pressure, paper;
+let paperSeed = Math.random() * 100.0; // each load ages a slightly different page
+
+function createFBO (w, h, internalFormat, format, type, filter) {
+  gl.activeTexture(gl.TEXTURE0);
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.viewport(0, 0, w, h);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  return {
+    texture, fbo, width: w, height: h,
+    texelSizeX: 1.0 / w,
+    texelSizeY: 1.0 / h,
+    attach (id) {
+      gl.activeTexture(gl.TEXTURE0 + id);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      return id;
+    }
+  };
+}
+
+function createDoubleFBO (w, h, internalFormat, format, type, filter) {
+  let fbo1 = createFBO(w, h, internalFormat, format, type, filter);
+  let fbo2 = createFBO(w, h, internalFormat, format, type, filter);
+  return {
+    width: w, height: h,
+    texelSizeX: fbo1.texelSizeX,
+    texelSizeY: fbo1.texelSizeY,
+    get read () { return fbo1; },
+    get write () { return fbo2; },
+    swap () { const t = fbo1; fbo1 = fbo2; fbo2 = t; }
+  };
+}
+
+function getResolution (resolution) {
+  let aspect = gl.drawingBufferWidth / gl.drawingBufferHeight;
+  if (aspect < 1) aspect = 1.0 / aspect;
+  const min = Math.round(resolution);
+  const max = Math.round(resolution * aspect);
+  if (gl.drawingBufferWidth > gl.drawingBufferHeight)
+    return { width: max, height: min };
+  return { width: min, height: max };
+}
+
+function initFramebuffers () {
+  const simRes = getResolution(config.SIM_RESOLUTION);
+  const dyeRes = getResolution(config.DYE_RESOLUTION);
+  const texType = ext.halfFloatTexType;
+  const rgba = ext.formatRGBA;
+  const rg = ext.formatRG;
+  const r = ext.formatR;
+  const filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
+  gl.disable(gl.BLEND);
+
+  dye = createDoubleFBO(dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
+  velocity = createDoubleFBO(simRes.width, simRes.height, rg.internalFormat, rg.format, texType, filtering);
+  divergence = createFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
+  curl = createFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
+  pressure = createDoubleFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
+
+  // parchment: baked once at display resolution
+  paper = createFBO(gl.drawingBufferWidth, gl.drawingBufferHeight, rgba.internalFormat, rgba.format, texType, filtering);
+  parchmentProgram.bind();
+  gl.uniform2f(parchmentProgram.uniforms.texelSize, paper.texelSizeX, paper.texelSizeY);
+  gl.uniform2f(parchmentProgram.uniforms.uResolution, paper.width, paper.height);
+  gl.uniform1f(parchmentProgram.uniforms.uSeed, paperSeed);
+  const wt = WORLD_TINTS[worldIndex];
+  gl.uniform3f(parchmentProgram.uniforms.uTint, wt[0], wt[1], wt[2]);
+  blit(paper);
+}
+
+/* world travel: each page has its own cast */
+const WORLD_TINTS = [
+  [1.00, 1.00, 1.00],  // the first page
+  [0.94, 1.00, 1.06],  // cold, moon-soaked
+  [1.07, 0.99, 0.90],  // sun-scorched
+  [0.92, 1.02, 0.95],  // moss and damp
+  [1.04, 0.94, 1.02],  // bruised violet dusk
+  [0.90, 0.94, 1.00],  // ash grey
+];
+let worldIndex = 0;
+
+initFramebuffers();
+
+/* ============================================================
+   The Black Lion Guardian — drawn as code, never an image.
+   A stylised lion silhouette built from canvas primitives,
+   with "TURAS AN ANAMA" cut into its flank in genuine Ogham
+   stroke geometry (aicme placement: above / below / across /
+   through the stem). The cuts are negative space: parchment
+   shows through the ink body.
+   ============================================================ */
+
+function blurMaskAlpha (ctx, S, radius, passes) {
+  const img = ctx.getImageData(0, 0, S, S);
+  const d = img.data;
+  let src = new Float32Array(S * S);
+  for (let i = 0; i < S * S; i++) src[i] = d[i * 4 + 3]; // alpha is the mask
+  let dst = new Float32Array(S * S);
+  const w = radius * 2 + 1;
+  for (let p = 0; p < passes; p++) {
+    for (let yy = 0; yy < S; yy++) {           // horizontal
+      const row = yy * S;
+      let sum = 0;
+      for (let k = -radius; k <= radius; k++) sum += src[row + Math.min(S - 1, Math.max(0, k))];
+      for (let xx = 0; xx < S; xx++) {
+        dst[row + xx] = sum / w;
+        sum += src[row + Math.min(S - 1, xx + radius + 1)] - src[row + Math.max(0, xx - radius)];
+      }
+    }
+    for (let xx = 0; xx < S; xx++) {           // vertical
+      let sum = 0;
+      for (let k = -radius; k <= radius; k++) sum += dst[Math.min(S - 1, Math.max(0, k)) * S + xx];
+      for (let yy = 0; yy < S; yy++) {
+        src[yy * S + xx] = sum / w;
+        sum += dst[Math.min(S - 1, yy + radius + 1) * S + xx] - dst[Math.max(0, yy - radius) * S + xx];
+      }
+    }
+  }
+  for (let i = 0; i < S * S; i++) {
+    const v = src[i];
+    d[i * 4] = v; d[i * 4 + 1] = v; d[i * 4 + 2] = v; d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function createLionMaskTexture () {
+  const S = 1024;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const x = cv.getContext('2d');
+  const u = v => v * S;
+  x.fillStyle = '#fff';
+
+  const ellipse = (cx, cy, rx, ry, rot) => {
+    x.beginPath();
+    x.ellipse(u(cx), u(cy), u(rx), u(ry), rot || 0, 0, Math.PI * 2);
+    x.fill();
+  };
+
+  // mane: jagged ring of ink
+  x.beginPath();
+  const mcx = 0.455, mcy = 0.345, N = 56;
+  for (let i = 0; i <= N; i++) {
+    const a = (i / N) * Math.PI * 2;
+    const j = Math.sin(i * 12.9898) * 43758.5453;
+    const spike = (i % 2 === 0 ? 0.075 : -0.01) + (j - Math.floor(j) - 0.5) * 0.05;
+    const r = 0.175 * (1 + spike);
+    const px = mcx + Math.cos(a) * r;
+    const py = mcy + Math.sin(a) * r * 1.06;
+    i === 0 ? x.moveTo(u(px), u(py)) : x.lineTo(u(px), u(py));
+  }
+  x.closePath(); x.fill();
+
+  ellipse(0.352, 0.330, 0.088, 0.082);          // head
+  ellipse(0.285, 0.362, 0.058, 0.043, -0.15);   // muzzle
+  ellipse(0.300, 0.402, 0.034, 0.026);          // jaw
+  ellipse(0.462, 0.525, 0.095, 0.150);          // chest
+  ellipse(0.585, 0.545, 0.175, 0.118);          // body
+  ellipse(0.700, 0.575, 0.100, 0.100);          // haunch
+
+  const leg = (lx, ly, w, h) => {
+    x.fillRect(u(lx), u(ly), u(w), u(h));
+    ellipse(lx + w / 2, ly + h, w * 0.85, 0.018);
+  };
+  leg(0.415, 0.560, 0.048, 0.235);
+  leg(0.478, 0.585, 0.046, 0.210);
+  leg(0.672, 0.620, 0.050, 0.175);
+  leg(0.730, 0.610, 0.046, 0.185);
+
+  // tail
+  x.lineWidth = u(0.020); x.strokeStyle = '#fff'; x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(u(0.755), u(0.505));
+  x.bezierCurveTo(u(0.865), u(0.545), u(0.885), u(0.680), u(0.822), u(0.735));
+  x.stroke();
+  ellipse(0.818, 0.742, 0.030, 0.036);          // tuft
+
+  // ---- Ogham: TURAS AN ANAMA, cut out of the flank ----
+  x.globalCompositeOperation = 'destination-out';
+  x.lineCap = 'butt';
+  const stemY = 0.560, x0 = 0.468, x1 = 0.762;
+  const long = 0.030, cross = 0.052;
+  // strokes per letter + aicme (stroke placement family)
+  const OG = { T: [3, 'above'], U: [3, 'vowel'], R: [5, 'diag'], A: [1, 'vowel'], S: [4, 'below'], N: [5, 'below'], M: [1, 'diag'] };
+  const word = ['T','U','R','A','S','|','A','N','|','A','N','A','M','A'];
+  let slots = 0;
+  for (const ch of word) slots += ch === '|' ? 2 : OG[ch][0] + 1;
+  const step = (x1 - x0) / slots;
+  x.lineWidth = u(0.0035);
+  x.beginPath(); x.moveTo(u(x0 - 0.012), u(stemY)); x.lineTo(u(x1 + 0.012), u(stemY)); x.stroke();
+  x.lineWidth = u(0.0042);
+  let cx = x0 + step * 0.5;
+  for (const ch of word) {
+    if (ch === '|') { cx += step * 2; continue; }
+    const def = OG[ch];
+    for (let i = 0; i < def[0]; i++) {
+      x.beginPath();
+      if (def[1] === 'above')      { x.moveTo(u(cx), u(stemY - long)); x.lineTo(u(cx), u(stemY)); }
+      else if (def[1] === 'below') { x.moveTo(u(cx), u(stemY)); x.lineTo(u(cx), u(stemY + long)); }
+      else if (def[1] === 'vowel') { x.moveTo(u(cx), u(stemY - long * 0.55)); x.lineTo(u(cx), u(stemY + long * 0.55)); }
+      else                         { x.moveTo(u(cx - 0.009), u(stemY + cross * 0.5)); x.lineTo(u(cx + 0.009), u(stemY - cross * 0.5)); }
+      x.stroke();
+      cx += step;
+    }
+    cx += step;
+  }
+  // the eye: one clean cut of parchment light
+  x.beginPath(); x.arc(u(0.338), u(0.312), u(0.011), 0, Math.PI * 2); x.fill();
+  x.globalCompositeOperation = 'source-over';
+
+  blurMaskAlpha(x, S, 2, 2);
+
+  const t = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  return {
+    texture: t,
+    attach (id) { gl.activeTexture(gl.TEXTURE0 + id); gl.bindTexture(gl.TEXTURE_2D, t); return id; }
+  };
+}
+
+const lionMask = createLionMaskTexture();
+const LION_SCALE = 0.92; // lion square fits the smaller screen dimension
+
+// sequencer state
+const lion = { phase: 'idle', t0: 0, strength: 0, damp: 1, emit: 0, active: false };
+function lionFit () {
+  const mn = Math.min(gl.drawingBufferWidth, gl.drawingBufferHeight);
+  return [gl.drawingBufferWidth / mn, gl.drawingBufferHeight / mn];
+}
+
+// ---------- Simulation step ----------
+function step (dt) {
+  gl.disable(gl.BLEND);
+
+  curlProgram.bind();
+  gl.uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
+  blit(curl);
+
+  vorticityProgram.bind();
+  gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
+  gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
+  gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
+  gl.uniform1f(vorticityProgram.uniforms.dt, dt);
+  blit(velocity.write);
+  velocity.swap();
+
+  if (lion.active) {
+    const fit = lionFit();
+    maskForceProgram.bind();
+    gl.uniform2f(maskForceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+    gl.uniform1i(maskForceProgram.uniforms.uVelocity, velocity.read.attach(0));
+    gl.uniform1i(maskForceProgram.uniforms.uMask, lionMask.attach(1));
+    gl.uniform2f(maskForceProgram.uniforms.uFit, fit[0], fit[1]);
+    gl.uniform1f(maskForceProgram.uniforms.uScale, LION_SCALE);
+    gl.uniform1f(maskForceProgram.uniforms.strength, lion.strength);
+    gl.uniform1f(maskForceProgram.uniforms.damp, lion.damp);
+    gl.uniform1f(maskForceProgram.uniforms.dt, dt);
+    blit(velocity.write);
+    velocity.swap();
+  }
+
+  divergenceProgram.bind();
+  gl.uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+  blit(divergence);
+
+  clearProgram.bind();
+  gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+  gl.uniform1f(clearProgram.uniforms.value, config.PRESSURE);
+  blit(pressure.write);
+  pressure.swap();
+
+  pressureProgram.bind();
+  gl.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+  for (let i = 0; i < config.PRESSURE_ITERATIONS; i++) {
+    gl.uniform1i(pressureProgram.uniforms.uPressure, pressure.read.attach(1));
+    blit(pressure.write);
+    pressure.swap();
+  }
+
+  gradSubtractProgram.bind();
+  gl.uniform2f(gradSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(gradSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
+  gl.uniform1i(gradSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
+  blit(velocity.write);
+  velocity.swap();
+
+  advectionProgram.bind();
+  gl.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(advectionProgram.uniforms.uManualFilter, ext.supportLinearFiltering ? 0 : 1);
+  gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
+  gl.uniform1i(advectionProgram.uniforms.uSource, velocity.read.attach(0));
+  gl.uniform1f(advectionProgram.uniforms.dt, dt);
+  gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+  blit(velocity.write);
+  velocity.swap();
+
+  gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
+  gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
+  gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
+  gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+  blit(dye.write);
+  dye.swap();
+
+  if (lion.emit > 0.001) {
+    const fit = lionFit();
+    maskEmitProgram.bind();
+    gl.uniform2f(maskEmitProgram.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
+    gl.uniform1i(maskEmitProgram.uniforms.uTarget, dye.read.attach(0));
+    gl.uniform1i(maskEmitProgram.uniforms.uMask, lionMask.attach(1));
+    gl.uniform2f(maskEmitProgram.uniforms.uFit, fit[0], fit[1]);
+    gl.uniform1f(maskEmitProgram.uniforms.uScale, LION_SCALE);
+    gl.uniform1f(maskEmitProgram.uniforms.rate, lion.emit * 48.0);
+    gl.uniform1f(maskEmitProgram.uniforms.uTime, performance.now() / 1000);
+    gl.uniform1f(maskEmitProgram.uniforms.dt, dt);
+    blit(dye.write);
+    dye.swap();
+  }
+}
+
+function render () {
+  displayProgram.bind();
+  gl.uniform2f(displayProgram.uniforms.texelSize, 1.0 / gl.drawingBufferWidth, 1.0 / gl.drawingBufferHeight);
+  gl.uniform1i(displayProgram.uniforms.uTexture, dye.read.attach(0));
+  gl.uniform1i(displayProgram.uniforms.uPaper, paper.attach(1));
+  gl.uniform1f(displayProgram.uniforms.uTime, performance.now() / 1000);
+  const aspect = gl.drawingBufferWidth / gl.drawingBufferHeight;
+  gl.uniform1f(displayProgram.uniforms.uAspect, aspect);
+  gl.uniform1fv(displayProgram.uniforms['uWake[0]'], crystalWake);
+  gl.uniform1f(displayProgram.uniforms.uRift, rift.open);
+  gl.uniform1f(displayProgram.uniforms.uReach, rift.reach);
+  gl.uniform1f(displayProgram.uniforms.uFlare, rift.flare);
+  gl.uniform1f(displayProgram.uniforms.uWorld, worldType);
+  gl.uniform3f(displayProgram.uniforms.uWorldColor, worldColor[0], worldColor[1], worldColor[2]);
+  gl.uniform1fv(displayProgram.uniforms['uTVSeed[0]'], tvSeeds);
+  gl.uniform1f(displayProgram.uniforms.uDgTV, dgTV);
+  gl.uniform1f(displayProgram.uniforms.uDgT, dgT);
+  gl.uniform3f(displayProgram.uniforms.uRiftColor, rift.color[0], rift.color[1], rift.color[2]);
+  gl.uniform2f(displayProgram.uniforms.uRiftA, rift.a[0] * aspect, rift.a[1]);
+  gl.uniform2f(displayProgram.uniforms.uRiftB, rift.b[0] * aspect, rift.b[1]);
+  gl.uniform2f(displayProgram.uniforms.uPointer, pointer.x, pointer.y);
+  blit(null);
+}
+
+/* ---------- Soul stones: state + hit testing ---------- */
+const crystalWake = new Float32Array(5);
+const CRYSTALS = [[0.085, 0.210], [0.915, 0.250], [0.075, 0.760], [0.925, 0.780], [0.500, 0.085]];
+const SOUL_COLORS = [
+  [0.78, 0.10, 0.10], // Malik red
+  [0.05, 0.60, 0.58], // Nyther teal
+  [0.46, 0.16, 0.62], // Maya purple
+  [0.82, 0.60, 0.12], // gold
+  [0.12, 0.55, 0.22], // green
+];
+
+/* ---------- The Rift ----------
+   Not decoration: an event. It propagates, erupts, flares
+   with the roar, then engulfs the screen — and the page you
+   arrive on is a different world. */
+const rift = { open: 0, target: 0, reach: 0, reachTarget: 0, flare: 0, color: [0.85, 0.78, 0.60], a: [0.32, 0.60], b: [0.68, 0.42] };
+function openRift (color) {
+  rift.color = color;
+  const jx = (Math.random() - 0.5) * 0.08, jy = (Math.random() - 0.5) * 0.10;
+  rift.a = [0.30 + jx, 0.62 + jy];
+  rift.b = [0.70 + jx, 0.40 - jy];
+  rift.reach = 0; rift.reachTarget = 1;
+  rift.target = 1;
+}
+function sealRift () { rift.target = 0; }
+
+/* screen shake: decays fast, applied to the whole body */
+let shakeAmt = 0;
+function addShake (v) { shakeAmt = Math.max(shakeAmt, v); }
+
+/* world travel: route on the destination the stone chose */
+/* ---------- The Broadcast chamber: TV state ---------- */
+const tvSeeds = new Float32Array([0.11, 0.23, 0.31, 0.43, 0.52, 0.64, 0.71, 0.79, 0.86, 0.90, 0.95, 0.99]);
+let dgTV = -1, dgT = -1e3;
+// mirror of the shader layout: [cx (fraction of aspect), cy, halfW, halfH]
+const TVS = [
+  [0.50, 0.155, 0.088, 0.066], [0.615, 0.150, 0.092, 0.070], [0.735, 0.158, 0.085, 0.063], [0.845, 0.150, 0.078, 0.060],
+  [0.555, 0.288, 0.082, 0.061], [0.675, 0.292, 0.086, 0.064], [0.790, 0.285, 0.075, 0.056],
+  [0.605, 0.412, 0.075, 0.056], [0.725, 0.408, 0.072, 0.054],
+  [0.660, 0.520, 0.068, 0.051], [0.762, 0.515, 0.058, 0.044],
+  [0.705, 0.615, 0.056, 0.042],
+];
+
+function tryTapTV (ux, uy) {
+  if (worldType !== 2 || lion.phase !== 'idle') return false;
+  const A = gl.drawingBufferWidth / gl.drawingBufferHeight;
+  const px = ux * A, py = uy;
+  for (let i = 0; i < 12; i++) {
+    if (Math.abs(px - A * TVS[i][0]) < TVS[i][2] && Math.abs(py - TVS[i][1]) < TVS[i][3]) {
+      if (i === 11) {
+        travelHome(); // the crown set broadcasts the First Page
+      } else {
+        tvSeeds[i] = Math.random(); // retune the channel
+        dgTV = i;
+        dgT = performance.now() / 1000;
+        addShake(0.06);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+/* going home skips the ritual: the tear simply takes you */
+function travelHome () {
+  if (lion.phase !== 'idle') return;
+  pendingDest = { type: 'parchment' };
+  rift.color = worldColor;
+  const jx = (Math.random() - 0.5) * 0.06;
+  rift.a = [0.34 + jx, 0.56]; rift.b = [0.66 + jx, 0.44];
+  rift.reach = 1;
+  rift.open = Math.max(rift.open, 0.5);
+  rift.target = 30;
+  lion.phase = 'engulf';
+  lion.t0 = performance.now();
+  helloEl.classList.add('dimmed');
+  addShake(0.3);
+}
+
+/* ---------- The place card: the world names itself ---------- */
+const placeEl = document.getElementById('place');
+let placeTimer = null;
+function setPlace (txt) {
+  placeEl.classList.remove('show');
+  clearTimeout(placeTimer);
+  if (txt) placeTimer = setTimeout(() => {
+    placeEl.textContent = txt;
+    placeEl.classList.add('show');
+  }, 1100);
+}
+setTimeout(() => setPlace('The First Page'), 3200);
+
+function travelToNewWorld () {
+  const dest = pendingDest || { type: 'parchment' };
+  pendingDest = null;
+  if (dest.type === 'chamber') {
+    worldType = dest.tvs ? 2 : 1;
+    worldColor = rift.color;           // the chamber wears the soul that opened it
+    document.body.classList.add('w-crt');
+    setPlace(dest.tvs ? 'Tier III — The Broadcast' : 'An Unwritten Chamber');
+  } else {
+    worldType = 0;
+    document.body.classList.remove('w-crt');
+    worldIndex = (worldIndex + 1 + Math.floor(Math.random() * (WORLD_TINTS.length - 2))) % WORLD_TINTS.length;
+    paperSeed = Math.random() * 100.0;
+    rebakePaper();
+    setPlace('The First Page');
+  }
+}
+function rebakePaper () {
+  parchmentProgram.bind();
+  gl.uniform2f(parchmentProgram.uniforms.texelSize, paper.texelSizeX, paper.texelSizeY);
+  gl.uniform2f(parchmentProgram.uniforms.uResolution, paper.width, paper.height);
+  gl.uniform1f(parchmentProgram.uniforms.uSeed, paperSeed);
+  const t = WORLD_TINTS[worldIndex];
+  gl.uniform3f(parchmentProgram.uniforms.uTint, t[0], t[1], t[2]);
+  blit(paper);
+}
+
+/* the ROAR: a radial shockwave through the fluid from the lion's head */
+function roarBlast () {
+  const fit = lionFit();
+  // lion head in mask space -> screen uv
+  const headM = [0.352, 1.0 - 0.330];
+  const hx = (headM[0] - 0.5) * LION_SCALE / fit[0] + 0.5;
+  const hy = (headM[1] - 0.5) * LION_SCALE / fit[1] + 0.5;
+  window.gpuInk && gpuInk.burst(hx, hy, 24000, 0, 0);
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * Math.PI * 2 + Math.random() * 0.4;
+    const f = 1400 + Math.random() * 900;
+    splat(hx, hy, Math.cos(a) * f, Math.sin(a) * f, 0.18, 0.9);
+  }
+  addShake(1.0);
+  rift.flare = 1.0;
+}
+
+/* ---------- Destinations: each stone leads to its own chamber ---------- */
+let worldType = 0;                       // 0 = parchment, 1 = chamber, 2 = chamber with the tower
+let worldColor = [0.30, 0.015, 0.028];
+const DESTINATIONS = [
+  { type: 'chamber' },              // Malik red
+  { type: 'chamber' },              // Nyther teal
+  { type: 'chamber' },              // Maya purple
+  { type: 'chamber' },              // gold
+  { type: 'chamber', tvs: true },   // green → the CRT chamber
+];
+let pendingDest = null;
+
+function tryWakeCrystal (ux, uy) {
+  const a = gl.drawingBufferWidth / gl.drawingBufferHeight;
+  for (let i = 0; i < 5; i++) {
+    const dx = (ux - CRYSTALS[i][0]) * a;
+    const dy = uy - CRYSTALS[i][1];
+    if (dx * dx + dy * dy < 0.013) {
+      crystalWake[i] = 1.0;
+      if (lion.phase === 'idle') summonLion(SOUL_COLORS[i], DESTINATIONS[i]);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ---------- Splats (ink drops) ----------
+function splat (x, y, dx, dy, amount, radius) {
+  splatProgram.bind();
+  gl.uniform2f(splatProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
+  gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+  gl.uniform2f(splatProgram.uniforms.point, x, y);
+  gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+  gl.uniform1f(splatProgram.uniforms.radius, correctRadius(radius / 100.0));
+  blit(velocity.write);
+  velocity.swap();
+
+  gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
+  gl.uniform3f(splatProgram.uniforms.color, amount, amount, amount);
+  blit(dye.write);
+  dye.swap();
+}
+
+function correctRadius (radius) {
+  const aspect = canvas.width / canvas.height;
+  if (aspect > 1) radius *= aspect;
+  return radius;
+}
+
+// ---------- Input ----------
+const pointer = { x: 0.5, y: 0.5, dx: 0, dy: 0, cx: -100, cy: -100, moved: false, primed: false, isTouch: false };
+
+function updatePointer (clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left) / rect.width;
+  const y = 1.0 - (clientY - rect.top) / rect.height;
+  pointer.cx = clientX;
+  pointer.cy = clientY;
+  if (!pointer.primed) {
+    // first event: sync position without a velocity spike
+    pointer.x = x; pointer.y = y; pointer.primed = true;
+    return;
+  }
+  pointer.dx = (x - pointer.x) * config.SPLAT_FORCE;
+  pointer.dy = (y - pointer.y) * config.SPLAT_FORCE;
+  pointer.x = x;
+  pointer.y = y;
+  pointer.moved = Math.abs(pointer.dx) > 0.5 || Math.abs(pointer.dy) > 0.5;
+}
+
+/* Pointer Events: one API for mouse, touch, and stylus.
+   Attached to the canvas (not window) and with touch-action
+   disabled so embedded WebViews can't swallow the gestures. */
+canvas.style.touchAction = 'none';
+
+if (window.PointerEvent) {
+  canvas.addEventListener('pointerdown', e => {
+    pointer.isTouch = (e.pointerType !== 'mouse');
+    pointer.primed = false;
+    updatePointer(e.clientX, e.clientY); // primes position only
+    const woke = tryWakeCrystal(pointer.x, pointer.y) || tryTapTV(pointer.x, pointer.y);
+    if (!woke && pointer.isTouch) softDrop(pointer.x, pointer.y); // otherwise a tap is a drop of ink
+    if (pointer.isTouch) penShow();
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse') {
+      pointer.isTouch = false;
+      updatePointer(e.clientX, e.clientY);
+      penShow();
+    } else if (e.pressure > 0 || e.buttons > 0) {
+      updatePointer(e.clientX, e.clientY);
+      penShow();
+    }
+  });
+  canvas.addEventListener('pointerup', () => { pointer.primed = false; if (pointer.isTouch) penHide(); });
+  canvas.addEventListener('pointercancel', () => { pointer.primed = false; penHide(); });
+} else {
+  // Fallback for ancient browsers
+  window.addEventListener('mousemove', e => {
+    if (pointer.isTouch) return;
+    updatePointer(e.clientX, e.clientY);
+    penShow();
+  });
+  window.addEventListener('touchstart', e => {
+    pointer.isTouch = true;
+    const t = e.targetTouches[0];
+    pointer.primed = false;
+    updatePointer(t.clientX, t.clientY);
+    if (!tryWakeCrystal(pointer.x, pointer.y) && !tryTapTV(pointer.x, pointer.y)) softDrop(pointer.x, pointer.y);
+  }, { passive: true });
+  window.addEventListener('touchmove', e => {
+    const t = e.targetTouches[0];
+    updatePointer(t.clientX, t.clientY);
+  }, { passive: true });
+  window.addEventListener('touchend', () => { pointer.primed = false; }, { passive: true });
+}
+
+/* ---------- The Universal Pen ----------
+   The visitor holds it. The nib follows the pointer and the
+   ink trail flows from its tip — interaction as lore. */
+const penEl = document.getElementById('pen');
+let penTimer = null;
+let penAngle = -30;
+function penShow () {
+  penEl.classList.add('live');
+  document.body.classList.add('penlive');
+  clearTimeout(penTimer);
+  penTimer = setTimeout(penHide, 1600);
+}
+function penHide () {
+  penEl.classList.remove('live');
+  document.body.classList.remove('penlive');
+}
+function penUpdate () {
+  if (pointer.cx < 0) return;
+  // slight lean into horizontal movement, like a hand writing
+  const sway = Math.max(-14, Math.min(14, pointer.dx * 0.008));
+  penAngle += ((-30 + sway) - penAngle) * 0.15;
+  penEl.style.transform =
+    `translate(${pointer.cx - 13}px, ${pointer.cy - 50}px) rotate(${penAngle.toFixed(2)}deg)`;
+}
+
+/* Smaller, quieter cousin of inkDrop — for taps */
+function softDrop (x, y) {
+  window.gpuInk && gpuInk.burst(x, y, 9000, 0, 0);
+  splat(x, y, 0, 0, 0.45, config.SPLAT_RADIUS * 1.2);
+  const jets = 5;
+  for (let i = 0; i < jets; i++) {
+    const a = (i / jets) * Math.PI * 2 + Math.random() * 0.8;
+    const f = 150 + Math.random() * 250;
+    splat(x, y, Math.cos(a) * f, Math.sin(a) * f, 0.06, config.SPLAT_RADIUS * 0.6);
+  }
+}
+
+/* A "drop" = one dense core + a ring of weak jets,
+   so it blooms outward like ink hitting water. */
+function inkDrop (x, y) {
+  splat(x, y, 0, 0, 1.2, config.SPLAT_RADIUS * 2.2);
+  const jets = 8;
+  for (let i = 0; i < jets; i++) {
+    const a = (i / jets) * Math.PI * 2 + Math.random() * 0.6;
+    const f = 300 + Math.random() * 500;
+    splat(x, y, Math.cos(a) * f, Math.sin(a) * f, 0.15, config.SPLAT_RADIUS * 0.8);
+  }
+}
+
+// ---------- Resize ----------
+function resizeCanvas () {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.floor(canvas.clientWidth * dpr) || Math.floor(window.innerWidth * dpr);
+  const h = Math.floor(canvas.clientHeight * dpr) || Math.floor(window.innerHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+    return true;
+  }
+  return false;
+}
+
+window.addEventListener('resize', () => {
+  if (resizeCanvas()) initFramebuffers();
+});
+
+/* ---------- The one orchestrated moment ----------
+   Ink blooms through the centre of the page, washes
+   outward past the title, and as it thins and settles
+   the title emerges through it. Happens once. */
+function openingSequence () {
+  const title = document.getElementById('hello');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduceMotion) {
+    title.classList.add('revealed');
+    return;
+  }
+
+  // Act 1 — a single dense drop lands dead centre
+  setTimeout(() => inkDrop(0.5, 0.5), 350);
+
+  // Act 2 — it tears open horizontally, past both sides of the title
+  setTimeout(() => {
+    splat(0.44, 0.5, -900, 60, 0.5, config.SPLAT_RADIUS * 1.4);
+    splat(0.56, 0.5, 900, -60, 0.5, config.SPLAT_RADIUS * 1.4);
+  }, 900);
+
+  // Act 3 — two soft echoes above and below, drifting away
+  setTimeout(() => {
+    splat(0.38, 0.64, -300, 350, 0.22, config.SPLAT_RADIUS);
+    splat(0.62, 0.36, 300, -350, 0.22, config.SPLAT_RADIUS);
+  }, 1500);
+
+  // Act 4 — title surfaces as the ink thins
+  setTimeout(() => title.classList.add('revealed'), 1900);
+}
+openingSequence();
+
+/* ---------- The Ritual, in five acts ----------
+   tear:   the page rips open, propagating across the sheet
+   erupt:  ink pours violently from the wound and snaps into the guardian
+   roar:   the guardian lands — shockwave, screen shake, the rift flares
+   engulf: the tear keeps ripping until the void takes the whole page
+   arrive: the wound seals over a different world-page */
+const helloEl = document.getElementById('hello');
+
+function summonLion (soulColor, dest) {
+  if (lion.phase !== 'idle') return; // one ritual at a time
+  lion.phase = 'tear';
+  lion.t0 = performance.now();
+  helloEl.classList.add('dimmed');
+  pendingDest = dest || { type: 'parchment' };
+  openRift(soulColor || [0.85, 0.78, 0.60]);
+  addShake(0.35);
+}
+
+let roared = false;
+function updateLion (now) {
+  if (lion.phase === 'idle') {
+    lion.strength = 0; lion.damp = 1; lion.emit = 0; lion.active = false;
+    return;
+  }
+  const t = (now - lion.t0) / 1000;
+
+  if (lion.phase === 'tear') {
+    lion.active = false;
+    // the rip travels with a stutter: paper resists, then gives
+    rift.reach = Math.min(1.0, Math.pow(t / 0.55, 1.4) * (0.9 + 0.2 * Math.sin(t * 40.0)));
+    if (t > 0.6) { rift.reach = 1.0; lion.phase = 'erupt'; lion.t0 = now; roared = false; }
+
+  } else if (lion.phase === 'erupt') {
+    lion.active = true;
+    const e = Math.min(t / 0.5, 1.0);
+    lion.strength = 2600 * e;
+    lion.emit = 1.7 * e;             // violent: the form snaps together fast
+    lion.damp = 0.995;
+    config.DENSITY_DISSIPATION = 0.10;
+    if (t > 1.0) { lion.phase = 'roar'; lion.t0 = now; }
+
+  } else if (lion.phase === 'roar') {
+    lion.active = true;
+    if (!roared) { roared = true; roarBlast(); }
+    lion.strength = 900;
+    lion.emit = 0.25;
+    lion.damp = 0.984;
+    if (t > 1.6) { lion.phase = 'engulf'; lion.t0 = now; }
+
+  } else if (lion.phase === 'engulf') {
+    lion.active = false;
+    lion.emit = 0;
+    rift.target = 30.0;              // the tear takes the whole page
+    config.DENSITY_DISSIPATION = 1.3; // the guardian burns off into the void
+    if ((t > 1.2 && rift.open > 22.0) || t > 4.0) {
+      lion.phase = 'arrive';
+      lion.t0 = now;
+      travelToNewWorld();            // a different page waits behind the wound
+      sealRift();
+      config.DENSITY_DISSIPATION = 0.42;
+      // the title condenses out of the new page
+      helloEl.classList.remove('revealed');
+      setTimeout(() => { helloEl.classList.remove('dimmed'); helloEl.classList.add('revealed'); }, 400);
+    }
+
+  } else if (lion.phase === 'arrive') {
+    lion.active = false;
+    if (rift.open < 0.02) { lion.phase = 'idle'; }
+  }
+}
+
+// the ritual runs once on its own, after the opening bloom settles
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  setTimeout(summonLion, 5500);
+}
+
+// ---------- Main loop ----------
+let lastTime = performance.now();
+function frame (now) {
+  const rawDt = Math.min((now - lastTime) / 1000, 0.5); // wall-clock, for animation dynamics
+  const dt = Math.min(rawDt, 0.0166);                   // capped, for the sim
+  lastTime = now;
+
+  if (pointer.moved) {
+    const speed = Math.hypot(pointer.dx, pointer.dy);
+    // mouse hover = incidental → faint. touch drag = deliberate → real ink.
+    const maxInk  = pointer.isTouch ? 0.55 : config.TRAIL_MAX_INK;
+    const radius  = pointer.isTouch ? config.SPLAT_RADIUS * 0.9 : config.TRAIL_RADIUS;
+    const amount = Math.min(speed / 4000, 1.0) * maxInk;
+    window.gpuInk && gpuInk.stroke(pointer.x, pointer.y, pointer.dx, pointer.dy, pointer.isTouch);
+    splat(pointer.x, pointer.y, pointer.dx * 0.6, pointer.dy * 0.6, amount, radius);
+    pointer.moved = false;
+  }
+
+  updateLion(now);
+  const wakeDecay = Math.exp(-0.21 * rawDt);
+  for (let i = 0; i < 5; i++) crystalWake[i] *= wakeDecay; // woken stones settle slowly
+
+  // rift dynamics (time-based: identical feel at any framerate)
+  const k = rift.target > rift.open ? (rift.target > 2.0 ? 5.0 : 4.2) : 2.1;
+  rift.open += (rift.target - rift.open) * Math.min(1.0, k * rawDt);
+  rift.flare *= Math.exp(-4.5 * rawDt);
+
+  // bursts of fibre and ink at the travelling rip-point
+  if (lion.phase === 'tear' && rift.reach > 0.02 && rift.reach < 0.99) {
+    const t = rift.reach;
+    const x = rift.a[0] + (rift.b[0] - rift.a[0]) * t;
+    const y = rift.a[1] + (rift.b[1] - rift.a[1]) * t;
+    window.gpuInk && gpuInk.burst(x, y, 900, 0, 0);
+    splat(x, y, (Math.random() - 0.5) * 800, (Math.random() - 0.5) * 800, 0.25, 0.35);
+    if (Math.random() < 0.3) addShake(0.18);
+  }
+  // during eruption the guardian's ink pours from the open wound
+  if (rift.open > 0.25 && lion.phase === 'erupt') {
+    for (let k = 0; k < 2; k++) {
+      const t = Math.random();
+      const x = rift.a[0] + (rift.b[0] - rift.a[0]) * t;
+      const y = rift.a[1] + (rift.b[1] - rift.a[1]) * t;
+      const nx = -(rift.b[1] - rift.a[1]), ny = (rift.b[0] - rift.a[0]);
+      const s = (Math.random() < 0.5 ? 1 : -1) * (600 + Math.random() * 800);
+      window.gpuInk && gpuInk.burst(x, y, 2500, nx * s * 0.06, ny * s * 0.06);
+      splat(x, y, nx * s, ny * s, 0.6, 0.5);
+    }
+  }
+
+  // screen shake, decaying
+  shakeAmt *= Math.exp(-6.0 * rawDt);
+  if (shakeAmt > 0.002) {
+    const sx = (Math.random() - 0.5) * shakeAmt * 22;
+    const sy = (Math.random() - 0.5) * shakeAmt * 22;
+    document.body.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
+  } else if (document.body.style.transform) {
+    document.body.style.transform = '';
+  }
+
+  penUpdate();
+  step(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+<script type="module">
+/* ============================================================
+   WebGPU particle ink — zero assets, zero libraries.
+   A 256x256 Navier-Stokes velocity field solved in compute
+   shaders drives 262,144 ink particles with FLIP-style
+   inertia. Particles deposit into a float trail buffer,
+   composited as iron-gall ink on paper.
+   ============================================================ */
+
+const GRID = 256;
+const POOL = 262144;           // 512^2 particles
+const JACOBI = 26;
+
+const canvas = document.getElementById('gpuc');
+
+async function init () {
+  if (!navigator.gpu) throw new Error('no webgpu');
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) throw new Error('no adapter');
+  const device = await adapter.requestDevice();
+  device.addEventListener?.('uncapturederror', e => console.error('WebGPU error:', e.error.message));
+  device.onuncapturederror = e => console.error('WebGPU error:', e.error.message);
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(innerWidth * dpr);
+  canvas.height = Math.floor(innerHeight * dpr);
+  const W = canvas.width, H = canvas.height;
+
+  const ctx = canvas.getContext('webgpu');
+  const format = navigator.gpu.getPreferredCanvasFormat();
+  ctx.configure({ device, format, alphaMode: 'premultiplied' });
+
+  /* ---------------- uniforms ---------------- */
+  // layout (f32 unless noted): 0 gridW, 1 gridH, 2 dt, 3 vorticity,
+  // 4-5 pointerPos (grid units), 6-7 pointerVel, 8 pointerRadius, 9 pointerOn,
+  // 10 emitStart(u32), 11 emitCount(u32), 12 time, 13 decay, 14-15 pad
+  const UBYTES = 64;
+  const ubuf = device.createBuffer({ size: UBYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const uf = new Float32Array(16);
+  const ui = new Uint32Array(uf.buffer);
+
+  /* ---------------- sim buffers ---------------- */
+  const cells = GRID * GRID;
+  const mk = (n) => device.createBuffer({ size: n * 4, usage: GPUBufferUsage.STORAGE });
+  const vel = [mk(cells * 2), mk(cells * 2)];   // vec2f
+  const prs = [mk(cells), mk(cells)];
+  const div = mk(cells);
+  const crl = mk(cells);
+
+  const pbuf = device.createBuffer({ size: POOL * 24, usage: GPUBufferUsage.STORAGE });
+
+  /* ---------------- trail texture ---------------- */
+  const trail = device.createTexture({
+    size: [W, H], format: 'rgba16float',
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+  });
+  const trailView = trail.createView();
+  const sampler = device.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+
+  /* ---------------- WGSL ---------------- */
+  const common = /* wgsl */`
+    struct U {
+      grid : vec2f, dt : f32, vort : f32,
+      pPos : vec2f, pVel : vec2f,
+      pRad : f32, pOn : f32,
+      emitStart : u32, emitCount : u32,
+      time : f32, decay : f32,
+      pad : vec2f,
+    };
+    @group(0) @binding(0) var<uniform> u : U;
+
+    fn idx (p : vec2i) -> u32 {
+      let q = clamp(p, vec2i(0), vec2i(i32(u.grid.x) - 1, i32(u.grid.y) - 1));
+      return u32(q.y) * u32(u.grid.x) + u32(q.x);
+    }
+    fn hash21 (p : vec2f) -> f32 {
+      var q = fract(p * vec2f(123.34, 456.21));
+      q = q + dot(q, q + 45.32);
+      return fract(q.x * q.y);
+    }
+  `;
+
+  const velSample = /* wgsl */`
+    fn sampleVel (pos : vec2f) -> vec2f {
+      let p = clamp(pos - 0.5, vec2f(0.0), u.grid - 1.001);
+      let i0 = vec2i(floor(p));
+      let f = fract(p);
+      let a = velIn[idx(i0)];
+      let b = velIn[idx(i0 + vec2i(1, 0))];
+      let c = velIn[idx(i0 + vec2i(0, 1))];
+      let d = velIn[idx(i0 + vec2i(1, 1))];
+      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+  `;
+
+  const shaders = {
+    force: common + `
+      @group(0) @binding(1) var<storage, read_write> velIn : array<vec2f>;
+      @compute @workgroup_size(8, 8)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        if (g.x >= u32(u.grid.x) || g.y >= u32(u.grid.y)) { return; }
+        let i = g.y * u32(u.grid.x) + g.x;
+        if (u.pOn > 0.5) {
+          let d = vec2f(f32(g.x), f32(g.y)) - u.pPos;
+          let s = exp(-dot(d, d) / (u.pRad * u.pRad));
+          velIn[i] = velIn[i] + u.pVel * s * u.dt;
+        }
+        // hard walls
+        if (g.x == 0u || g.y == 0u || g.x == u32(u.grid.x) - 1u || g.y == u32(u.grid.y) - 1u) {
+          velIn[i] = vec2f(0.0);
+        }
+      }
+    `,
+    advect: common + `
+      @group(0) @binding(1) var<storage, read> velIn : array<vec2f>;
+      @group(0) @binding(2) var<storage, read_write> velOut : array<vec2f>;
+      ${velSample}
+      @compute @workgroup_size(8, 8)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        if (g.x >= u32(u.grid.x) || g.y >= u32(u.grid.y)) { return; }
+        let i = g.y * u32(u.grid.x) + g.x;
+        let pos = vec2f(f32(g.x) + 0.5, f32(g.y) + 0.5);
+        let back = pos - velIn[i] * u.dt;
+        velOut[i] = sampleVel(back) / (1.0 + 0.35 * u.dt);
+      }
+    `,
+    curl: common + `
+      @group(0) @binding(1) var<storage, read> velIn : array<vec2f>;
+      @group(0) @binding(2) var<storage, read_write> curlOut : array<f32>;
+      @compute @workgroup_size(8, 8)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        if (g.x >= u32(u.grid.x) || g.y >= u32(u.grid.y)) { return; }
+        let p = vec2i(i32(g.x), i32(g.y));
+        let L = velIn[idx(p + vec2i(-1, 0))].y;
+        let R = velIn[idx(p + vec2i(1, 0))].y;
+        let B = velIn[idx(p + vec2i(0, -1))].x;
+        let T = velIn[idx(p + vec2i(0, 1))].x;
+        curlOut[g.y * u32(u.grid.x) + g.x] = 0.5 * ((R - L) - (T - B));
+      }
+    `,
+    vorticity: common + `
+      @group(0) @binding(1) var<storage, read_write> velIn : array<vec2f>;
+      @group(0) @binding(2) var<storage, read> curlIn : array<f32>;
+      @compute @workgroup_size(8, 8)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        if (g.x >= u32(u.grid.x) || g.y >= u32(u.grid.y)) { return; }
+        let p = vec2i(i32(g.x), i32(g.y));
+        let L = abs(curlIn[idx(p + vec2i(-1, 0))]);
+        let R = abs(curlIn[idx(p + vec2i(1, 0))]);
+        let B = abs(curlIn[idx(p + vec2i(0, -1))]);
+        let T = abs(curlIn[idx(p + vec2i(0, 1))]);
+        let C = curlIn[g.y * u32(u.grid.x) + g.x];
+        var force = vec2f(abs(T) - abs(B), abs(R) - abs(L));
+        force = force / (length(force) + 1e-4);
+        let i = g.y * u32(u.grid.x) + g.x;
+        velIn[i] = velIn[i] + vec2f(force.y, -force.x) * (u.vort * C * u.dt);
+      }
+    `,
+    divergence: common + `
+      @group(0) @binding(1) var<storage, read> velIn : array<vec2f>;
+      @group(0) @binding(2) var<storage, read_write> divOut : array<f32>;
+      @compute @workgroup_size(8, 8)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        if (g.x >= u32(u.grid.x) || g.y >= u32(u.grid.y)) { return; }
+        let p = vec2i(i32(g.x), i32(g.y));
+        let L = velIn[idx(p + vec2i(-1, 0))].x;
+        let R = velIn[idx(p + vec2i(1, 0))].x;
+        let B = velIn[idx(p + vec2i(0, -1))].y;
+        let T = velIn[idx(p + vec2i(0, 1))].y;
+        divOut[g.y * u32(u.grid.x) + g.x] = 0.5 * (R - L + T - B);
+      }
+    `,
+    jacobi: common + `
+      @group(0) @binding(1) var<storage, read> prsIn : array<f32>;
+      @group(0) @binding(2) var<storage, read_write> prsOut : array<f32>;
+      @group(0) @binding(3) var<storage, read> divIn : array<f32>;
+      @compute @workgroup_size(8, 8)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        if (g.x >= u32(u.grid.x) || g.y >= u32(u.grid.y)) { return; }
+        let p = vec2i(i32(g.x), i32(g.y));
+        let L = prsIn[idx(p + vec2i(-1, 0))];
+        let R = prsIn[idx(p + vec2i(1, 0))];
+        let B = prsIn[idx(p + vec2i(0, -1))];
+        let T = prsIn[idx(p + vec2i(0, 1))];
+        let i = g.y * u32(u.grid.x) + g.x;
+        prsOut[i] = (L + R + B + T - divIn[i]) * 0.25;
+      }
+    `,
+    subtract: common + `
+      @group(0) @binding(1) var<storage, read_write> velIn : array<vec2f>;
+      @group(0) @binding(2) var<storage, read> prsIn : array<f32>;
+      @compute @workgroup_size(8, 8)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        if (g.x >= u32(u.grid.x) || g.y >= u32(u.grid.y)) { return; }
+        let p = vec2i(i32(g.x), i32(g.y));
+        let L = prsIn[idx(p + vec2i(-1, 0))];
+        let R = prsIn[idx(p + vec2i(1, 0))];
+        let B = prsIn[idx(p + vec2i(0, -1))];
+        let T = prsIn[idx(p + vec2i(0, 1))];
+        let i = g.y * u32(u.grid.x) + g.x;
+        velIn[i] = velIn[i] - 0.5 * vec2f(R - L, T - B);
+      }
+    `,
+    particles: common + `
+      struct P { pos : vec2f, vel : vec2f, life : f32, seed : f32 };
+      @group(0) @binding(1) var<storage, read> velIn : array<vec2f>;
+      @group(0) @binding(2) var<storage, read_write> parts : array<P>;
+      ${velSample}
+      @compute @workgroup_size(64)
+      fn main (@builtin(global_invocation_id) g : vec3u) {
+        let i = g.x;
+        if (i >= ${POOL}u) { return; }
+        var p = parts[i];
+        // ring-buffer respawn window
+        let rel = (i + ${POOL}u - u.emitStart) % ${POOL}u;
+        if (rel < u.emitCount) {
+          let a = hash21(vec2f(f32(i) * 0.013, u.time)) * 6.28318;
+          let r = sqrt(hash21(vec2f(u.time, f32(i) * 0.007))) * u.pRad * 0.8;
+          p.pos = u.pPos + vec2f(cos(a), sin(a)) * r;
+          p.vel = u.pVel * 0.02 + vec2f(cos(a), sin(a)) * (6.0 + 24.0 * hash21(vec2f(f32(i), u.time * 3.0)));
+          p.life = 1.0;
+          p.seed = hash21(vec2f(f32(i), u.time));
+        } else if (p.life > 0.0) {
+          let gv = sampleVel(p.pos);
+          // FLIP-style: keep our own momentum, dragged toward the fluid
+          p.vel = p.vel + (gv - p.vel) * clamp(6.0 * u.dt, 0.0, 1.0);
+          // fine turbulence so tendrils feather
+          let n = hash21(p.pos * 0.35 + p.seed * 91.0 + u.time * 0.1) - 0.5;
+          p.pos = p.pos + (p.vel + vec2f(n, -n) * 2.0) * u.dt;
+          p.pos = clamp(p.pos, vec2f(1.0), u.grid - 1.0);
+          p.life = p.life - u.dt * (0.10 + 0.14 * p.seed);
+        }
+        parts[i] = p;
+      }
+    `,
+  };
+
+  const fadeWGSL = common + `
+    @vertex fn vs (@builtin(vertex_index) v : u32) -> @builtin(position) vec4f {
+      let xy = array<vec2f, 3>(vec2f(-1.0, -3.0), vec2f(3.0, 1.0), vec2f(-1.0, 1.0));
+      return vec4f(xy[v], 0.0, 1.0);
+    }
+    @fragment fn fs () -> @location(0) vec4f {
+      return vec4f(u.decay, u.decay, u.decay, u.decay);
+    }
+  `;
+
+  const particleDrawWGSL = common + `
+    struct P { pos : vec2f, vel : vec2f, life : f32, seed : f32 };
+    @group(0) @binding(1) var<storage, read> parts : array<P>;
+    struct VOut { @builtin(position) pos : vec4f, @location(0) uv : vec2f, @location(1) life : f32 };
+    @vertex fn vs (@builtin(vertex_index) v : u32, @builtin(instance_index) inst : u32) -> VOut {
+      let corner = array<vec2f, 6>(
+        vec2f(-1.0, -1.0), vec2f(1.0, -1.0), vec2f(-1.0, 1.0),
+        vec2f(-1.0, 1.0), vec2f(1.0, -1.0), vec2f(1.0, 1.0));
+      let p = parts[inst];
+      var o : VOut;
+      o.uv = corner[v];
+      o.life = p.life;
+      if (p.life <= 0.0) {
+        o.pos = vec4f(2.0, 2.0, 0.0, 1.0); // off-screen
+        return o;
+      }
+      let clip = (p.pos / u.grid) * 2.0 - 1.0;
+      let size = vec2f(2.6) / u.pad;       // pad carries canvas resolution
+      o.pos = vec4f(clip + corner[v] * size, 0.0, 1.0);
+      return o;
+    }
+    @fragment fn fs (in : VOut) -> @location(0) vec4f {
+      let d = dot(in.uv, in.uv);
+      if (d > 1.0) { discard; }
+      let a = exp(-d * 2.6) * 0.085 * smoothstep(0.0, 0.12, in.life);
+      return vec4f(a, a, a, 1.0);
+    }
+  `;
+
+  const compositeWGSL = /* wgsl */`
+    @group(0) @binding(0) var samp : sampler;
+    @group(0) @binding(1) var trailTex : texture_2d<f32>;
+    struct VOut { @builtin(position) pos : vec4f, @location(0) uv : vec2f };
+    @vertex fn vs (@builtin(vertex_index) v : u32) -> VOut {
+      let xy = array<vec2f, 3>(vec2f(-1.0, -3.0), vec2f(3.0, 1.0), vec2f(-1.0, 1.0));
+      var o : VOut;
+      o.pos = vec4f(xy[v], 0.0, 1.0);
+      o.uv = xy[v] * 0.5 + 0.5;
+      return o;
+    }
+    @fragment fn fs (in : VOut) -> @location(0) vec4f {
+      let uv = vec2f(in.uv.x, 1.0 - in.uv.y);
+      let dens = textureSample(trailTex, samp, uv).r;
+      let ink = clamp(1.0 - exp(-dens * 1.7), 0.0, 1.0);
+      let thin = vec3f(0.42, 0.33, 0.24);   // sepia wash
+      let core = vec3f(0.055, 0.045, 0.035); // soaked black
+      let tone = mix(thin, core, smoothstep(0.15, 0.85, ink));
+      // premultiplied: transparent where no ink, so the world shows through
+      let a = ink * 0.92;
+      return vec4f(tone * a, a);
+    }
+  `;
+
+  /* ---------------- pipelines ---------------- */
+  const cs = (code) => device.createComputePipeline({
+    layout: 'auto',
+    compute: { module: device.createShaderModule({ code }), entryPoint: 'main' }
+  });
+  const pipes = {};
+  for (const k of Object.keys(shaders)) pipes[k] = cs(shaders[k]);
+
+  const fadeMod = device.createShaderModule({ code: fadeWGSL });
+  const fadePipe = device.createRenderPipeline({
+    layout: 'auto',
+    vertex: { module: fadeMod, entryPoint: 'vs' },
+    fragment: {
+      module: fadeMod, entryPoint: 'fs',
+      targets: [{
+        format: 'rgba16float',
+        blend: { color: { srcFactor: 'zero', dstFactor: 'src' }, alpha: { srcFactor: 'zero', dstFactor: 'src' } }
+      }]
+    },
+    primitive: { topology: 'triangle-list' }
+  });
+
+  const partMod = device.createShaderModule({ code: particleDrawWGSL });
+  const partPipe = device.createRenderPipeline({
+    layout: 'auto',
+    vertex: { module: partMod, entryPoint: 'vs' },
+    fragment: {
+      module: partMod, entryPoint: 'fs',
+      targets: [{
+        format: 'rgba16float',
+        blend: { color: { srcFactor: 'one', dstFactor: 'one' }, alpha: { srcFactor: 'one', dstFactor: 'one' } }
+      }]
+    },
+    primitive: { topology: 'triangle-list' }
+  });
+
+  const compMod = device.createShaderModule({ code: compositeWGSL });
+  const compPipe = device.createRenderPipeline({
+    layout: 'auto',
+    vertex: { module: compMod, entryPoint: 'vs' },
+    fragment: { module: compMod, entryPoint: 'fs', targets: [{ format }] },
+    primitive: { topology: 'triangle-list' }
+  });
+
+  /* ---------------- bind groups ---------------- */
+  const bg = (pipe, entries) => device.createBindGroup({
+    layout: pipe.getBindGroupLayout(0),
+    entries: entries.map((r, i) => ({ binding: i, resource: r }))
+  });
+  const U = { buffer: ubuf };
+  const B = (b) => ({ buffer: b });
+
+  const bgForce   = [bg(pipes.force, [U, B(vel[0])]), bg(pipes.force, [U, B(vel[1])])];
+  const bgAdvect  = [bg(pipes.advect, [U, B(vel[0]), B(vel[1])]), bg(pipes.advect, [U, B(vel[1]), B(vel[0])])];
+  const bgCurl    = [bg(pipes.curl, [U, B(vel[0]), B(crl)]), bg(pipes.curl, [U, B(vel[1]), B(crl)])];
+  const bgVort    = [bg(pipes.vorticity, [U, B(vel[0]), B(crl)]), bg(pipes.vorticity, [U, B(vel[1]), B(crl)])];
+  const bgDiv     = [bg(pipes.divergence, [U, B(vel[0]), B(div)]), bg(pipes.divergence, [U, B(vel[1]), B(div)])];
+  const bgJac     = [bg(pipes.jacobi, [U, B(prs[0]), B(prs[1]), B(div)]), bg(pipes.jacobi, [U, B(prs[1]), B(prs[0]), B(div)])];
+  const bgSub     = [bg(pipes.subtract, [U, B(vel[0]), B(prs[0])]), bg(pipes.subtract, [U, B(vel[1]), B(prs[0])])];
+  const bgParts   = [bg(pipes.particles, [U, B(vel[0]), B(pbuf)]), bg(pipes.particles, [U, B(vel[1]), B(pbuf)])];
+  const bgFade    = bg(fadePipe, [U]);
+  const bgPart    = bg(partPipe, [U, B(pbuf)]);
+  const bgComp    = device.createBindGroup({
+    layout: compPipe.getBindGroupLayout(0),
+    entries: [{ binding: 0, resource: sampler }, { binding: 1, resource: trailView }]
+  });
+
+  /* ---------------- state ---------------- */
+  let cur = 0; // which vel buffer is current
+  let presentFails = 0;
+  let emitCursor = 0;
+  const pointer = { x: GRID / 2, y: GRID / 2, dx: 0, dy: 0, on: 0, emit: 0 };
+  let lastT = performance.now();
+
+  /* ---- public API: the world feeds ink events here ----
+     coordinates arrive in world uv (y-up), converted to grid units */
+  const emits = [];
+  const strokeState = { x: 0, y: 0, dx: 0, dy: 0, live: 0 };
+  window.gpuInk = {
+    burst (ux, uy, n, vx, vy) {
+      emits.push({ x: ux * GRID, y: uy * GRID, n: Math.min(n, 40000), vx: vx || 0, vy: vy || 0 });
+      if (emits.length > 24) emits.shift();
+    },
+    stroke (ux, uy, dx, dy, isTouch) {
+      strokeState.x = ux * GRID; strokeState.y = uy * GRID;
+      strokeState.dx = dx * 0.06; strokeState.dy = dy * 0.06;
+      strokeState.live = isTouch ? 5 : 3; // frames of emission per event
+    }
+  };
+
+  const wgGrid = Math.ceil(GRID / 8);
+  function frame (now) {
+    const dt = Math.min((now - lastT) / 1000, 0.033);
+    lastT = now;
+
+    // uniforms
+    uf[0] = GRID; uf[1] = GRID;
+    uf[2] = dt * 60.0 * 0.28;             // sim dt in grid units
+    uf[3] = 12.0;                          // vorticity
+    let ex = strokeState.x, ey = strokeState.y, evx = strokeState.dx * 40, evy = strokeState.dy * 40;
+    let eOn = 0, eN = 0, eRad = 7.0;
+    const q = emits.shift();
+    if (q) {
+      ex = q.x; ey = q.y; evx = q.vx * 40; evy = q.vy * 40;
+      eOn = 1; eN = q.n; eRad = 6.0;
+    } else if (strokeState.live > 0) {
+      strokeState.live--;
+      eOn = 1;
+      eN = Math.min(3500, 300 + Math.hypot(evx, evy) * 8);
+      eRad = 4.5;
+    }
+    uf[4] = ex; uf[5] = ey;
+    uf[6] = evx; uf[7] = evy;
+    uf[8] = eRad;
+    uf[9] = eOn;
+    ui[10] = emitCursor;
+    ui[11] = Math.floor(eN);
+    emitCursor = (emitCursor + Math.floor(eN)) % POOL;
+    uf[12] = now / 1000;
+    uf[13] = Math.exp(-0.9 * dt);          // trail decay
+    uf[14] = W; uf[15] = H;                // canvas res rides in pad
+    device.queue.writeBuffer(ubuf, 0, uf);
+
+    const enc = device.createCommandEncoder();
+
+    // --- fluid ---
+    let c = enc.beginComputePass();
+    c.setPipeline(pipes.force);     c.setBindGroup(0, bgForce[cur]);  c.dispatchWorkgroups(wgGrid, wgGrid);
+    c.setPipeline(pipes.curl);      c.setBindGroup(0, bgCurl[cur]);   c.dispatchWorkgroups(wgGrid, wgGrid);
+    c.setPipeline(pipes.vorticity); c.setBindGroup(0, bgVort[cur]);   c.dispatchWorkgroups(wgGrid, wgGrid);
+    c.setPipeline(pipes.divergence);c.setBindGroup(0, bgDiv[cur]);    c.dispatchWorkgroups(wgGrid, wgGrid);
+    for (let i = 0; i < JACOBI; i++) {
+      c.setPipeline(pipes.jacobi);  c.setBindGroup(0, bgJac[i % 2]);  c.dispatchWorkgroups(wgGrid, wgGrid);
+    }
+    c.setPipeline(pipes.subtract);  c.setBindGroup(0, bgSub[cur]);    c.dispatchWorkgroups(wgGrid, wgGrid);
+    c.setPipeline(pipes.advect);    c.setBindGroup(0, bgAdvect[cur]); c.dispatchWorkgroups(wgGrid, wgGrid);
+    // particles read the freshly advected field
+    c.setPipeline(pipes.particles); c.setBindGroup(0, bgParts[1 - cur]); c.dispatchWorkgroups(Math.ceil(POOL / 64));
+    c.end();
+    cur = 1 - cur;
+
+    // --- trail: fade, then deposit particles ---
+    let r = enc.beginRenderPass({ colorAttachments: [{ view: trailView, loadOp: 'load', storeOp: 'store' }] });
+    r.setPipeline(fadePipe); r.setBindGroup(0, bgFade); r.draw(3);
+    r.setPipeline(partPipe); r.setBindGroup(0, bgPart); r.draw(6, POOL);
+    r.end();
+
+    // --- composite to screen (guarded: a failed swap chain must not kill the sim) ---
+    try {
+      const view = ctx.getCurrentTexture().createView();
+      const f = enc.beginRenderPass({ colorAttachments: [{ view, clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: 'clear', storeOp: 'store' }] });
+      f.setPipeline(compPipe); f.setBindGroup(0, bgComp); f.draw(3);
+      f.end();
+    } catch (e) {
+      presentFails++;
+      if (presentFails > 30) {
+        // device can compute but not present: retire the overlay gracefully
+        canvas.style.display = 'none';
+        window.gpuInk = null;
+        return; // stop the loop; the WebGL world stands alone
+      }
+    }
+
+    device.queue.submit([enc.finish()]);
+
+    requestAnimationFrame(frame);
+  }
+
+
+
+
+
+  requestAnimationFrame(frame);
+}
+
+init().then(() => { document.title += ''; window.__gpuInkReady = true; })
+  .catch(() => { /* no WebGPU: the WebGL world stands alone */ });
+</script>
+</body>
+</html>
