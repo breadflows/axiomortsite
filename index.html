@@ -19,6 +19,11 @@
     overflow-x: hidden;
     background: #1a120a;
   }
+  /* the scrollbar belongs to the desk, not the browser */
+  html { scrollbar-width: thin; scrollbar-color: #4a3826 #1a120a; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #1a120a; }
+  ::-webkit-scrollbar-thumb { background: #4a3826; border-radius: 5px; border: 2px solid #1a120a; }
   /* the hero occupies the first screen of the page; the world scrolls with you */
   #stage {
     position: absolute;
@@ -1865,44 +1870,25 @@ function updatePointer (clientX, clientY) {
 canvas.style.touchAction = 'pan-y'; /* leave vertical scroll to the page; drawing still works */
 
 if (window.PointerEvent) {
+  /* Site mode: no free drawing. The canvas only listens for taps on
+     the stones and TVs; ink now answers the interface (see the hover
+     wiring at the end of the page). */
   canvas.addEventListener('pointerdown', e => {
     pointer.isTouch = (e.pointerType !== 'mouse');
     pointer.primed = false;
     updatePointer(e.clientX, e.clientY); // primes position only
-    const woke = tryWakeCrystal(pointer.x, pointer.y) || tryTapTV(pointer.x, pointer.y);
-    if (!woke && pointer.isTouch) softDrop(pointer.x, pointer.y); // otherwise a tap is a drop of ink
-    if (pointer.isTouch) penShow();
-    canvas.setPointerCapture(e.pointerId);
+    tryWakeCrystal(pointer.x, pointer.y) || tryTapTV(pointer.x, pointer.y);
   });
-  canvas.addEventListener('pointermove', e => {
-    if (e.pointerType === 'mouse') {
-      pointer.isTouch = false;
-      updatePointer(e.clientX, e.clientY);
-      penShow();
-    } else if (e.pressure > 0 || e.buttons > 0) {
-      updatePointer(e.clientX, e.clientY);
-      penShow();
-    }
-  });
-  canvas.addEventListener('pointerup', () => { pointer.primed = false; if (pointer.isTouch) penHide(); });
-  canvas.addEventListener('pointercancel', () => { pointer.primed = false; penHide(); });
+  canvas.addEventListener('pointerup', () => { pointer.primed = false; });
+  canvas.addEventListener('pointercancel', () => { pointer.primed = false; });
 } else {
   // Fallback for ancient browsers
-  window.addEventListener('mousemove', e => {
-    if (pointer.isTouch) return;
-    updatePointer(e.clientX, e.clientY);
-    penShow();
-  });
   window.addEventListener('touchstart', e => {
     pointer.isTouch = true;
     const t = e.targetTouches[0];
     pointer.primed = false;
     updatePointer(t.clientX, t.clientY);
-    if (!tryWakeCrystal(pointer.x, pointer.y) && !tryTapTV(pointer.x, pointer.y)) softDrop(pointer.x, pointer.y);
-  }, { passive: true });
-  window.addEventListener('touchmove', e => {
-    const t = e.targetTouches[0];
-    updatePointer(t.clientX, t.clientY);
+    tryWakeCrystal(pointer.x, pointer.y) || tryTapTV(pointer.x, pointer.y);
   }, { passive: true });
   window.addEventListener('touchend', () => { pointer.primed = false; }, { passive: true });
 }
@@ -2627,6 +2613,21 @@ init().then(() => { document.title += ''; window.__gpuInkReady = true; })
   .catch(() => { /* no WebGPU: the WebGL world stands alone */ });
 </script>
 <script>
+  /* Ink answers the interface: hovering anything clickable drops a
+     quiet bloom behind it. Uses the sim's own softDrop. */
+  document.querySelectorAll('#stage nav a, #content a, #content button').forEach(el => {
+    let last = 0;
+    el.addEventListener('pointerenter', () => {
+      const now = performance.now();
+      if (now - last < 600) return; // don't flood on jittery hovers
+      last = now;
+      const r = el.getBoundingClientRect();
+      const x = (r.left + r.width / 2) / window.innerWidth;
+      const y = 1 - (r.top + r.height / 2) / window.innerHeight;
+      if (typeof softDrop === 'function') softDrop(x, y);
+    });
+  });
+
   document.querySelector('.playbtn').addEventListener('click', () => {
     const media = document.getElementById('teaser-media');
     const f = document.createElement('iframe');
