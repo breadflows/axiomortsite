@@ -130,14 +130,14 @@
   }
   #stage .logline {
     font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic; font-size: clamp(15px, 2.2vw, 19px);
-    color: #33230f; line-height: 1.6; max-width: 580px;
+    font-style: italic; font-size: clamp(17px, 2.4vw, 21px);
+    color: #160e05; line-height: 1.55; max-width: 580px;
   }
   #stage .format-line {
     font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic; font-size: 12px;
-    letter-spacing: 0.26em; text-transform: uppercase;
-    color: #5a4426;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: #3d2a12;
   }
   #stage .cta {
     pointer-events: auto; cursor: pointer;
@@ -154,12 +154,12 @@
   #stage nav { display: flex; gap: 10px 30px; justify-content: center; flex-wrap: wrap; }
   #stage nav a {
     pointer-events: auto; cursor: pointer;
-    font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: #5a4426; text-decoration: none;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #33230f; text-decoration: none;
     border-bottom: 1px solid transparent; padding-bottom: 2px;
     transition: color 0.2s, border-color 0.2s;
   }
-  #stage nav a:hover { color: #33230f; border-color: #8a7350; }
+  #stage nav a:hover { color: #160e05; border-color: #8a7350; }
   body.w-crt #stage .studio, body.w-crt #stage nav a { color: #e6ddd0; }
 
   #content {
@@ -168,30 +168,43 @@
     margin-top: 100svh;
     pointer-events: none;
     font-family: Georgia, 'Times New Roman', serif;
-    color: #291b0b;
-    font-size: 18px; line-height: 1.7;
+    color: #160e05;
+    font-size: 19px; line-height: 1.65;
     padding-bottom: 40px;
-    /* parchment halo: keeps the writing legible over drifting ink */
     text-shadow:
-      0 1px 0 rgba(233, 220, 196, 0.9),
-      0 0 5px rgba(233, 220, 196, 0.95),
-      0 0 14px rgba(233, 220, 196, 0.6);
+      0 1px 0 rgba(236, 225, 203, 0.95),
+      0 0 5px rgba(236, 225, 203, 0.95),
+      0 0 14px rgba(236, 225, 203, 0.7);
+  }
+  /* readability plates: every text block sits on soft solid parchment,
+     feathered so it reads as clean paper, not a card */
+  #content p, #content h2, #content .label, #content figcaption,
+  #stage .logline, #stage .format-line {
+    background: rgba(238, 227, 205, 0.85);
+    box-shadow: 0 0 16px 10px rgba(238, 227, 205, 0.85);
+    width: fit-content;
+  }
+  body.w-crt #content p, body.w-crt #content h2, body.w-crt #content .label,
+  body.w-crt #content figcaption, body.w-crt #stage .logline, body.w-crt #stage .format-line {
+    background: rgba(12, 9, 5, 0.78);
+    box-shadow: 0 0 16px 10px rgba(12, 9, 5, 0.78);
   }
   #content a, #content button { pointer-events: auto; cursor: pointer; }
   #content .col { max-width: 780px; margin: 0 auto; padding: 0 clamp(20px, 6vw, 48px); }
   #content section { padding: 72px 0; }
   #content .label {
-    font-style: italic; font-size: 13px;
-    letter-spacing: 0.34em; text-transform: uppercase;
-    color: #6b543a;
+    display: inline-block;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 0.26em; text-transform: uppercase;
+    color: #3d2a12;
   }
   #content h2 {
-    font-style: italic; font-weight: 400;
-    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
-    margin: 10px 0 26px;
+    font-style: italic; font-weight: 700;
+    font-size: clamp(1.9rem, 4.2vw, 2.6rem);
+    margin: 12px 0 26px;
   }
-  #content p { max-width: 620px; }
-  #content .passage p { margin-bottom: 18px; color: #4a3517; }
+  #content p { max-width: 580px; }
+  #content .passage p { margin-bottom: 18px; }
   #content a { color: inherit; }
 
   .rule {
@@ -206,8 +219,8 @@
   .plate iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: auto; }
   .plate img { width: 100%; display: block; }
   .caption {
-    margin-top: 10px; text-align: center;
-    font-style: italic; font-size: 14px; color: #6b543a;
+    margin: 10px auto 0; text-align: center;
+    font-style: italic; font-size: 15px; font-weight: 700; color: #3d2a12;
   }
   .playbtn {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -237,7 +250,7 @@
   .cast { text-align: center; }
   .cast .frame { border: 1px solid currentColor; padding: 5px; }
   .cast img { aspect-ratio: 3 / 4; object-fit: cover; width: 100%; display: block; filter: sepia(0.15) saturate(0.92); }
-  .cast figcaption { margin-top: 9px; font-style: italic; font-size: 14.5px; }
+  .cast figcaption { margin: 9px auto 0; font-style: italic; font-size: 15.5px; font-weight: 700; }
 
   /* the timeline: chapters carry a spine line and a wax-red node */
   .chapter-sec { position: relative; padding-left: 32px; }
@@ -250,7 +263,6 @@
     width: 9px; height: 9px; border-radius: 50%; background: #8c1f1f;
   }
   body.w-crt .chapter-sec::after { background: #ff5b5b; }
-  .chapter-note { opacity: 0.85; max-width: 620px; }
   .sub { margin-top: 64px; }
   @media (max-width: 700px) { .chapter-sec { padding-left: 20px; } }
   .seal {
@@ -263,12 +275,15 @@
 
   .links { display: flex; gap: 14px 26px; flex-wrap: wrap; margin-top: 28px; }
   .links a {
-    font-style: italic; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
     text-decoration: none;
-    border: 1px solid currentColor; padding: 11px 26px;
-    opacity: 0.85; transition: opacity 0.2s;
+    border: 1px solid currentColor; padding: 12px 28px;
+    background: rgba(238, 227, 205, 0.85);
+    transition: background 0.2s;
   }
-  .links a:hover { opacity: 1; }
+  .links a:hover { background: rgba(238, 227, 205, 1); }
+  body.w-crt .links a { background: rgba(12, 9, 5, 0.78); }
+  .chapter-note { max-width: 580px; }
 
   #content footer {
     padding: 60px 0 20px; text-align: center;
