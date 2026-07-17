@@ -120,7 +120,13 @@
   }
   #stage .studio {
     font-size: 13px; letter-spacing: 0.34em; text-transform: uppercase;
-    color: #6b543a;
+    color: #5a4426;
+  }
+  #stage .studio, #stage nav a {
+    text-shadow:
+      0 1px 0 rgba(233, 220, 196, 0.9),
+      0 0 5px rgba(233, 220, 196, 0.95),
+      0 0 14px rgba(233, 220, 196, 0.6);
   }
   #stage nav { display: flex; gap: 10px 30px; justify-content: center; flex-wrap: wrap; }
   #stage nav a {
@@ -139,9 +145,14 @@
     margin-top: 100svh;
     pointer-events: none;
     font-family: Georgia, 'Times New Roman', serif;
-    color: #33230f;
+    color: #291b0b;
     font-size: 18px; line-height: 1.7;
     padding-bottom: 40px;
+    /* parchment halo: keeps the writing legible over drifting ink */
+    text-shadow:
+      0 1px 0 rgba(233, 220, 196, 0.9),
+      0 0 5px rgba(233, 220, 196, 0.95),
+      0 0 14px rgba(233, 220, 196, 0.6);
   }
   #content a, #content button { pointer-events: auto; cursor: pointer; }
   #content .col { max-width: 780px; margin: 0 auto; padding: 0 clamp(20px, 6vw, 48px); }
@@ -155,7 +166,6 @@
     font-style: italic; font-weight: 400;
     font-size: clamp(1.6rem, 3.5vw, 2.2rem);
     margin: 10px 0 26px;
-    text-shadow: 0 0 1px rgba(51,35,15,0.4);
   }
   #content p { max-width: 620px; }
   #content .passage p { margin-bottom: 18px; color: #4a3517; }
@@ -235,8 +245,17 @@
 
   /* when the lion carries the page into a chamber, the writing turns to light */
   body.w-crt #content {
-    color: #e8dcc8;
-    text-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+    color: #ecdfc9;
+    text-shadow:
+      0 1px 0 rgba(8, 6, 4, 0.9),
+      0 0 5px rgba(8, 6, 4, 0.95),
+      0 0 16px rgba(8, 6, 4, 0.7);
+  }
+  body.w-crt #stage .studio, body.w-crt #stage nav a {
+    text-shadow:
+      0 1px 0 rgba(8, 6, 4, 0.9),
+      0 0 5px rgba(8, 6, 4, 0.95),
+      0 0 16px rgba(8, 6, 4, 0.7);
   }
   body.w-crt #content .label, body.w-crt #content .caption,
   body.w-crt #content .passage p, body.w-crt .rule { color: #cfc4ad; }
@@ -2641,18 +2660,32 @@ init().then(() => { document.title += ''; window.__gpuInkReady = true; })
   .catch(() => { /* no WebGPU: the WebGL world stands alone */ });
 </script>
 <script>
-  /* Ink answers the interface: hovering anything clickable drops a
-     quiet bloom behind it. Uses the sim's own softDrop. */
+  /* Ink answers the interface: hovering anything clickable makes a
+     quiet ring bloom OUTWARD around its outline — never on the label. */
+  function inkRing (el) {
+    if (typeof splat !== 'function') return;
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const padX = r.width / 2 + 18, padY = r.height / 2 + 16;
+    const pts = 9;
+    for (let k = 0; k < pts; k++) {
+      const a = (k / pts) * Math.PI * 2 + Math.random() * 0.5;
+      const px = cx + Math.cos(a) * padX;
+      const py = cy + Math.sin(a) * padY;
+      const x = px / window.innerWidth;
+      const y = 1 - py / window.innerHeight;
+      // outward drift so the ink pulls away from the words
+      splat(x, y, Math.cos(a) * 340, -Math.sin(a) * 340, 0.26, 0.11);
+      window.gpuInk && gpuInk.burst(x, y, 2200, Math.cos(a) * 0.5, -Math.sin(a) * 0.5);
+    }
+  }
   document.querySelectorAll('#stage nav a, #content a, #content button').forEach(el => {
     let last = 0;
     el.addEventListener('pointerenter', () => {
       const now = performance.now();
       if (now - last < 600) return; // don't flood on jittery hovers
       last = now;
-      const r = el.getBoundingClientRect();
-      const x = (r.left + r.width / 2) / window.innerWidth;
-      const y = 1 - (r.top + r.height / 2) / window.innerHeight;
-      if (typeof softDrop === 'function') softDrop(x, y);
+      inkRing(el);
     });
   });
 
