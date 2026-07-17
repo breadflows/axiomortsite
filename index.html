@@ -194,6 +194,7 @@
   .playbtn:hover::after { background: rgba(26,18,10,0.95); }
 
   .plates-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 34px; }
+  .plate.wide { grid-column: 1 / -1; }
   @media (max-width: 700px) { .plates-2 { grid-template-columns: 1fr; } }
 
   .cast-grid {
@@ -250,6 +251,7 @@
   <nav>
     <a href="#teaser">Teaser</a>
     <a href="#beginning">The Beginning</a>
+    <a href="#stills">Stills</a>
     <a href="#cast">The Cast</a>
     <a href="#chapters">Chapters</a>
     <a href="#music">Music</a>
@@ -289,9 +291,20 @@
       <p>The cat was doing what cats do. Then suddenly, after a normal routine, he becomes infested with a parasite.</p>
       <p>But this is no ordinary lion. This is god for some — universe for others.</p>
       <p>So what happens when a universe falls apart from an infection?</p>
+    </section>
+
+    <div class="rule">❦</div>
+
+    <section id="stills">
+      <span class="label">From the Film</span>
+      <h2>Stills</h2>
       <div class="plates-2">
-        <figure class="plate"><img src="assets/stills/green-portal.jpg" alt="Concept art — a green rift" loading="lazy"><figcaption class="caption">concept art</figcaption></figure>
-        <figure class="plate"><img src="assets/stills/attic-interior.jpg" alt="Concept art — an attic in green light" loading="lazy"><figcaption class="caption">concept art</figcaption></figure>
+        <figure class="plate wide"><img src="assets/stills/overlook.jpg" alt="Two figures overlook a sprawling ruined city at sunset" loading="lazy"></figure>
+        <figure class="plate"><img src="assets/stills/interrogation.jpg" alt="An interrogation room" loading="lazy"></figure>
+        <figure class="plate"><img src="assets/stills/crossing.jpg" alt="A hooded man crosses a rainy Dublin street" loading="lazy"></figure>
+        <figure class="plate"><img src="assets/stills/night-bus.jpg" alt="A Dublin bus at night" loading="lazy"></figure>
+        <figure class="plate"><img src="assets/stills/vps-truck.jpg" alt="A patrol truck among concrete ruins" loading="lazy"></figure>
+        <figure class="plate wide"><img src="assets/stills/rooftop.jpg" alt="A black mass splattered across a skyscraper rooftop" loading="lazy"></figure>
       </div>
     </section>
 
