@@ -122,12 +122,35 @@
     font-size: 13px; letter-spacing: 0.34em; text-transform: uppercase;
     color: #5a4426;
   }
-  #stage .studio, #stage nav a {
+  #stage .studio, #stage nav a, #stage .logline, #stage .format-line {
     text-shadow:
       0 1px 0 rgba(233, 220, 196, 0.9),
       0 0 5px rgba(233, 220, 196, 0.95),
       0 0 14px rgba(233, 220, 196, 0.6);
   }
+  #stage .logline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic; font-size: clamp(15px, 2.2vw, 19px);
+    color: #33230f; line-height: 1.6; max-width: 580px;
+  }
+  #stage .format-line {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic; font-size: 12px;
+    letter-spacing: 0.26em; text-transform: uppercase;
+    color: #5a4426;
+  }
+  #stage .cta {
+    pointer-events: auto; cursor: pointer;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic; font-size: 14px;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: #e8dcc8; background: #33230f;
+    padding: 14px 40px; text-decoration: none;
+    transition: background 0.2s;
+  }
+  #stage .cta:hover { background: #5a4426; }
+  body.w-crt #stage .logline, body.w-crt #stage .format-line { color: #ecdfc9; }
+  body.w-crt #stage .cta { background: #e8dcc8; color: #1a120a; }
   #stage nav { display: flex; gap: 10px 30px; justify-content: center; flex-wrap: wrap; }
   #stage nav a {
     pointer-events: auto; cursor: pointer;
@@ -216,11 +239,20 @@
   .cast img { aspect-ratio: 3 / 4; object-fit: cover; width: 100%; display: block; filter: sepia(0.15) saturate(0.92); }
   .cast figcaption { margin-top: 9px; font-style: italic; font-size: 14.5px; }
 
-  .entry { display: flex; gap: 24px; align-items: baseline; padding: 24px 0; border-top: 1px solid rgba(51,35,15,0.3); }
-  .entry:last-of-type { border-bottom: 1px solid rgba(51,35,15,0.3); }
-  .entry .no { font-style: italic; font-size: 1.4rem; opacity: 0.55; min-width: 2em; }
-  .entry h3 { font-weight: 400; font-style: italic; font-size: 1.3rem; }
-  .entry p { font-size: 16px; margin-top: 4px; opacity: 0.85; }
+  /* the timeline: chapters carry a spine line and a wax-red node */
+  .chapter-sec { position: relative; padding-left: 32px; }
+  .chapter-sec::before {
+    content: ""; position: absolute; left: 0; top: 10px; bottom: 0;
+    width: 1px; background: currentColor; opacity: 0.28;
+  }
+  .chapter-sec::after {
+    content: ""; position: absolute; left: -4px; top: 6px;
+    width: 9px; height: 9px; border-radius: 50%; background: #8c1f1f;
+  }
+  body.w-crt .chapter-sec::after { background: #ff5b5b; }
+  .chapter-note { opacity: 0.85; max-width: 620px; }
+  .sub { margin-top: 64px; }
+  @media (max-width: 700px) { .chapter-sec { padding-left: 20px; } }
   .seal {
     display: inline-block; margin-left: 12px; vertical-align: middle;
     font-style: italic; font-size: 11.5px;
@@ -265,14 +297,16 @@
 </head>
 <body>
 <div id="stage">
-  <span class="studio">BreadFlows Studios</span>
+  <span class="studio">BreadFlows Studios Presents</span>
   <div id="hello">Axiomort</div>
+  <p class="logline">A Dublin man finds a portal in his attic.<br>There are worlds inside a black lion.</p>
+  <p class="format-line">A film told in chapters — Chapter One in production</p>
+  <a class="cta" href="#teaser">▶ &nbsp;Watch Teaser 1</a>
   <nav>
-    <a href="#teaser">Teaser</a>
     <a href="#beginning">The Beginning</a>
-    <a href="#stills">Stills</a>
+    <a href="#teaser">Teaser</a>
+    <a href="#chapter-one">Chapter One</a>
     <a href="#cast">The Cast</a>
-    <a href="#chapters">Chapters</a>
     <a href="#music">Music</a>
   </nav>
 </div>
@@ -291,10 +325,21 @@
 <main id="content">
   <div class="col">
 
-    <section id="teaser">
-      <span class="label">The First Transmission</span>
+    <section id="beginning" class="passage">
+      <span class="label">Prologue</span>
+      <h2>In the beginning there was a black lion</h2>
+      <p>The cat was doing what cats do. Then, after one ordinary routine, he becomes host to a parasite — a cosmic, ink-black thing. But this is no ordinary lion. This is god for some, universe for others. There are worlds inside him.</p>
+      <p>In Dublin, a man finds a portal in his attic. He and the lion are quantum-linked: every convulsion inside the lion's universe surfaces in the man's life as another financial scam. As one world falls apart, the other gets billed for it.</p>
+      <p>Will the lion's pain end? Will the Dublin man get financial relief? One question is cosmic. The other is not. They share an answer.</p>
+    </section>
+
+    <div class="rule">❦</div>
+
+    <section id="teaser" class="chapter-sec">
+      <span class="label">i · Out Now</span>
       <h2>Teaser One</h2>
-      <div class="plate">
+      <p class="chapter-note">The first transmission from the story.</p>
+      <div class="plate" style="margin-top: 30px;">
         <div class="media" id="teaser-media">
           <button class="playbtn" type="button" aria-label="Play AXIOMORT Teaser 1"></button>
         </div>
@@ -304,19 +349,13 @@
 
     <div class="rule">❦</div>
 
-    <section id="beginning" class="passage">
-      <span class="label">How It Starts</span>
-      <h2>In the beginning there was a black lion</h2>
-      <p>The cat was doing what cats do. Then, after one ordinary routine, he becomes host to a parasite — a cosmic, ink-black thing. But this is no ordinary lion. This is god for some, universe for others. There are worlds inside him.</p>
-      <p>In Dublin, a man finds a portal in his attic. He and the lion are quantum-linked: every convulsion inside the lion's universe surfaces in the man's life as another financial scam. As one world falls apart, the other gets billed for it.</p>
-      <p>Will the lion's pain end? Will the Dublin man get financial relief? One question is cosmic. The other is not. They share an answer.</p>
-    </section>
+    <section id="chapter-one" class="chapter-sec">
+      <span class="label">ii · In Production</span>
+      <h2>Chapter One — The Movie</h2>
+      <p class="chapter-note">The story begins as a film. Release date and first footage to be revealed — what follows is Chapter One as it takes shape.</p>
 
-    <div class="rule">❦</div>
-
-    <section id="stills">
-      <span class="label">From the Film</span>
-      <h2>Stills</h2>
+      <div class="sub" id="stills">
+      <span class="label">From Chapter One</span>
       <div class="plates-2">
         <figure class="plate wide"><img src="assets/stills/overlook.jpg" alt="Two figures overlook a sprawling ruined city at sunset" loading="lazy"></figure>
         <figure class="plate"><img src="assets/stills/interrogation.jpg" alt="An interrogation room" loading="lazy"></figure>
@@ -325,13 +364,10 @@
         <figure class="plate"><img src="assets/stills/vps-truck.jpg" alt="A patrol truck among concrete ruins" loading="lazy"></figure>
         <figure class="plate wide"><img src="assets/stills/rooftop.jpg" alt="A black mass splattered across a skyscraper rooftop" loading="lazy"></figure>
       </div>
-    </section>
+      </div>
 
-    <div class="rule">❦</div>
-
-    <section id="cast">
-      <span class="label">Drawn So Far</span>
-      <h2>The Cast</h2>
+      <div class="sub" id="cast">
+      <span class="label">Featured in Chapter One</span>
       <div class="cast-grid">
         <figure class="cast" data-stone="3"><div class="frame"><img src="assets/characters/evander-questborne.jpg" alt="Evander Questborne" loading="lazy"></div><figcaption>Evander Questborne</figcaption></figure>
         <figure class="cast" data-stone="4"><div class="frame"><img src="assets/characters/black-lion.jpg" alt="The Black Lion" loading="lazy"></div><figcaption>The Black Lion</figcaption></figure>
@@ -343,26 +379,6 @@
         <figure class="cast"><div class="frame"><img src="assets/characters/robot.jpg" alt="Warthorn" loading="lazy"></div><figcaption>Warthorn</figcaption></figure>
         <figure class="cast"><div class="frame"><img src="assets/characters/priest.jpg" alt="The Priest" loading="lazy"></div><figcaption>The Priest</figcaption></figure>
       </div>
-    </section>
-
-    <div class="rule">❦</div>
-
-    <section id="chapters">
-      <span class="label">The Story, In Order</span>
-      <h2>Chapters</h2>
-      <div class="entry">
-        <span class="no">i.</span>
-        <div>
-          <h3>Teaser One</h3>
-          <p>The first look. <a href="#teaser">Watch it above</a>, or <a href="https://youtu.be/hs5fbREGA9o" target="_blank" rel="noopener">on YouTube</a>.</p>
-        </div>
-      </div>
-      <div class="entry">
-        <span class="no">ii.</span>
-        <div>
-          <h3>Chapter One — The Movie <span class="seal">In Production</span></h3>
-          <p>The story begins as a film. Release date and first footage to be revealed.</p>
-        </div>
       </div>
     </section>
 
