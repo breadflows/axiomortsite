@@ -314,14 +314,13 @@
       <span class="label">Drawn So Far</span>
       <h2>The Cast</h2>
       <div class="cast-grid">
-        <figure class="cast"><div class="frame"><img src="assets/characters/evander-questborne.jpg" alt="Evander Questborne" loading="lazy"></div><figcaption>Evander Questborne</figcaption></figure>
+        <figure class="cast" data-stone="3"><div class="frame"><img src="assets/characters/evander-questborne.jpg" alt="Evander Questborne" loading="lazy"></div><figcaption>Evander Questborne</figcaption></figure>
         <figure class="cast"><div class="frame"><img src="assets/characters/kara-oriefel.jpg" alt="Kara Oriefel" loading="lazy"></div><figcaption>Kara Oriefel</figcaption></figure>
-        <figure class="cast"><div class="frame"><img src="assets/characters/black-lion.jpg" alt="The Black Lion" loading="lazy"></div><figcaption>The Black Lion</figcaption></figure>
-        <figure class="cast"><div class="frame"><img src="assets/characters/nyther-solis.jpg" alt="Nyther Solis" loading="lazy"></div><figcaption>Nyther Solis</figcaption></figure>
-        <figure class="cast"><div class="frame"><img src="assets/characters/malik-creed.jpg" alt="Malik Creed" loading="lazy"></div><figcaption>Malik Creed</figcaption></figure>
+        <figure class="cast" data-stone="4"><div class="frame"><img src="assets/characters/black-lion.jpg" alt="The Black Lion" loading="lazy"></div><figcaption>The Black Lion</figcaption></figure>
+        <figure class="cast" data-stone="1"><div class="frame"><img src="assets/characters/nyther-solis.jpg" alt="Nyther Solis" loading="lazy"></div><figcaption>Nyther Solis</figcaption></figure>
+        <figure class="cast" data-stone="0"><div class="frame"><img src="assets/characters/malik-creed.jpg" alt="Malik Creed" loading="lazy"></div><figcaption>Malik Creed</figcaption></figure>
         <figure class="cast"><div class="frame"><img src="assets/characters/orion-vale.jpg" alt="Orion Vale" loading="lazy"></div><figcaption>Orion Vale</figcaption></figure>
-        <figure class="cast"><div class="frame"><img src="assets/characters/maya.jpg" alt="Maya" loading="lazy"></div><figcaption>Maya</figcaption></figure>
-        <figure class="cast"><div class="frame"><img src="assets/characters/mara.jpg" alt="Mara" loading="lazy"></div><figcaption>Mara</figcaption></figure>
+        <figure class="cast" data-stone="2"><div class="frame"><img src="assets/characters/maya.jpg" alt="Maya" loading="lazy"></div><figcaption>Maya</figcaption></figure>
         <figure class="cast"><div class="frame"><img src="assets/characters/cosmic-jerry.jpg" alt="Cosmic Jerry" loading="lazy"></div><figcaption>Cosmic Jerry</figcaption></figure>
         <figure class="cast"><div class="frame"><img src="assets/characters/zavion-kade.jpg" alt="Zavion Kade" loading="lazy"></div><figcaption>Zavion Kade</figcaption></figure>
         <figure class="cast"><div class="frame"><img src="assets/characters/death-knight.jpg" alt="The Death Knight" loading="lazy"></div><figcaption>Death Knight</figcaption></figure>
@@ -888,6 +887,7 @@ const displayShader = `
   uniform float uTime;
   uniform float uAspect;
   uniform float uWake[5];
+  uniform vec2 uCrysPos[5]; /* stone positions in page uv (y-up); they ride the cast cards */
   uniform float uRift;
   uniform float uReach;
   uniform float uFlare;
@@ -1257,11 +1257,11 @@ const displayShader = `
     vec3 col = paper * mix(vec3(1.0), stainInk, ink);
 
     col = rift(col, p);
-    col = crystal(col, p, vec2(0.085 * uAspect, 0.210),  0.10, 0.034, vec3(0.78, 0.10, 0.10), uWake[0], 0.13); // Malik red
-    col = crystal(col, p, vec2(0.915 * uAspect, 0.250), -0.14, 0.031, vec3(0.05, 0.60, 0.58), uWake[1], 0.37); // Nyther teal
-    col = crystal(col, p, vec2(0.075 * uAspect, 0.760), -0.07, 0.030, vec3(0.46, 0.16, 0.62), uWake[2], 0.55); // Maya purple
-    col = crystal(col, p, vec2(0.925 * uAspect, 0.780),  0.12, 0.032, vec3(0.82, 0.60, 0.12), uWake[3], 0.72); // gold
-    col = crystal(col, p, vec2(0.500 * uAspect, 0.085),  0.03, 0.031, vec3(0.12, 0.55, 0.22), uWake[4], 0.91); // green
+    col = crystal(col, p, vec2(uCrysPos[0].x * uAspect, uCrysPos[0].y),  0.10, 0.034, vec3(0.78, 0.10, 0.10), uWake[0], 0.13); // Malik red
+    col = crystal(col, p, vec2(uCrysPos[1].x * uAspect, uCrysPos[1].y), -0.14, 0.031, vec3(0.05, 0.60, 0.58), uWake[1], 0.37); // Nyther teal
+    col = crystal(col, p, vec2(uCrysPos[2].x * uAspect, uCrysPos[2].y), -0.07, 0.030, vec3(0.46, 0.16, 0.62), uWake[2], 0.55); // Maya purple
+    col = crystal(col, p, vec2(uCrysPos[3].x * uAspect, uCrysPos[3].y),  0.12, 0.032, vec3(0.82, 0.60, 0.12), uWake[3], 0.72); // Evander gold
+    col = crystal(col, p, vec2(uCrysPos[4].x * uAspect, uCrysPos[4].y),  0.03, 0.031, vec3(0.12, 0.55, 0.22), uWake[4], 0.91); // Black Lion green
 
     gl_FragColor = vec4(col, 1.0);
   }
@@ -1647,6 +1647,19 @@ function step (dt) {
 }
 
 function render () {
+  /* the stones ride their cast cards: card rect -> page uv, with a slow bob */
+  const t = performance.now() / 1000;
+  for (let i = 0; i < 5; i++) {
+    const el = stoneEls[i];
+    if (!el) { CRYSTALS[i][0] = -9; CRYSTALS[i][1] = -9; continue; }
+    const r = el.getBoundingClientRect();
+    if (r.bottom < -80 || r.top > window.innerHeight + 80) { CRYSTALS[i][0] = -9; CRYSTALS[i][1] = -9; continue; }
+    const bob = Math.sin(t * 1.3 + i * 1.7) * 7;
+    CRYSTALS[i][0] = (r.left + r.width / 2) / window.innerWidth;
+    CRYSTALS[i][1] = 1 - (r.top - 30 + bob) / window.innerHeight;
+  }
+  for (let i = 0; i < 5; i++) { crystalFlat[i * 2] = CRYSTALS[i][0]; crystalFlat[i * 2 + 1] = CRYSTALS[i][1]; }
+
   displayProgram.bind();
   gl.uniform2f(displayProgram.uniforms.texelSize, 1.0 / gl.drawingBufferWidth, 1.0 / gl.drawingBufferHeight);
   gl.uniform1i(displayProgram.uniforms.uTexture, dye.read.attach(0));
@@ -1655,6 +1668,7 @@ function render () {
   const aspect = gl.drawingBufferWidth / gl.drawingBufferHeight;
   gl.uniform1f(displayProgram.uniforms.uAspect, aspect);
   gl.uniform1fv(displayProgram.uniforms['uWake[0]'], crystalWake);
+  gl.uniform2fv(displayProgram.uniforms['uCrysPos[0]'], crystalFlat);
   gl.uniform1f(displayProgram.uniforms.uRift, rift.open);
   gl.uniform1f(displayProgram.uniforms.uReach, rift.reach);
   gl.uniform1f(displayProgram.uniforms.uFlare, rift.flare);
@@ -1670,9 +1684,13 @@ function render () {
   blit(null);
 }
 
-/* ---------- Soul stones: state + hit testing ---------- */
+/* ---------- Soul stones: state + hit testing ----------
+   Positions are dynamic: each stone hovers above its cast card
+   (wired at the end of the page). Offscreen until the cast scrolls in. */
 const crystalWake = new Float32Array(5);
-const CRYSTALS = [[0.085, 0.210], [0.915, 0.250], [0.075, 0.760], [0.925, 0.780], [0.500, 0.085]];
+const CRYSTALS = [[-9, -9], [-9, -9], [-9, -9], [-9, -9], [-9, -9]];
+const crystalFlat = new Float32Array(10).fill(-9);
+const stoneEls = [null, null, null, null, null];
 const SOUL_COLORS = [
   [0.78, 0.10, 0.10], // Malik red
   [0.05, 0.60, 0.58], // Nyther teal
@@ -2640,6 +2658,13 @@ init().then(() => { document.title += ''; window.__gpuInkReady = true; })
       if (typeof softDrop === 'function') softDrop(x, y);
     });
   });
+
+  /* Each soul stone hovers above its character; the render loop
+     reads these elements every frame. Clicks pass through the card
+     to the canvas, so the stones stay summonable. */
+  for (let i = 0; i < 5; i++) {
+    stoneEls[i] = document.querySelector('[data-stone="' + i + '"]');
+  }
 
   document.querySelector('.playbtn').addEventListener('click', () => {
     const media = document.getElementById('teaser-media');
