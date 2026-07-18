@@ -2,331 +2,3790 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AXIOMORT™ — BreadFlows Studios</title>
-<meta name="description" content="AXIOMORT — a story by BreadFlows Studios. A Dublin man finds a portal in his attic. Worlds inside a black lion. Watch Teaser 1; Chapter One, the movie, is in production.">
-<meta property="og:title" content="AXIOMORT™">
-<meta property="og:description" content="A Dublin man finds a portal in his attic. There are worlds inside a black lion. The two are quantum-linked.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AXIOMORT&trade; | BreadFlows</title>
+<meta name="description" content="AXIOMORT is a sci-fi fantasy universe told in chapters by BreadFlows. Watch Teaser One, explore Chapter One, and listen to the original soundtrack before the film is released.">
+<link rel="canonical" href="https://axiomort.com/">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://axiomort.com/">
+<meta property="og:title" content="AXIOMORT&trade; | BreadFlows">
+<meta property="og:description" content="A sci-fi fantasy universe told in chapters. Teaser One is out now. Chapter One is in production.">
 <meta property="og:image" content="https://axiomort.com/assets/stills/teaser-thumbnail.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AXIOMORT&trade; | BreadFlows">
+<meta name="twitter:description" content="A sci-fi fantasy universe told in chapters. Teaser One is out now. Chapter One is in production.">
+<meta name="twitter:image" content="https://axiomort.com/assets/stills/teaser-thumbnail.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=EB+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html {
-    width: 100%; height: 100%;
-    scroll-behavior: smooth;
-  }
+  html { width: 100%; height: 100%; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #4a3826 transparent; }
   body {
-    width: 100%; min-height: 100%;
-    overflow-x: hidden;
-    background: #1a120a;
+    width: 100%; min-height: 100%; overflow-x: hidden;
+    background: transparent;
+    color: #160e05;
+    font-family: 'EB Garamond', Georgia, serif;
   }
-  /* the scrollbar belongs to the desk, not the browser */
-  html { scrollbar-width: thin; scrollbar-color: #4a3826 #1a120a; }
   ::-webkit-scrollbar { width: 10px; }
-  ::-webkit-scrollbar-track { background: #1a120a; }
-  ::-webkit-scrollbar-thumb { background: #4a3826; border-radius: 5px; border: 2px solid #1a120a; }
-  /* the hero occupies the first screen of the page; the world scrolls with you */
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #4a3826; border-radius: 5px; border: 2px solid rgba(238,227,205,0.2); }
+  
   #stage {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 100vh;
-    height: 100svh;
-    display: flex;
-    flex-direction: column;
-    gap: 26px;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 20px;
-    pointer-events: none; /* input goes to the canvas beneath */
-    z-index: 3;
+    position: absolute; top: 0; left: 0; right: 0; height: 100vh; height: 100svh;
+    display: flex; flex-direction: column; gap: 26px;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 0 20px; pointer-events: none; z-index: 3;
   }
   #hello {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic;
-    font-size: clamp(2.4rem, 7vw, 5.5rem);
-    font-weight: 400;
-    /* iron-gall ink on parchment */
+    font-family: 'Cinzel', serif;
+    font-size: clamp(3.5rem, 10vw, 8.5rem); font-weight: 400;
     color: #33230f;
-    text-shadow:
-      0 0 1px rgba(51, 35, 15, 0.55),
-      0 0 6px rgba(51, 35, 15, 0.18);
-    user-select: none;
-    /* revealed by the ink bloom on load */
-    opacity: 0;
-    letter-spacing: 0.18em;
-    transition: opacity 2.6s ease, letter-spacing 3.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-shadow: 0 0 1px rgba(51, 35, 15, 0.55), 0 0 12px rgba(238, 227, 205, 0.9);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    user-select: none; opacity: 0; transform: scale(0.98);
+    transition: opacity 2s ease, transform 2.5s cubic-bezier(0.16, 1, 0.3, 1), letter-spacing 3s ease;
   }
-  #hello.revealed {
-    opacity: 0.9;
-    letter-spacing: 0.05em;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #hello { transition: opacity 0.6s ease; letter-spacing: 0.05em; }
-  }
-  #hello.dimmed { opacity: 0.10 !important; }
-  body.w-crt #hello {
-    color: #e8dcc8;
-    text-shadow: 0 0 14px rgba(255, 40, 40, 0.45), 0 0 2px rgba(0, 0, 0, 0.8);
-  }
-  #place {
-    position: fixed;
-    left: 5vw;
-    bottom: 7vh;
-    z-index: 4;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic;
-    font-size: 13px;
-    letter-spacing: 0.34em;
-    text-transform: uppercase;
-    color: #6b543a;
-    opacity: 0;
-    transition: opacity 1.8s ease;
-    pointer-events: none;
-  }
-  #place.show { opacity: 0.8; }
-  body.w-crt #place { color: #e6ddd0; text-shadow: 0 0 10px rgba(255, 255, 255, 0.22); }
-  #pen {
-    position: fixed;
-    left: 0; top: 0;
-    width: 26px; height: 52px;
-    z-index: 5;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-    transform-origin: 13px 50px; /* the nib tip */
-    filter: drop-shadow(0 2px 3px rgba(20, 12, 4, 0.35));
-  }
-  #pen.live { opacity: 0.92; }
-  body.penlive, body.penlive canvas { cursor: none; }
-  canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-    z-index: 1;
-  }
-  #gpuc {
-    z-index: 2;
-    pointer-events: none; /* input stays on the world canvas */
-  }
-
-  /* ---------- The site, written on the page ----------
-     Content floats above the living parchment. Containers pass
-     the pointer through to the ink; only links and buttons catch it. */
-  #stage .studio, #stage nav {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic;
-  }
-  #stage .studio {
-    font-size: 13px; letter-spacing: 0.34em; text-transform: uppercase;
-    color: #5a4426;
-  }
-  #stage .studio, #stage nav a, #stage .logline, #stage .format-line {
-    text-shadow:
-      0 1px 0 rgba(233, 220, 196, 0.9),
-      0 0 5px rgba(233, 220, 196, 0.95),
-      0 0 14px rgba(233, 220, 196, 0.6);
+  #hello.revealed { opacity: 0.95; transform: scale(1); letter-spacing: 0.08em; }
+  
+  #stage .studio, #stage .format-line {
+    font-family: 'Cinzel', serif;
+    font-size: 14px; font-weight: 600; letter-spacing: 0.3em;
+    text-transform: uppercase; color: #5a4426;
+    text-shadow: 0 0 8px rgba(238, 227, 205, 0.9);
   }
   #stage .logline {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic; font-size: clamp(17px, 2.4vw, 21px);
-    color: #160e05; line-height: 1.55; max-width: 580px;
+    font-size: clamp(20px, 2.5vw, 26px); font-weight: 400; font-style: italic;
+    color: #160e05; line-height: 1.6; max-width: 700px;
+    text-shadow: 0 0 10px rgba(238, 227, 205, 0.9);
   }
-  #stage .format-line {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 13px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    color: #3d2a12;
-  }
+  
   #stage .cta {
     pointer-events: auto; cursor: pointer;
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic; font-size: 14px;
-    letter-spacing: 0.24em; text-transform: uppercase;
+    font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
     color: #e8dcc8; background: #33230f;
-    padding: 14px 40px; text-decoration: none;
-    transition: background 0.2s;
+    padding: 18px 48px; text-decoration: none;
+    border: 1px solid #160e05;
+    box-shadow: 0 4px 12px rgba(51, 35, 15, 0.3);
+    transition: all 0.4s ease;
   }
-  #stage .cta:hover { background: #5a4426; }
-  body.w-crt #stage .logline, body.w-crt #stage .format-line { color: #ecdfc9; }
-  body.w-crt #stage .cta { background: #e8dcc8; color: #1a120a; }
-  #stage nav { display: flex; gap: 10px 30px; justify-content: center; flex-wrap: wrap; }
+  #stage .cta:hover { background: #5a4426; border-color: #33230f; box-shadow: 0 6px 20px rgba(51, 35, 15, 0.4); }
+  
+  #stage nav { display: flex; gap: 20px 40px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
   #stage nav a {
     pointer-events: auto; cursor: pointer;
-    font-size: 14px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600; 
+    letter-spacing: 0.2em; text-transform: uppercase;
     color: #33230f; text-decoration: none;
-    border-bottom: 1px solid transparent; padding-bottom: 2px;
-    transition: color 0.2s, border-color 0.2s;
+    border-bottom: 1px solid transparent; padding-bottom: 4px;
+    transition: all 0.3s ease; text-shadow: 0 0 8px rgba(238, 227, 205, 0.9);
   }
-  #stage nav a:hover { color: #160e05; border-color: #8a7350; }
-  body.w-crt #stage .studio, body.w-crt #stage nav a { color: #e6ddd0; }
+  #stage nav a:hover { color: #160e05; border-color: #5a4426; }
 
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; }
+  #gpuc { z-index: 2; pointer-events: none; }
+  
   #content {
-    position: relative; z-index: 3;
-    margin-top: 100vh;
-    margin-top: 100svh;
-    pointer-events: none;
-    font-family: Georgia, 'Times New Roman', serif;
-    color: #160e05;
-    font-size: 19px; line-height: 1.65;
-    padding-bottom: 40px;
-    text-shadow:
-      0 1px 0 rgba(236, 225, 203, 0.95),
-      0 0 5px rgba(236, 225, 203, 0.95),
-      0 0 14px rgba(236, 225, 203, 0.7);
+    position: relative; z-index: 3; margin-top: 100vh; margin-top: 100svh;
+    pointer-events: none; font-size: 21px; line-height: 1.7;
+    padding-bottom: 100px;
+    text-shadow: 0 1px 0 rgba(236, 225, 203, 0.9), 0 0 14px rgba(236, 225, 203, 0.8);
   }
-  /* readability plates: every text block sits on soft solid parchment,
-     feathered so it reads as clean paper, not a card */
+  
+  /* Readability ink-wash plates */
   #content p, #content h2, #content .label, #content figcaption,
   #stage .logline, #stage .format-line {
-    background: rgba(238, 227, 205, 0.85);
-    box-shadow: 0 0 16px 10px rgba(238, 227, 205, 0.85);
+    background: rgba(238, 227, 205, 0.82);
+    box-shadow: 0 0 20px 14px rgba(238, 227, 205, 0.82);
     width: fit-content;
   }
-  body.w-crt #content p, body.w-crt #content h2, body.w-crt #content .label,
-  body.w-crt #content figcaption, body.w-crt #stage .logline, body.w-crt #stage .format-line {
-    background: rgba(12, 9, 5, 0.78);
-    box-shadow: 0 0 16px 10px rgba(12, 9, 5, 0.78);
+  #stage .logline, #stage .format-line { margin: 0 auto; }
+  
+  #content .passage p, #content .chapter-note {
+    background: rgba(238, 227, 205, 0.88);
+    box-shadow: 0 0 24px 16px rgba(238, 227, 205, 0.88);
+    margin-bottom: 24px;
+    max-width: 800px; /* Wider for desktop readability */
   }
-  #content a, #content button { pointer-events: auto; cursor: pointer; }
-  #content .col { max-width: 780px; margin: 0 auto; padding: 0 clamp(20px, 6vw, 48px); }
-  #content section { padding: 72px 0; }
+  
+  #content a, #content button { pointer-events: auto; cursor: pointer; color: inherit; }
+  #content .col { max-width: 1200px; margin: 0 auto; padding: 0 clamp(20px, 6vw, 48px); }
+  #content section { padding: 90px 0; display: flex; flex-direction: column; align-items: center; }
+  
   #content .label {
-    display: inline-block;
-    font-size: 14px; font-weight: 700;
-    letter-spacing: 0.26em; text-transform: uppercase;
-    color: #3d2a12;
+    display: inline-block; font-family: 'Cinzel', serif;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.25em;
+    text-transform: uppercase; color: #5a4426;
+    margin-bottom: 24px;
   }
+  
   #content h2 {
-    font-style: italic; font-weight: 700;
-    font-size: clamp(1.9rem, 4.2vw, 2.6rem);
-    margin: 12px 0 26px;
+    font-family: 'Cinzel', serif; font-weight: 400;
+    font-size: clamp(2.5rem, 5vw, 3.8rem); margin: 0 0 40px;
+    color: #160e05; text-align: center;
   }
-  #content p { max-width: 580px; }
-  #content .passage p { margin-bottom: 18px; }
-  #content a { color: inherit; }
-
+  
   .rule {
-    display: flex; align-items: center; gap: 18px;
-    max-width: 520px; margin: 0 auto;
-    font-size: 14px; color: #6b543a; justify-content: center;
+    display: flex; align-items: center; gap: 24px;
+    max-width: 400px; margin: 60px auto;
+    justify-content: center; opacity: 0.4;
   }
-  .rule::before, .rule::after { content: ""; flex: 1; height: 1px; background: rgba(51,35,15,0.3); }
-
-  .plate { border: 1px solid currentColor; padding: 9px; }
-  .plate .media { position: relative; aspect-ratio: 16 / 9; background: #1a120a; }
-  .plate iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: auto; }
-  .plate img { width: 100%; display: block; }
-  .caption {
-    margin: 10px auto 0; text-align: center;
-    font-style: italic; font-size: 15px; font-weight: 700; color: #3d2a12;
+  .rule::before, .rule::after { content: ">   PLAY TEASER";
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    white-space: nowrap; font-family: 'Cinzel', serif; font-size: 16px; font-weight: 600;
+    letter-spacing: 0.2em; color: #e8dcc8;
+    background: rgba(26, 18, 10, 0.85); border: 1px solid rgba(232, 220, 200, 0.3);
+    padding: 18px 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    transition: all 0.4s ease;
   }
-  .playbtn {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    border: 0; padding: 0; display: block;
-    background: url("assets/stills/teaser-thumbnail.jpg") center / cover no-repeat;
-  }
-  .playbtn::after {
-    content: "▶   Play Teaser 1";
-    position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%);
-    white-space: nowrap;
-    font-style: italic; font-size: 14px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    color: #e8dcc8; background: rgba(26,18,10,0.82);
-    padding: 11px 26px;
-    transition: background 0.2s;
-  }
-  .playbtn:hover::after { background: rgba(26,18,10,0.95); }
-
-  .plates-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 34px; }
+  .playbtn:hover::after { background: #33230f; border-color: #8a7350; transform: translate(-50%, -50%) scale(1.05); }
+  
+  .plates-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; width: 100%; }
   .plate.wide { grid-column: 1 / -1; }
-  @media (max-width: 700px) { .plates-2 { grid-template-columns: 1fr; } }
-
+  @media (max-width: 900px) { .plates-2 { grid-template-columns: 1fr; } }
+  
   .cast-grid {
-    margin-top: 46px; display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 52px 22px; /* tall row gap: the stones hover in it */
+    margin-top: 60px; display: grid; width: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 60px 32px;
   }
   .cast { text-align: center; }
-  .cast .frame { border: 1px solid currentColor; padding: 5px; }
-  .cast img { aspect-ratio: 3 / 4; object-fit: cover; width: 100%; display: block; filter: sepia(0.15) saturate(0.92); }
-  .cast figcaption { margin: 9px auto 0; font-style: italic; font-size: 15.5px; font-weight: 700; }
-
-  /* the timeline: chapters carry a spine line and a wax-red node */
-  .chapter-sec { position: relative; padding-left: 32px; }
-  .chapter-sec::before {
-    content: ""; position: absolute; left: 0; top: 10px; bottom: 0;
-    width: 1px; background: currentColor; opacity: 0.28;
+  .cast .frame {
+    background: rgba(238, 227, 205, 0.5);
+    border: 1px solid rgba(51, 35, 15, 0.15); padding: 8px;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
   }
-  .chapter-sec::after {
-    content: ""; position: absolute; left: -4px; top: 6px;
-    width: 9px; height: 9px; border-radius: 50%; background: #8c1f1f;
+  .cast:hover .frame { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(51, 35, 15, 0.2); }
+  .cast img { aspect-ratio: 3 / 4; object-fit: cover; width: 100%; display: block; filter: sepia(0.25) saturate(0.8); }
+  .cast figcaption {
+    margin: 16px auto 0; font-family: 'Cinzel', serif; font-size: 17px;
+    font-weight: 600; color: #160e05;
   }
-  body.w-crt .chapter-sec::after { background: #ff5b5b; }
-  .sub { margin-top: 64px; }
-  @media (max-width: 700px) { .chapter-sec { padding-left: 20px; } }
-  .seal {
-    display: inline-block; margin-left: 12px; vertical-align: middle;
-    font-style: italic; font-size: 11.5px;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    color: #8c1f1f; border: 1px solid #8c1f1f; padding: 3px 10px;
-  }
-  body.w-crt .seal { color: #ff5b5b; border-color: #ff5b5b; }
-
-  .links { display: flex; gap: 14px 26px; flex-wrap: wrap; margin-top: 28px; }
+  
+  .links { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 56px; justify-content: center; width: 100%; }
   .links a {
-    font-size: 14px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
-    text-decoration: none;
-    border: 1px solid currentColor; padding: 12px 28px;
+    font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none;
+    padding: 16px 36px; color: #33230f;
+    border: 1px solid rgba(51, 35, 15, 0.3);
     background: rgba(238, 227, 205, 0.85);
-    transition: background 0.2s;
+    transition: all 0.3s ease;
   }
-  .links a:hover { background: rgba(238, 227, 205, 1); }
-  body.w-crt .links a { background: rgba(12, 9, 5, 0.78); }
-  .chapter-note { max-width: 580px; }
+  .links a:hover {
+    background: #33230f; color: #e8dcc8;
+    border-color: #33230f;
+    box-shadow: 0 8px 20px rgba(51, 35, 15, 0.3);
+  }
+  
+  footer {
+    padding: 100px 0 60px; text-align: center;
+    font-family: 'Cinzel', serif; font-size: 14px;
+    letter-spacing: 0.25em; color: #6b543a;
+  }
 
-  #content footer {
-    padding: 60px 0 20px; text-align: center;
-    font-style: italic; font-size: 13.5px; letter-spacing: 0.06em; opacity: 0.7;
+  /* Hide the old distracting UI pieces */
+  #place, #pen, .seal, .chapter-sec::before, .chapter-sec::after { display: none !important; }
+
+  /* ============================================================
+     Codex AAA redesign layer: darker studio UI, material depth,
+     controlled shader ambience, and parallax media treatments.
+     ============================================================ */
+  :root {
+    color-scheme: dark;
+    --aaa-ink: #040403;
+    --aaa-panel: rgba(7, 8, 7, 0.78);
+    --aaa-panel-solid: #090a09;
+    --aaa-bone: #fff4df;
+    --aaa-muted: rgba(255, 244, 223, 0.68);
+    --aaa-line: rgba(255, 244, 223, 0.16);
+    --aaa-gold: #d5a64a;
+    --aaa-amber: #ffcf73;
+    --aaa-crimson: #9b1f2d;
+    --aaa-oxide: #4d706b;
+    --aaa-max: 1180px;
   }
 
-  /* when the lion carries the page into a chamber, the writing turns to light */
-  body.w-crt #content {
-    color: #ecdfc9;
-    text-shadow:
-      0 1px 0 rgba(8, 6, 4, 0.9),
-      0 0 5px rgba(8, 6, 4, 0.95),
-      0 0 16px rgba(8, 6, 4, 0.7);
+  html { scrollbar-color: rgba(213, 166, 74, 0.65) rgba(4, 4, 3, 0.72); }
+
+  body {
+    background:
+      radial-gradient(circle at 78% 12%, rgba(155, 31, 45, 0.18), transparent 30rem),
+      radial-gradient(circle at 8% 68%, rgba(77, 112, 107, 0.16), transparent 28rem),
+      var(--aaa-ink);
+    color: var(--aaa-bone);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
   }
-  body.w-crt #stage .studio, body.w-crt #stage nav a {
-    text-shadow:
-      0 1px 0 rgba(8, 6, 4, 0.9),
-      0 0 5px rgba(8, 6, 4, 0.95),
-      0 0 16px rgba(8, 6, 4, 0.7);
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      linear-gradient(90deg, rgba(4, 4, 3, 0.94), rgba(4, 4, 3, 0.34) 48%, rgba(4, 4, 3, 0.84)),
+      linear-gradient(0deg, var(--aaa-ink), transparent 36%, rgba(4, 4, 3, 0.5)),
+      url("assets/stills/overlook.jpg") center / cover no-repeat;
+    filter: saturate(0.98) contrast(1.06);
   }
-  body.w-crt #content .label, body.w-crt #content .caption,
-  body.w-crt #content .passage p, body.w-crt .rule { color: #cfc4ad; }
-  body.w-crt .rule::before, body.w-crt .rule::after { background: rgba(232,220,200,0.3); }
-  body.w-crt .entry, body.w-crt .entry:last-of-type { border-color: rgba(232,220,200,0.3); }
+
+  canvas { z-index: 1; }
+  #c { opacity: 0.46; mix-blend-mode: multiply; }
+  #gpuc { opacity: 0.72; mix-blend-mode: screen; }
+
+  #stage {
+    min-height: 94svh;
+    height: 94svh;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+    gap: 1rem;
+    padding: 6.5rem clamp(1rem, 5vw, 4rem) 5rem;
+    pointer-events: none;
+    isolation: isolate;
+  }
+
+  #stage::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 9rem;
+    z-index: -1;
+    background: linear-gradient(180deg, transparent, var(--aaa-ink));
+  }
+
+  #stage .studio,
+  #stage .format-line,
+  #content .label {
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--aaa-amber);
+    font-size: 0.76rem;
+    font-weight: 850;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    text-shadow: none;
+  }
+
+  #hello {
+    max-width: 9ch;
+    color: var(--aaa-bone);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(3.6rem, 13vw, 10.7rem);
+    font-weight: 900;
+    line-height: 0.8;
+    letter-spacing: 0;
+    text-shadow: 0 0 4rem rgba(213, 166, 74, 0.22);
+  }
+
+  #hello.revealed { letter-spacing: 0; opacity: 1; }
+
+  #hello .trade {
+    display: inline-block;
+    margin-left: 0.04em;
+    font-size: 0.22em;
+    line-height: 1;
+    vertical-align: 2.1em;
+  }
+
+  #stage .logline {
+    max-width: 42rem;
+    color: rgba(255, 244, 223, 0.8);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    font-style: normal;
+    line-height: 1.55;
+    text-shadow: none;
+  }
+
+  #stage .format-line {
+    color: rgba(255, 244, 223, 0.58);
+  }
+
+  #content p,
+  #content h2,
+  #content .label,
+  #content figcaption,
+  #stage .logline,
+  #stage .format-line {
+    background: transparent;
+    box-shadow: none;
+    width: auto;
+  }
+
+  #stage .cta,
+  #stage nav a,
+  #content a,
+  #content button {
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--aaa-line);
+    color: var(--aaa-bone);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-shadow: none;
+    isolation: isolate;
+  }
+
+  #stage .cta {
+    display: inline-flex;
+    width: fit-content;
+    margin-top: 0.7rem;
+    padding: 0.95rem 1.25rem;
+    background: linear-gradient(135deg, rgba(213, 166, 74, 0.34), rgba(155, 31, 45, 0.18));
+    box-shadow: inset 0 0 0 1px rgba(255, 207, 115, 0.18), 0 1.2rem 3rem rgba(0, 0, 0, 0.28);
+  }
+
+  #stage .cta::before,
+  #stage nav a::before,
+  #content a::before,
+  #content button::before {
+    content: "";
+    position: absolute;
+    inset: -45%;
+    z-index: -1;
+    background:
+      radial-gradient(circle at var(--mx) var(--my), rgba(255, 207, 115, 0.35), transparent 7rem),
+      radial-gradient(circle at calc(var(--mx) + 18%) calc(var(--my) + 8%), rgba(155, 31, 45, 0.2), transparent 6rem);
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  #stage .cta:hover::before,
+  #stage nav a:hover::before,
+  #content a:hover::before,
+  #content button:hover::before {
+    opacity: 1;
+  }
+
+  #stage nav {
+    width: min(100%, 46rem);
+    justify-content: flex-start;
+    gap: 0.65rem;
+    margin-top: 1rem;
+  }
+
+  #stage nav a {
+    padding: 0.72rem 0.85rem;
+    background: rgba(4, 4, 3, 0.42);
+    backdrop-filter: blur(14px);
+  }
+
+  #content {
+    z-index: 3;
+    margin-top: 94svh;
+    color: var(--aaa-bone);
+    font-size: 1rem;
+    line-height: 1.65;
+    text-shadow: none;
+    background:
+      linear-gradient(180deg, rgba(4, 4, 3, 0.72), var(--aaa-ink) 18rem),
+      var(--aaa-ink);
+  }
+
+  #content .col {
+    max-width: var(--aaa-max);
+    padding: 0 clamp(1rem, 4vw, 3rem);
+  }
+
+  #content section {
+    align-items: flex-start;
+    padding: clamp(4.5rem, 9vw, 8rem) 0;
+    border-top: 1px solid var(--aaa-line);
+  }
+
+  #content h2 {
+    max-width: 54rem;
+    color: var(--aaa-bone);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(2rem, 5vw, 4.45rem);
+    font-weight: 900;
+    line-height: 0.98;
+    text-align: left;
+  }
+
+  #content .passage p,
+  #content .chapter-note,
+  #music > p {
+    max-width: 50rem;
+    color: var(--aaa-muted);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(1rem, 1.7vw, 1.15rem);
+    line-height: 1.75;
+  }
+
+  .rule {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    color: transparent;
+    opacity: 1;
+  }
+
+  .rule::before,
+  .rule::after {
+    background: linear-gradient(90deg, transparent, rgba(213, 166, 74, 0.5), transparent);
+  }
+
+  .plate,
+  .cast {
+    --rx: 0deg;
+    --ry: 0deg;
+    --mx: 50%;
+    --my: 50%;
+    min-width: 0;
+    border: 1px solid var(--aaa-line);
+    background: rgba(7, 8, 7, 0.76);
+    box-shadow: none;
+    transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+    transform-style: preserve-3d;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .plate:hover,
+  .cast:hover {
+    border-color: rgba(255, 207, 115, 0.44);
+    box-shadow: 0 1.4rem 4rem rgba(0, 0, 0, 0.34);
+  }
+
+  .plate img,
+  .cast img,
+  .playbtn {
+    filter: saturate(0.95) contrast(1.08) brightness(0.82);
+  }
+
+  .plate img,
+  .cast .frame,
+  .plate .media {
+    transform: translateZ(32px);
+  }
+
+  .plate::after,
+  .cast .frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at var(--mx) var(--my), rgba(255, 207, 115, 0.28), transparent 7rem),
+      linear-gradient(115deg, transparent 0 36%, rgba(255,255,255,0.1) 44%, transparent 54%);
+    mix-blend-mode: screen;
+    opacity: 0.65;
+  }
+
+  .plate { position: relative; padding: 0; overflow: hidden; }
+  .plate .media { aspect-ratio: 16 / 9; }
+  .plate img { width: 100%; height: 100%; object-fit: cover; }
+
+  .caption,
+  .cast figcaption {
+    color: rgba(255, 244, 223, 0.78);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-style: normal;
+    font-size: 0.92rem;
+  }
+
+  .cast {
+    position: relative;
+    text-align: left;
+    padding: 0;
+  }
+
+  .cast .frame {
+    position: relative;
+    padding: 0;
+    border: 0;
+    background: #070807;
+    overflow: hidden;
+  }
+
+  .cast:hover .frame {
+    transform: translateZ(32px);
+    box-shadow: none;
+  }
+
+  .cast figcaption {
+    margin: 0;
+    padding: 1rem;
+    font-weight: 800;
+    transform: translateZ(46px);
+  }
+
+  .links a {
+    background: rgba(7, 8, 7, 0.76);
+    border-color: var(--aaa-line);
+    color: var(--aaa-bone);
+  }
+
+  .links a:hover {
+    background: rgba(213, 166, 74, 0.16);
+    border-color: rgba(255, 207, 115, 0.45);
+  }
+
+  .aaa-signal {
+    position: absolute;
+    right: clamp(1rem, 5vw, 4rem);
+    bottom: clamp(1rem, 5vw, 3rem);
+    width: min(21rem, calc(100vw - 2rem));
+    padding: 1rem;
+    border: 1px solid var(--aaa-line);
+    background: rgba(4, 4, 3, 0.64);
+    color: var(--aaa-bone);
+    backdrop-filter: blur(18px);
+    pointer-events: none;
+  }
+
+  .aaa-signal span,
+  .aaa-signal small {
+    display: block;
+    color: rgba(255, 244, 223, 0.58);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .aaa-signal strong {
+    display: block;
+    margin: 0.4rem 0;
+    font-size: 1rem;
+  }
+
+  .aaa-signal small {
+    line-height: 1.55;
+    text-transform: none;
+  }
+
+  footer {
+    color: rgba(255, 244, 223, 0.52);
+    border-top: 1px solid var(--aaa-line);
+  }
+
+  @media (max-width: 860px) {
+    #stage {
+      min-height: 90svh;
+      height: 90svh;
+      justify-content: flex-end;
+      padding: 5rem 1rem 9rem;
+    }
+
+    #stage nav { display: none; }
+    #content { margin-top: 90svh; }
+
+    #hello {
+      font-size: clamp(3.1rem, 15vw, 4rem);
+      white-space: nowrap;
+    }
+
+    #stage .cta {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .aaa-signal {
+      left: 1rem;
+      right: 1rem;
+      bottom: 1rem;
+      width: auto;
+    }
+
+    .cast-grid,
+    .plates-2 {
+      gap: 1rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #c,
+    #gpuc {
+      display: none !important;
+    }
+
+    .plate,
+    .cast {
+      transform: none !important;
+    }
+  }
+
+  /* Codex AAA title visibility fix */
+  #hello,
+  #hello.dimmed {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Codex AAA content shell fix */
+  #content p,
+  #content h2,
+  #content .label,
+  #content figcaption,
+  #content .passage p,
+  #content .chapter-note,
+  #content .caption,
+  #music > p,
+  #stage .logline,
+  #stage .format-line {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  #content .passage p,
+  #content .chapter-note,
+  #music > p {
+    padding: 0 !important;
+    color: rgba(255, 244, 223, 0.68) !important;
+  }
+
+  #content .passage {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(18rem, 0.72fr);
+    column-gap: clamp(2rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  #content .passage .label,
+  #content .passage h2 {
+    grid-column: 1;
+  }
+
+  #content .passage p {
+    grid-column: 2;
+  }
+
+  #content .passage p + p {
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 900px) {
+    #content .passage {
+      display: flex;
+    }
+  }
+
+  /* Codex AAA premium scroll text material */
+  #content .passage p,
+  #content .chapter-note,
+  #music > p {
+    position: relative;
+    overflow: hidden;
+    padding: 1.05rem 1.15rem !important;
+    border: 1px solid rgba(255, 207, 115, 0.18);
+    background:
+      linear-gradient(115deg, rgba(255, 244, 223, 0.075), transparent 26%),
+      linear-gradient(180deg, rgba(20, 19, 16, 0.92), rgba(7, 8, 7, 0.86)),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 5px) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 244, 223, 0.08),
+      inset 0 -1px 0 rgba(213, 166, 74, 0.08),
+      0 1.2rem 3.5rem rgba(0, 0, 0, 0.26) !important;
+    color: rgba(255, 244, 223, 0.78) !important;
+    backdrop-filter: blur(10px) saturate(1.12);
+  }
+
+  #content .passage p::before,
+  #content .chapter-note::before,
+  #music > p::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(255, 207, 115, 0.12), transparent 13rem),
+      linear-gradient(135deg, transparent 0 42%, rgba(255, 255, 255, 0.055) 50%, transparent 58%);
+    opacity: 0.7;
+    mix-blend-mode: screen;
+  }
+
+  #content .passage p::after,
+  #content .chapter-note::after,
+  #music > p::after {
+    content: "";
+    position: absolute;
+    left: 0.9rem;
+    right: 0.9rem;
+    top: 0.55rem;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 207, 115, 0.48), transparent);
+  }
+
+  #content .passage p,
+  #content .chapter-note,
+  #music > p {
+    clip-path: polygon(0.45rem 0, calc(100% - 0.45rem) 0, 100% 0.45rem, 100% calc(100% - 0.45rem), calc(100% - 0.45rem) 100%, 0.45rem 100%, 0 calc(100% - 0.45rem), 0 0.45rem);
+  }
+
+  #content .passage p + p {
+    margin-top: 0.85rem;
+  }
+
+  @media (max-width: 900px) {
+    #content .passage p,
+    #content .chapter-note,
+    #music > p {
+      padding: 0.95rem 1rem !important;
+    }
+  }
+
+  /* Codex bugfix: teaser, dividers, dashless copy, compact music scroll */
+  .rule {
+    position: relative !important;
+    display: flex !important;
+    width: min(100%, 54rem) !important;
+    max-width: none !important;
+    height: 1px !important;
+    margin: 4rem auto !important;
+    gap: 0 !important;
+    color: transparent !important;
+    opacity: 1 !important;
+  }
+
+  .rule::before,
+  .rule::after {
+    content: "" !important;
+    position: static !important;
+    flex: 1 1 auto !important;
+    height: 1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 207, 115, 0.42), transparent) !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  #teaser {
+    align-items: center !important;
+  }
+
+  #teaser .plate {
+    width: min(100%, 980px) !important;
+    max-width: 980px !important;
+    margin-inline: auto !important;
+  }
+
+  #teaser .plate .media {
+    position: relative !important;
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    min-height: 220px !important;
+    overflow: hidden !important;
+    background: #050505 url("assets/stills/teaser-thumbnail.jpg") center / cover no-repeat !important;
+    transform: translateZ(32px);
+  }
+
+  #teaser .playbtn {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: url("assets/stills/teaser-thumbnail.jpg") center / cover no-repeat !important;
+    filter: saturate(0.95) contrast(1.08) brightness(0.8) !important;
+  }
+
+  #teaser .playbtn::after {
+    content: ">   PLAY TEASER" !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    white-space: nowrap !important;
+    color: var(--aaa-bone) !important;
+    background: rgba(7, 8, 7, 0.74) !important;
+    border: 1px solid rgba(255, 207, 115, 0.34) !important;
+    padding: 1rem 1.35rem !important;
+    box-shadow: 0 1rem 2.5rem rgba(0,0,0,0.46) !important;
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
+    font-size: 0.78rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  #teaser .playbtn:hover::after {
+    transform: translate(-50%, -50%) scale(1.04) !important;
+  }
+
+  #music > p {
+    width: fit-content !important;
+    max-width: 34rem !important;
+    min-width: 0 !important;
+  }
+
+  @media (max-width: 900px) {
+    #teaser .plate {
+      width: 100% !important;
+    }
+
+    #teaser .plate .media {
+      min-height: 12rem !important;
+    }
+
+    #music > p {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* Codex bugfix: make production signal part of hero copy */
+  .aaa-signal {
+    position: static !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: min(100%, 24rem) !important;
+    margin: 0.15rem 0 0.35rem !important;
+    padding: 0.85rem 0 !important;
+    border: 0 !important;
+    border-top: 1px solid rgba(255, 207, 115, 0.24) !important;
+    border-bottom: 1px solid rgba(255, 207, 115, 0.12) !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  .aaa-signal strong {
+    margin: 0.28rem 0 !important;
+  }
+
+  @media (max-width: 860px) {
+    .aaa-signal {
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      width: 100% !important;
+      margin-top: 0.15rem !important;
+    }
+  }
+
+  /* Codex bugfix: Music scroll panel should size the box, not crush the sentence */
+  #music > p.passage {
+    display: block !important;
+    grid-template-columns: none !important;
+    width: min(100%, 34rem) !important;
+    max-width: 34rem !important;
+    min-width: 0 !important;
+    line-height: 1.65 !important;
+    white-space: normal !important;
+  }
+
+  @media (max-width: 900px) {
+    #music > p.passage {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* Codex AAA shader lightfield pass */
+  :root {
+    --light-x: 50%;
+    --light-y: 38%;
+    --scroll-glow: 0;
+  }
+
+  #aaa-lightfield {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
+    opacity: 0.82;
+    background: #020302;
+    mix-blend-mode: screen;
+  }
+
+  body.aaa-hardware-lit::before {
+    opacity: 0.34;
+    background:
+      radial-gradient(circle at var(--light-x) var(--light-y), rgba(255, 211, 122, 0.2), transparent 22rem),
+      linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.68));
+  }
+
+  body.aaa-hardware-lit #c {
+    z-index: 1 !important;
+    opacity: 0.34;
+    mix-blend-mode: screen;
+  }
+
+  body.aaa-hardware-lit #gpuc {
+    z-index: 1 !important;
+    opacity: 0.5;
+    mix-blend-mode: screen;
+  }
+
+  body.aaa-hardware-lit #stage::after {
+    background:
+      radial-gradient(circle at var(--light-x) var(--light-y), rgba(255, 214, 130, 0.14), transparent 19rem),
+      linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.66));
+  }
+
+  body.aaa-hardware-lit #content .passage p,
+  body.aaa-hardware-lit #content .chapter-note,
+  body.aaa-hardware-lit #music > p,
+  body.aaa-hardware-lit .plate,
+  body.aaa-hardware-lit .cast .frame,
+  body.aaa-hardware-lit .links a,
+  body.aaa-hardware-lit #stage .cta,
+  body.aaa-hardware-lit #stage nav a {
+    background-image:
+      radial-gradient(circle at var(--mx, var(--light-x)) var(--my, var(--light-y)), rgba(255, 221, 149, calc(0.08 + var(--scroll-glow) * 0.1)), transparent 8rem),
+      linear-gradient(135deg, rgba(255,255,255,0.055), transparent 34%, rgba(0,0,0,0.28)),
+      repeating-linear-gradient(100deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 9px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 228, 168, 0.18),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.42),
+      0 calc(0.6rem + var(--scroll-glow) * 1rem) calc(2.2rem + var(--scroll-glow) * 2rem) rgba(0, 0, 0, 0.34);
+  }
+
+  body.aaa-hardware-lit .plate::after,
+  body.aaa-hardware-lit .cast .frame::after {
+    background:
+      radial-gradient(circle at var(--mx) var(--my), rgba(255, 222, 151, 0.36), transparent 6.5rem),
+      linear-gradient(115deg, transparent 0 34%, rgba(255,255,255,0.13) 43%, transparent 54%),
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.32));
+    opacity: calc(0.56 + var(--scroll-glow) * 0.2);
+  }
+
+  body.aaa-hardware-lit #hello {
+    text-shadow:
+      0 0 1px rgba(255, 240, 205, 0.9),
+      0 0 calc(1rem + var(--scroll-glow) * 1.6rem) rgba(255, 191, 82, 0.24),
+      0 2rem 5rem rgba(0,0,0,0.7);
+  }
+
+  body.aaa-hardware-lit #content .label {
+    text-shadow: 0 0 1.3rem rgba(255, 198, 91, calc(0.12 + var(--scroll-glow) * 0.16));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #aaa-lightfield {
+      display: none !important;
+    }
+
+    body.aaa-hardware-lit #c,
+    body.aaa-hardware-lit #gpuc {
+    z-index: 1 !important;
+      display: none !important;
+    }
+  }
+
+  /* Codex dimensional portal pass: less black-gold gallery, more spatial world surface */
+  :root {
+    --aaa-amber: #d4f2df;
+    --aaa-gold: #7ff0c8;
+    --aaa-oxide: #6ab0aa;
+    --aaa-cyan: #89d7ff;
+    --aaa-acid: #b6ff68;
+    --aaa-ember: #ff7059;
+    --aaa-void: #020506;
+  }
+
+  html {
+    scrollbar-color: rgba(126, 240, 200, 0.7) rgba(2, 5, 6, 0.8);
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: clip;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 82% 14%, rgba(137, 215, 255, 0.12), transparent 28rem),
+      radial-gradient(circle at 12% 72%, rgba(182, 255, 104, 0.08), transparent 30rem),
+      radial-gradient(circle at 50% 48%, rgba(255, 112, 89, 0.07), transparent 38rem),
+      var(--aaa-void);
+  }
+
+  body.aaa-hardware-lit::before {
+    opacity: 0.26;
+    background:
+      radial-gradient(circle at var(--light-x) var(--light-y), rgba(137, 215, 255, 0.2), transparent 18rem),
+      linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.74));
+  }
+
+  #aaa-lightfield {
+    opacity: 0.95 !important;
+    mix-blend-mode: screen !important;
+  }
+
+  #stage,
+  #content .col {
+    transform-style: preserve-3d;
+  }
+
+  #stage::before {
+    content: "";
+    position: absolute;
+    inset: 8vh 0 auto auto;
+    width: min(48vw, 42rem);
+    height: min(58vh, 34rem);
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, transparent, rgba(137, 215, 255, 0.18), transparent),
+      repeating-linear-gradient(90deg, transparent 0 2.1rem, rgba(127, 240, 200, 0.12) 2.1rem calc(2.1rem + 1px)),
+      repeating-linear-gradient(0deg, transparent 0 2.1rem, rgba(255, 112, 89, 0.09) 2.1rem calc(2.1rem + 1px));
+    transform: perspective(900px) rotateY(-34deg) rotateX(12deg) translateZ(-120px);
+    transform-origin: right center;
+    opacity: 0.38;
+    mask-image: linear-gradient(90deg, transparent, #000 18%, #000 72%, transparent);
+  }
+
+  body.aaa-hardware-lit #stage::after {
+    background:
+      radial-gradient(circle at var(--light-x) var(--light-y), rgba(137, 215, 255, 0.12), transparent 17rem),
+      linear-gradient(180deg, rgba(0,0,0,0.02), rgba(2,5,6,0.72));
+  }
+
+  #content section {
+    position: relative;
+    isolation: isolate;
+  }
+
+  #content section::before {
+    content: "";
+    position: absolute;
+    inset: 3rem 0 2rem;
+    pointer-events: none;
+    z-index: -1;
+    border: 1px solid rgba(137, 215, 255, 0.08);
+    background:
+      linear-gradient(115deg, rgba(137, 215, 255, 0.06), transparent 32%, rgba(182, 255, 104, 0.035)),
+      linear-gradient(180deg, rgba(2, 7, 8, 0.12), rgba(2, 7, 8, 0.02));
+    transform: perspective(1000px) rotateX(4deg) translateZ(-80px);
+    box-shadow: 0 3rem 8rem rgba(0, 0, 0, 0.38);
+    opacity: 0.75;
+  }
+
+  #content section:nth-of-type(even)::before {
+    transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateZ(-90px);
+    border-color: rgba(255, 112, 89, 0.08);
+  }
+
+  #content .label,
+  #stage .studio,
+  #stage .format-line {
+    color: color-mix(in srgb, var(--aaa-cyan) 68%, var(--aaa-acid) 32%);
+    text-shadow: 0 0 1.2rem rgba(126, 240, 200, 0.22);
+  }
+
+  body.aaa-hardware-lit #content .passage p,
+  body.aaa-hardware-lit #content .chapter-note,
+  body.aaa-hardware-lit #music > p,
+  body.aaa-hardware-lit .plate,
+  body.aaa-hardware-lit .cast .frame,
+  body.aaa-hardware-lit .links a,
+  body.aaa-hardware-lit #stage .cta,
+  body.aaa-hardware-lit #stage nav a {
+    border-color: rgba(137, 215, 255, 0.18) !important;
+    background-color: rgba(2, 7, 8, 0.64) !important;
+    background-image:
+      radial-gradient(circle at var(--mx, var(--light-x)) var(--my, var(--light-y)), rgba(137, 215, 255, calc(0.10 + var(--scroll-glow) * 0.12)), transparent 8rem),
+      linear-gradient(135deg, rgba(182,255,104,0.035), transparent 35%, rgba(255,112,89,0.05)),
+      repeating-linear-gradient(100deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 9px) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(137, 215, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.48),
+      0 calc(0.8rem + var(--scroll-glow) * 1rem) calc(2.5rem + var(--scroll-glow) * 2.2rem) rgba(0, 0, 0, 0.42),
+      0 0 calc(1rem + var(--scroll-glow) * 1.4rem) rgba(126, 240, 200, 0.055) !important;
+  }
+
+  .plate,
+  .cast {
+    transform:
+      perspective(1000px)
+      rotateX(calc(var(--rx) + 0.8deg))
+      rotateY(var(--ry))
+      translateZ(0);
+  }
+
+  .plate::before,
+  .cast::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(137, 215, 255, 0.24), transparent 26%, transparent 74%, rgba(255, 112, 89, 0.14)),
+      linear-gradient(180deg, rgba(182,255,104,0.09), transparent 42%);
+    transform: translate3d(0.9rem, 0.9rem, -50px) scale(0.985);
+    opacity: 0.54;
+    filter: blur(0.3px);
+  }
+
+  body.aaa-hardware-lit .plate::after,
+  body.aaa-hardware-lit .cast .frame::after {
+    background:
+      radial-gradient(circle at var(--mx) var(--my), rgba(137, 215, 255, 0.34), transparent 6.5rem),
+      linear-gradient(115deg, transparent 0 33%, rgba(182, 255, 104, 0.10) 43%, transparent 55%),
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.36)) !important;
+  }
+
+  body.aaa-hardware-lit #hello {
+    text-shadow:
+      0 0 1px rgba(230, 255, 244, 0.95),
+      0 0 calc(1rem + var(--scroll-glow) * 1.6rem) rgba(137, 215, 255, 0.28),
+      0 0 calc(2rem + var(--scroll-glow) * 2rem) rgba(255, 112, 89, 0.12),
+      0 2rem 5rem rgba(0,0,0,0.72) !important;
+  }
+
+  .rule::before,
+  .rule::after {
+    background: linear-gradient(90deg, transparent, rgba(126, 240, 200, 0.42), rgba(255, 112, 89, 0.18), transparent) !important;
+  }
+
+  @media (max-width: 900px) {
+    #stage::before {
+      width: 82vw;
+      height: 38vh;
+      opacity: 0.24;
+      transform: perspective(800px) rotateY(-28deg) rotateX(9deg) translateZ(-140px);
+    }
+
+    #content section::before {
+      inset-inline: 0;
+      transform: perspective(900px) rotateX(3deg) translateZ(-70px);
+    }
+  }
+
+  /* Codex dimensional clamp: keep depth paint inside the viewport */
+  #stage,
+  #content,
+  #content .col,
+  #content section {
+    overflow-x: clip;
+  }
+
+  #stage::before,
+  #content section::before,
+  .plate::before,
+  .cast::before {
+    contain: paint;
+  }
+
+  @supports not (overflow: clip) {
+    #stage,
+    #content,
+    #content .col,
+    #content section {
+      overflow-x: hidden;
+    }
+  }
+
+  /* Codex visible world plane: make dimensional read before hover */
+  body.aaa-hardware-lit::before {
+    opacity: 0.42 !important;
+    background:
+      linear-gradient(90deg, rgba(2, 5, 6, 0.94), rgba(2, 5, 6, 0.42) 46%, rgba(2, 5, 6, 0.88)),
+      linear-gradient(180deg, rgba(2, 5, 6, 0.15), rgba(2, 5, 6, 0.72)),
+      url("assets/stills/overlook.jpg") center / cover no-repeat !important;
+    filter: saturate(0.78) contrast(1.16) brightness(0.54);
+  }
+
+  body.aaa-hardware-lit::after {
+    content: "";
+    position: fixed;
+    right: -7vw;
+    top: 8vh;
+    width: min(58vw, 62rem);
+    height: 76vh;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(2, 5, 6, 0.18), rgba(2, 5, 6, 0.72)),
+      linear-gradient(180deg, rgba(137, 215, 255, 0.1), transparent 34%, rgba(182,255,104,0.06)),
+      url("assets/stills/rooftop.jpg") center / cover no-repeat;
+    border-left: 1px solid rgba(137, 215, 255, 0.2);
+    box-shadow:
+      -2rem 0 8rem rgba(0, 0, 0, 0.64),
+      inset 1px 0 0 rgba(182, 255, 104, 0.18);
+    transform: perspective(900px) rotateY(-23deg) rotateX(4deg) translateZ(-140px);
+    transform-origin: right center;
+    opacity: 0.48;
+    mask-image: linear-gradient(90deg, transparent 0, #000 18%, #000 76%, transparent 100%);
+  }
+
+  #aaa-lightfield {
+    opacity: 1 !important;
+  }
+
+  #content .col {
+    position: relative;
+  }
+
+  #content .col::before {
+    content: "";
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 32vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(137, 215, 255, 0.16), transparent),
+      repeating-linear-gradient(0deg, transparent 0 2.4rem, rgba(126, 240, 200, 0.09) 2.4rem calc(2.4rem + 1px));
+    transform: perspective(900px) rotateY(34deg) translateX(-38%) translateZ(-180px);
+    opacity: 0.44;
+    mask-image: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent);
+  }
+
+  .plate.wide {
+    box-shadow:
+      0 2.2rem 7rem rgba(0,0,0,0.58),
+      0 0 0 1px rgba(137, 215, 255, 0.15),
+      0 0 6rem rgba(126, 240, 200, 0.08) !important;
+  }
+
+  .plate.wide::before {
+    transform: translate3d(1.35rem, 1.35rem, -70px) scale(0.975);
+    opacity: 0.72;
+  }
+
+  #stills .plate.wide img {
+    filter: saturate(0.96) contrast(1.12) brightness(0.78);
+  }
+
+  @media (max-width: 900px) {
+    body.aaa-hardware-lit::after {
+      right: -24vw;
+      top: 12vh;
+      width: 92vw;
+      height: 62vh;
+      opacity: 0.3;
+      transform: perspective(760px) rotateY(-17deg) rotateX(3deg) translateZ(-170px);
+    }
+
+    #content .col::before {
+      display: none;
+    }
+  }
+
+  /* Codex world panes: break the uniform gallery rhythm */
+  @media (min-width: 901px) {
+    #stills .plates-2 {
+      display: grid !important;
+      grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+      gap: clamp(1.2rem, 2.4vw, 2rem) !important;
+      align-items: stretch;
+      perspective: 1200px;
+    }
+
+    #stills .plates-2 .plate:nth-child(1) {
+      grid-column: 1 / -1;
+    }
+
+    #stills .plates-2 .plate:nth-child(2) {
+      grid-column: 1 / 7;
+      transform: perspective(1000px) rotateX(calc(var(--rx) + 0.8deg)) rotateY(calc(var(--ry) - 1.2deg)) translateY(0.3rem);
+    }
+
+    #stills .plates-2 .plate:nth-child(3) {
+      grid-column: 7 / -1;
+      transform: perspective(1000px) rotateX(calc(var(--rx) + 0.8deg)) rotateY(calc(var(--ry) + 1.2deg)) translateY(2.4rem);
+    }
+
+    #stills .plates-2 .plate:nth-child(4) {
+      grid-column: 1 / 5;
+      transform: perspective(1000px) rotateX(calc(var(--rx) + 0.8deg)) rotateY(calc(var(--ry) - 1.8deg)) translateY(1.3rem);
+    }
+
+    #stills .plates-2 .plate:nth-child(5) {
+      grid-column: 5 / 9;
+      transform: perspective(1000px) rotateX(calc(var(--rx) + 0.8deg)) rotateY(var(--ry)) translateY(-0.4rem);
+    }
+
+    #stills .plates-2 .plate:nth-child(6) {
+      grid-column: 9 / -1;
+      transform: perspective(1000px) rotateX(calc(var(--rx) + 0.8deg)) rotateY(calc(var(--ry) + 1.8deg)) translateY(1.8rem);
+    }
+  }
+
+  /* Codex GPU music player */
+  #music.music-player-section {
+    align-items: stretch !important;
+    padding-top: clamp(5rem, 8vw, 8rem);
+  }
+
+  .music-player {
+    display: grid;
+    grid-template-columns: minmax(20rem, 1.08fr) minmax(18rem, 0.92fr);
+    gap: clamp(2rem, 5vw, 5.5rem);
+    align-items: center;
+    width: 100%;
+    transform-style: preserve-3d;
+  }
+
+  .music-disc-stage {
+    position: relative;
+    min-height: clamp(22rem, 43vw, 36rem);
+    transform-style: preserve-3d;
+    perspective: 1100px;
+  }
+
+  #music-disc-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    filter: drop-shadow(0 2rem 3rem rgba(0,0,0,0.65));
+  }
+
+  .music-sleeve {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    z-index: 2;
+    width: min(68%, 30rem);
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 1px solid rgba(137, 215, 255, 0.18);
+    box-shadow:
+      0 2rem 6rem rgba(0,0,0,0.58),
+      0 0 0 1px rgba(255,255,255,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.22);
+    transform: translateY(-50%) rotateY(7deg) rotateX(2deg) translateZ(32px);
+  }
+
+  .music-shadow {
+    position: absolute;
+    left: 5%;
+    right: 5%;
+    bottom: 4%;
+    height: 18%;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.58), transparent 72%);
+    filter: blur(18px);
+  }
+
+  .music-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    transform: translateZ(36px);
+  }
+
+  #music .music-copy h2 {
+    max-width: 9.5em;
+    text-align: left;
+  }
+
+  #music .music-copy > p.passage {
+    width: min(100%, 34rem) !important;
+    max-width: 34rem !important;
+    margin-top: 1.3rem;
+  }
+
+  .music-actions {
+    justify-content: flex-start !important;
+    margin-top: 2rem !important;
+    gap: 0.85rem !important;
+  }
+
+  .music-actions a {
+    min-height: 3rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .music-actions .play-now {
+    color: #020506 !important;
+    background:
+      linear-gradient(135deg, rgba(230,255,244,0.96), rgba(126,240,200,0.88)) !important;
+    border-color: rgba(137, 215, 255, 0.7) !important;
+    box-shadow:
+      0 0 2rem rgba(126,240,200,0.16),
+      inset 0 1px 0 rgba(255,255,255,0.54) !important;
+  }
+
+  .music-actions .play-now::after {
+    content: "";
+    width: 2.2rem;
+    height: 1px;
+    margin-left: 1rem;
+    background: currentColor;
+    box-shadow: 0.65rem -0.35rem 0 -0.48rem currentColor, 0.65rem 0.35rem 0 -0.48rem currentColor;
+    transform: skewX(28deg);
+  }
+
+  @media (max-width: 900px) {
+    .music-player {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .music-disc-stage {
+      min-height: min(86vw, 28rem);
+      order: 1;
+    }
+
+    .music-copy {
+      order: 2;
+    }
+
+    .music-sleeve {
+      width: 66%;
+    }
+
+    #music .music-copy h2 {
+      max-width: 100%;
+    }
+
+    .music-actions {
+      width: 100%;
+    }
+
+    .music-actions a {
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+  }
+
+  /* Codex music player copy fix */
+  #music .music-copy > p.passage {
+    display: block !important;
+    grid-template-columns: none !important;
+    width: min(100%, 35rem) !important;
+    max-width: 35rem !important;
+    min-width: 18rem !important;
+    white-space: normal !important;
+    line-height: 1.65 !important;
+  }
+
+  #music .music-actions .play-now {
+    color: #03100f !important;
+    background-color: #bfffe1 !important;
+    background-image: linear-gradient(135deg, rgba(238,255,247,1), rgba(126,240,200,0.95)) !important;
+    border-color: rgba(188, 255, 229, 0.86) !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+  }
+
+  #music .music-actions .play-now:hover {
+    color: #010706 !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,1), rgba(154,255,217,1)) !important;
+  }
+
+  @media (max-width: 900px) {
+    #music .music-copy > p.passage {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+    }
+  }
+
+  /* Codex hero wormhole: replace CSS spring-plane with rendered rift */
+  #stage::before {
+    display: none !important;
+  }
+
+  #hero-rift {
+    position: absolute !important;
+    inset: -8% -4% -4% auto !important;
+    z-index: 0 !important;
+    width: min(72vw, 78rem) !important;
+    height: 112% !important;
+    pointer-events: none !important;
+    opacity: 0.92;
+    mix-blend-mode: screen;
+    filter: saturate(1.12) contrast(1.08);
+  }
+
+  #stage > :not(#hero-rift) {
+    position: relative;
+    z-index: 2;
+  }
+
+  body.aaa-hardware-lit #stage::after {
+    z-index: 1;
+    background:
+      radial-gradient(ellipse at 68% 42%, rgba(137, 215, 255, 0.09), transparent 22rem),
+      linear-gradient(180deg, rgba(0,0,0,0.02), rgba(2,5,6,0.74)) !important;
+  }
+
+  @media (max-width: 900px) {
+    #hero-rift {
+      inset: -2% -44% 10% auto !important;
+      width: 150vw !important;
+      height: 82% !important;
+      opacity: 0.62;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #hero-rift {
+      display: none !important;
+    }
+  }
+
+  /* Codex hero wormhole refinement: compact high-fidelity rift */
+  #hero-rift {
+    inset: 0 -5% 0 auto !important;
+    width: min(58vw, 64rem) !important;
+    height: 96% !important;
+    opacity: 0.76 !important;
+    filter: saturate(1.18) contrast(1.22) brightness(0.86) !important;
+  }
+
+  body.aaa-hardware-lit #stage::after {
+    background:
+      radial-gradient(ellipse at 70% 43%, rgba(137, 215, 255, 0.07), transparent 18rem),
+      linear-gradient(180deg, rgba(0,0,0,0.08), rgba(2,5,6,0.78)) !important;
+  }
+
+  @media (max-width: 900px) {
+    #hero-rift {
+      inset: 6% -46% 16% auto !important;
+      width: 128vw !important;
+      height: 68% !important;
+      opacity: 0.56 !important;
+    }
+  }
+
+  /* Codex hero focus: keep global lightfield from reading as a spring on landing */
+  body.hero-zone #aaa-lightfield {
+    opacity: 0.10 !important;
+  }
+
+  body.hero-zone #gpuc {
+    opacity: 0.18 !important;
+  }
+
+  body.hero-zone #c {
+    opacity: 0.16 !important;
+  }
+
+  body.hero-zone::after {
+    opacity: 0.18 !important;
+  }
+
+  body.hero-zone #hero-rift {
+    opacity: 0.95 !important;
+    inset: 2% 1% 4% auto !important;
+    width: min(56vw, 60rem) !important;
+    height: 88% !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift {
+      inset: 8% -34% 22% auto !important;
+      width: 116vw !important;
+      height: 62% !important;
+      opacity: 0.68 !important;
+    }
+  }
+
+  /* Codex hero rift core: render a void, not only a neon rim */
+  #hero-rift {
+    mix-blend-mode: normal !important;
+    opacity: 1 !important;
+    inset: -2% -1% 0 auto !important;
+    width: min(64vw, 70rem) !important;
+    height: 102% !important;
+    filter: saturate(1.24) contrast(1.2) brightness(0.95) drop-shadow(0 0 3.4rem rgba(43, 213, 255, 0.12)) !important;
+  }
+
+  @media (max-width: 900px) {
+    #hero-rift {
+      mix-blend-mode: normal !important;
+      inset: 4% -42% 20% auto !important;
+      width: 132vw !important;
+      height: 68% !important;
+      opacity: 0.78 !important;
+    }
+  }
+
+  /* Codex hero rift tear: remove circular loop silhouette */
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    inset: -1% 2% 0 auto !important;
+    width: min(46vw, 52rem) !important;
+    height: 98% !important;
+    opacity: 0.96 !important;
+    mix-blend-mode: normal !important;
+    filter: saturate(1.18) contrast(1.24) brightness(0.9) drop-shadow(0 0 3rem rgba(43, 213, 255, 0.12)) !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      inset: 4% -28% 20% auto !important;
+      width: 104vw !important;
+      height: 62% !important;
+      opacity: 0.7 !important;
+    }
+  }
+
+  /* Codex music physical sleeve fix: disc tucks into jacket */
+  .music-disc-stage {
+    min-height: clamp(24rem, 46vw, 38rem) !important;
+  }
+
+  #music-disc-canvas {
+    left: 10% !important;
+    right: -8% !important;
+    width: 98% !important;
+    height: 100% !important;
+    filter:
+      drop-shadow(0 2rem 3rem rgba(0,0,0,0.7))
+      drop-shadow(0 0 2.6rem rgba(126,240,200,0.08)) !important;
+  }
+
+  .music-sleeve {
+    left: 1.5% !important;
+    width: min(56%, 25.5rem) !important;
+    z-index: 3 !important;
+    transform: translateY(-50%) rotateY(4deg) rotateX(1.4deg) translateZ(44px) !important;
+  }
+
+  .music-disc-stage::before {
+    content: "";
+    position: absolute;
+    left: min(54%, 25.2rem);
+    top: 50%;
+    z-index: 4;
+    width: 1.1rem;
+    height: min(52%, 23.5rem);
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,0.58), rgba(255,255,255,0.08), transparent),
+      linear-gradient(180deg, transparent, rgba(126,240,200,0.16), transparent);
+    transform: translateY(-50%) rotateY(6deg) translateZ(52px);
+    opacity: 0.78;
+    filter: blur(0.2px);
+  }
+
+  .music-disc-stage::after {
+    content: "";
+    position: absolute;
+    left: 42%;
+    top: 50%;
+    z-index: 2;
+    width: min(56%, 27rem);
+    aspect-ratio: 1;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 55%, rgba(0,0,0,0.32) 68%, transparent 78%);
+    transform: translate(-50%, -50%) translateZ(18px);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 900px) {
+    .music-disc-stage {
+      min-height: min(92vw, 30rem) !important;
+    }
+
+    #music-disc-canvas {
+      left: 9% !important;
+      width: 98% !important;
+    }
+
+    .music-sleeve {
+      width: 55% !important;
+      left: 2% !important;
+    }
+
+    .music-disc-stage::before {
+      left: 54%;
+      height: 50%;
+    }
+  }
+
+  /* Codex gallery correction: controlled editorial grid, not scattered panes */
+  @media (min-width: 901px) {
+    #stills .plates-2 {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: clamp(1.25rem, 2.2vw, 2rem) !important;
+      align-items: start !important;
+      perspective: 1000px;
+    }
+
+    #stills .plates-2 .plate,
+    #stills .plates-2 .plate:nth-child(n) {
+      grid-column: auto !important;
+      transform: perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry)) !important;
+      translate: none !important;
+    }
+
+    #stills .plates-2 .plate.wide,
+    #stills .plates-2 .plate:nth-child(1),
+    #stills .plates-2 .plate:nth-child(6) {
+      grid-column: 1 / -1 !important;
+    }
+
+    #stills .plates-2 .plate img {
+      aspect-ratio: 16 / 9 !important;
+      height: auto !important;
+    }
+
+    #stills .plates-2 .plate.wide img {
+      aspect-ratio: 21 / 9 !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    #stills .plates-2 {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+
+    #stills .plates-2 .plate,
+    #stills .plates-2 .plate:nth-child(n) {
+      grid-column: 1 / -1 !important;
+      transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) !important;
+    }
+
+    #stills .plates-2 .plate img,
+    #stills .plates-2 .plate.wide img {
+      aspect-ratio: 16 / 9 !important;
+      height: auto !important;
+    }
+  }
+
+  /* Codex character hierarchy: fewer equal-weight faces at once */
+  #cast {
+    align-items: stretch !important;
+  }
+
+  #cast > .label {
+    align-self: center;
+  }
+
+  #cast .cast-grid {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: clamp(0.9rem, 1.7vw, 1.35rem) !important;
+    align-items: stretch !important;
+    width: 100%;
+    margin-top: clamp(1.5rem, 3vw, 2.5rem) !important;
+  }
+
+  #cast .cast {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #cast .cast:nth-child(-n + 3) {
+    grid-column: span 4;
+  }
+
+  #cast .cast:nth-child(n + 4) {
+    grid-column: span 2;
+  }
+
+  #cast .cast .frame {
+    height: 100%;
+  }
+
+  #cast .cast:nth-child(-n + 3) img {
+    aspect-ratio: 4 / 5 !important;
+  }
+
+  #cast .cast:nth-child(n + 4) img {
+    aspect-ratio: 1 / 1 !important;
+    filter: saturate(0.72) contrast(1.08) brightness(0.72);
+  }
+
+  #cast .cast:nth-child(n + 4) figcaption {
+    padding: 0.72rem 0.75rem;
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  #cast .cast:nth-child(-n + 3) figcaption {
+    padding: 1rem 1.05rem 1.1rem;
+    font-size: 1rem;
+  }
+
+  #cast .cast:nth-child(-n + 3)::before {
+    opacity: 0.7;
+  }
+
+  #cast .cast:nth-child(n + 4)::before {
+    opacity: 0.32;
+    transform: translate3d(0.45rem, 0.45rem, -40px) scale(0.985);
+  }
+
+  #cast .cast:nth-child(n + 4):hover img {
+    filter: saturate(0.95) contrast(1.08) brightness(0.82);
+  }
+
+  @media (max-width: 1100px) and (min-width: 701px) {
+    #cast .cast-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    }
+
+    #cast .cast:nth-child(-n + 3) {
+      grid-column: span 2;
+    }
+
+    #cast .cast:nth-child(n + 4) {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 700px) {
+    #cast .cast-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 0.85rem !important;
+    }
+
+    #cast .cast:nth-child(1) {
+      grid-column: 1 / -1;
+    }
+
+    #cast .cast:nth-child(n + 2) {
+      grid-column: span 1;
+    }
+
+    #cast .cast:nth-child(1) img {
+      aspect-ratio: 16 / 10 !important;
+    }
+
+    #cast .cast:nth-child(n + 2) img {
+      aspect-ratio: 1 / 1 !important;
+    }
+
+    #cast .cast figcaption,
+    #cast .cast:nth-child(-n + 3) figcaption,
+    #cast .cast:nth-child(n + 4) figcaption {
+      padding: 0.75rem;
+      font-size: 0.78rem;
+    }
+  }
+
+  /* Codex character captions: readable names without heavy empty bars */
+  #cast .cast {
+    background: rgba(2, 7, 8, 0.58) !important;
+  }
+
+  #cast .cast figcaption,
+  #cast .cast:nth-child(-n + 3) figcaption,
+  #cast .cast:nth-child(n + 4) figcaption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    margin: 0 !important;
+    color: rgba(255, 252, 242, 0.96) !important;
+    background:
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.72) 34%, rgba(0,0,0,0.9)),
+      linear-gradient(90deg, rgba(137,215,255,0.16), transparent 58%);
+    transform: none !important;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.8), 0 0 1rem rgba(126,240,200,0.16);
+  }
+
+  #cast .cast:nth-child(-n + 3) figcaption {
+    padding: 2.1rem 1.05rem 0.95rem !important;
+    font-size: 1rem !important;
+  }
+
+  #cast .cast:nth-child(n + 4) figcaption {
+    padding: 1.45rem 0.72rem 0.62rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  #cast .cast img {
+    display: block;
+  }
+
+  /* Codex reference rift hero: use the actual AXIOMORT attic portal art */
+  #hero-rift-art {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 0;
+    width: min(74vw, 86rem);
+    height: 100%;
+    object-fit: cover;
+    object-position: 47% center;
+    pointer-events: none;
+    opacity: 0.82;
+    filter: saturate(1.05) contrast(1.12) brightness(0.72);
+    mask-image:
+      linear-gradient(90deg, transparent 0, #000 16%, #000 86%, transparent 100%),
+      linear-gradient(180deg, transparent 0, #000 10%, #000 88%, transparent 100%);
+    transform: translateZ(-80px) scale(1.02);
+  }
+
+  body.hero-zone #hero-rift-art {
+    opacity: 0.88;
+  }
+
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    inset: 0 0 0 auto !important;
+    width: min(74vw, 86rem) !important;
+    height: 100% !important;
+    opacity: 0.34 !important;
+    mix-blend-mode: screen !important;
+    filter: saturate(1.18) contrast(1.18) brightness(0.75) !important;
+  }
+
+  body.hero-zone #aaa-lightfield {
+    opacity: 0.05 !important;
+  }
+
+  #stage > :not(#hero-rift):not(#hero-rift-art) {
+    z-index: 3;
+  }
+
+  #stage::after {
+    z-index: 2 !important;
+  }
+
+  body.aaa-hardware-lit #stage::after {
+    background:
+      linear-gradient(90deg, rgba(2,5,6,0.28), rgba(2,5,6,0.06) 46%, rgba(2,5,6,0.42)),
+      radial-gradient(ellipse at 56% 48%, rgba(255, 132, 74, 0.12), transparent 22rem),
+      radial-gradient(ellipse at 35% 46%, rgba(137, 215, 255, 0.12), transparent 18rem),
+      linear-gradient(180deg, rgba(0,0,0,0.04), rgba(2,5,6,0.78)) !important;
+  }
+
+  @media (max-width: 900px) {
+    #hero-rift-art {
+      inset: 2% -38% 18% auto;
+      width: 138vw;
+      height: 76%;
+      object-position: 45% center;
+      opacity: 0.58;
+    }
+
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      inset: 2% -38% 18% auto !important;
+      width: 138vw !important;
+      height: 76% !important;
+      opacity: 0.22 !important;
+    }
+  }
+
+  /* Codex reference rift composition pass */
+  body.hero-zone::before {
+    opacity: 0.14 !important;
+  }
+
+  #stage {
+    overflow: hidden !important;
+    background: #020303 !important;
+    justify-content: flex-end !important;
+    padding-bottom: clamp(4.5rem, 11vh, 7rem) !important;
+  }
+
+  #hero-rift-art {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: 50% 46% !important;
+    opacity: 0.86 !important;
+    transform: none !important;
+    filter: saturate(1.08) contrast(1.18) brightness(0.64) !important;
+    mask-image: none !important;
+    mix-blend-mode: normal !important;
+  }
+
+  body.hero-zone #hero-rift-art {
+    opacity: 0.9 !important;
+  }
+
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0.15 !important;
+    mix-blend-mode: screen !important;
+    filter: saturate(1.32) contrast(1.18) brightness(0.58) !important;
+    transform: none !important;
+  }
+
+  body.hero-zone #aaa-lightfield {
+    opacity: 0.025 !important;
+  }
+
+  #stage::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    background:
+      radial-gradient(circle at 46% 30%, rgba(0, 0, 0, 0.06) 0 18%, rgba(0, 0, 0, 0.22) 36%, rgba(0, 0, 0, 0.58) 76%),
+      linear-gradient(90deg, rgba(1, 3, 4, 0.86) 0, rgba(1, 3, 4, 0.62) 26%, rgba(1, 3, 4, 0.16) 57%, rgba(1, 3, 4, 0.58) 100%),
+      linear-gradient(180deg, rgba(1, 3, 4, 0.1) 0, rgba(1, 3, 4, 0.1) 44%, rgba(1, 3, 4, 0.96) 100%) !important;
+  }
+
+  #stage::after {
+    z-index: 2 !important;
+    height: 52% !important;
+    background: linear-gradient(180deg, transparent 0, rgba(2, 3, 3, 0.98) 100%) !important;
+  }
+
+  body.aaa-hardware-lit #stage::after {
+    background: linear-gradient(180deg, transparent 0, rgba(2, 3, 3, 0.98) 100%) !important;
+  }
+
+  #stage > :not(#hero-rift):not(#hero-rift-art) {
+    position: relative !important;
+    z-index: 4 !important;
+  }
+
+  #stage .studio,
+  #stage .logline,
+  #stage .format-line {
+    text-shadow: 0 0.7rem 2.4rem rgba(0, 0, 0, 0.84) !important;
+  }
+
+  @media (max-width: 900px) {
+    #stage {
+      padding: 5rem 1rem 8rem !important;
+    }
+
+    #hero-rift-art {
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-position: 48% 42% !important;
+      opacity: 0.68 !important;
+      filter: saturate(1.05) contrast(1.14) brightness(0.54) !important;
+    }
+
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      opacity: 0.1 !important;
+    }
+
+    #stage::before {
+      background:
+        radial-gradient(circle at 50% 22%, rgba(0, 0, 0, 0.06) 0 18%, rgba(0, 0, 0, 0.26) 36%, rgba(0, 0, 0, 0.72) 78%),
+        linear-gradient(180deg, rgba(1, 3, 4, 0.16) 0, rgba(1, 3, 4, 0.28) 42%, rgba(1, 3, 4, 0.97) 100%) !important;
+    }
+  }
+
+  /* Codex rift art cascade fix */
+  #stage > #hero-rift-art,
+  #hero-rift-art {
+    position: absolute !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Codex music player aspect-ratio fix */
+  #music.music-player-section {
+    overflow-x: clip !important;
+  }
+
+  .music-player {
+    grid-template-columns: minmax(0, 1.04fr) minmax(17rem, 0.86fr) !important;
+    align-items: center !important;
+  }
+
+  .music-disc-stage {
+    width: min(100%, 44rem) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    aspect-ratio: 1.34 / 1 !important;
+    max-height: min(62vh, 34rem) !important;
+    justify-self: start !important;
+    overflow: visible !important;
+    --sleeve-size: min(58%, 25rem);
+    --disc-left: 24%;
+    --disc-width: 88%;
+  }
+
+  #music-disc-canvas {
+    inset: 0 auto 0 var(--disc-left) !important;
+    width: var(--disc-width) !important;
+    height: 100% !important;
+    max-width: none !important;
+  }
+
+  .music-sleeve {
+    left: 0 !important;
+    top: 50% !important;
+    width: var(--sleeve-size) !important;
+    max-width: none !important;
+    height: auto !important;
+  }
+
+  .music-disc-stage::before {
+    left: calc(var(--sleeve-size) - 0.45rem) !important;
+    height: calc(var(--sleeve-size) * 0.92) !important;
+  }
+
+  .music-disc-stage::after {
+    left: calc(var(--disc-left) + 29%) !important;
+    width: min(48%, 23.5rem) !important;
+  }
+
+  .music-shadow {
+    left: 5% !important;
+    right: 2% !important;
+    bottom: 3% !important;
+  }
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    .music-disc-stage {
+      --sleeve-size: 60%;
+      --disc-left: 22%;
+      --disc-width: 88%;
+      aspect-ratio: 1.28 / 1 !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .music-player {
+      grid-template-columns: 1fr !important;
+      gap: clamp(1.25rem, 6vw, 2rem) !important;
+    }
+
+    .music-disc-stage {
+      width: min(100%, 38rem) !important;
+      aspect-ratio: 1.26 / 1 !important;
+      max-height: none !important;
+      order: 1 !important;
+      --sleeve-size: 58%;
+      --disc-left: 23%;
+      --disc-width: 91%;
+    }
+
+    #music-disc-canvas {
+      inset: 0 auto 0 var(--disc-left) !important;
+      width: var(--disc-width) !important;
+      height: 100% !important;
+    }
+
+    .music-sleeve {
+      width: var(--sleeve-size) !important;
+      left: 0 !important;
+    }
+
+    .music-disc-stage::before {
+      left: calc(var(--sleeve-size) - 0.35rem) !important;
+      height: calc(var(--sleeve-size) * 0.88) !important;
+    }
+
+    .music-disc-stage::after {
+      left: calc(var(--disc-left) + 29%) !important;
+      width: 50% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .music-disc-stage {
+      aspect-ratio: 1.18 / 1 !important;
+      --sleeve-size: 57%;
+      --disc-left: 22%;
+      --disc-width: 94%;
+    }
+
+    .music-copy {
+      width: 100% !important;
+    }
+
+    .music-actions {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+    }
+
+    .music-actions a {
+      width: 100% !important;
+    }
+  }
+
+  @supports not (overflow: clip) {
+    #music.music-player-section {
+      overflow-x: hidden !important;
+    }
+  }
+
+  /* Codex music phone disc containment */
+  @media (max-width: 480px) {
+    .music-disc-stage {
+      --disc-left: 16%;
+      --disc-width: 84%;
+      --sleeve-size: 57%;
+    }
+
+    .music-disc-stage::after {
+      left: calc(var(--disc-left) + 28%) !important;
+      width: 46% !important;
+    }
+  }
+
+  /* Codex music single CTA */
+  #music .music-actions {
+    width: fit-content !important;
+    max-width: 100% !important;
+  }
+
+  #music .music-actions .play-now {
+    min-width: min(100%, 14rem) !important;
+    justify-content: center !important;
+  }
+
+  @media (max-width: 480px) {
+    #music .music-actions {
+      width: 100% !important;
+    }
+  }
+
+  /* Codex prologue black lion feature */
+  #beginning.passage {
+    grid-template-columns: minmax(18rem, 0.82fr) minmax(0, 0.92fr) !important;
+    align-items: center !important;
+  }
+
+  #beginning .beginning-lion-plate {
+    grid-column: 1 !important;
+    margin: clamp(1.25rem, 3vw, 2rem) 0 0 !important;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(137, 215, 255, 0.18);
+    background: rgba(2, 7, 8, 0.72);
+    box-shadow:
+      0 2rem 5rem rgba(0, 0, 0, 0.48),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    transform: perspective(1000px) rotateY(3deg) rotateX(1deg);
+    transform-origin: left center;
+    isolation: isolate;
+  }
+
+  #beginning .beginning-lion-plate::before,
+  #beginning .beginning-lion-plate::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  #beginning .beginning-lion-plate::before {
+    background:
+      radial-gradient(circle at var(--mx, 52%) var(--my, 40%), rgba(126, 240, 200, 0.18), transparent 11rem),
+      linear-gradient(115deg, transparent 0 36%, rgba(255,255,255,0.12) 45%, transparent 55%),
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.34));
+    mix-blend-mode: screen;
+    opacity: 0.72;
+  }
+
+  #beginning .beginning-lion-plate::after {
+    border: 1px solid rgba(255, 244, 223, 0.07);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.48);
+  }
+
+  #beginning .beginning-lion-plate img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    object-position: center;
+    filter: saturate(0.88) contrast(1.14) brightness(0.84);
+  }
+
+  #beginning.passage p {
+    grid-column: 2 !important;
+  }
+
+  @media (max-width: 900px) {
+    #beginning.passage {
+      display: flex !important;
+      align-items: stretch !important;
+    }
+
+    #beginning .beginning-lion-plate {
+      width: 100% !important;
+      margin: 0.35rem 0 0.75rem !important;
+      transform: none !important;
+    }
+
+    #beginning .beginning-lion-plate img {
+      aspect-ratio: 16 / 10;
+      object-position: center 44%;
+    }
+  }
+
+  /* Codex prologue black lion layout refinement */
+  @media (min-width: 901px) {
+    #beginning.passage {
+      grid-template-rows: auto auto auto auto auto !important;
+      row-gap: 0 !important;
+    }
+
+    #beginning.passage .label {
+      grid-row: 1 !important;
+    }
+
+    #beginning.passage h2 {
+      grid-row: 2 !important;
+    }
+
+    #beginning .beginning-lion-plate {
+      grid-row: 3 / span 3 !important;
+      align-self: start !important;
+      margin-top: clamp(1rem, 2.4vw, 1.7rem) !important;
+    }
+
+    #beginning.passage p:nth-of-type(1) {
+      grid-row: 2 !important;
+      align-self: end !important;
+      margin-top: 0 !important;
+    }
+
+    #beginning.passage p:nth-of-type(2) {
+      grid-row: 3 !important;
+    }
+
+    #beginning.passage p:nth-of-type(3) {
+      grid-row: 4 !important;
+    }
+
+    #beginning .beginning-lion-plate img {
+      aspect-ratio: 16 / 10 !important;
+      object-position: center 48% !important;
+    }
+  }
+
+  /* Codex hero action simplification */
+  #stage .cta {
+    margin-top: 0.85rem !important;
+    padding: 0.84rem 1.05rem !important;
+    min-height: 2.75rem !important;
+    letter-spacing: 0.07em !important;
+  }
+
+  #stage .hero-jumps {
+    width: min(100%, 36rem) !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 0 !important;
+    margin-top: 0.82rem !important;
+    padding: 0 !important;
+    color: rgba(255, 244, 223, 0.46) !important;
+  }
+
+  #stage .hero-jumps a {
+    position: relative !important;
+    overflow: visible !important;
+    border: 0 !important;
+    min-height: 0 !important;
+    padding: 0.2rem 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    color: rgba(255, 244, 223, 0.5) !important;
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.9) !important;
+  }
+
+  #stage .hero-jumps a + a::before {
+    content: "" !important;
+    display: inline-block !important;
+    position: static !important;
+    width: 0.24rem !important;
+    height: 0.24rem !important;
+    margin: 0 0.7rem 0 0.65rem !important;
+    border-radius: 50% !important;
+    background: rgba(126, 240, 200, 0.42) !important;
+    opacity: 1 !important;
+    vertical-align: 0.12em !important;
+    transition: none !important;
+  }
+
+  #stage .hero-jumps a::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: -0.24rem !important;
+    height: 1px !important;
+    background: currentColor !important;
+    transform: scaleX(0) !important;
+    transform-origin: left center !important;
+    opacity: 0.55 !important;
+    transition: transform 180ms ease !important;
+  }
+
+  #stage .hero-jumps a:hover,
+  #stage .hero-jumps a:focus-visible {
+    color: rgba(255, 244, 223, 0.88) !important;
+  }
+
+  #stage .hero-jumps a:hover::after,
+  #stage .hero-jumps a:focus-visible::after {
+    transform: scaleX(1) !important;
+  }
+
+  body.aaa-hardware-lit #stage .hero-jumps a {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  @media (max-width: 860px) {
+    #stage .hero-jumps {
+      display: none !important;
+    }
+  }
+
+  /* Codex hero two-action decision */
+  #stage .hero-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    margin-top: 0.85rem !important;
+    width: min(100%, 28rem) !important;
+  }
+
+  #stage .hero-actions .cta {
+    margin-top: 0 !important;
+    min-height: 2.8rem !important;
+    justify-content: center !important;
+  }
+
+  #stage .hero-actions .cta-primary {
+    flex: 0 0 auto !important;
+  }
+
+  #stage .hero-actions .cta-secondary {
+    flex: 0 0 auto !important;
+    color: rgba(255, 244, 223, 0.82) !important;
+    background: rgba(4, 4, 3, 0.24) !important;
+    background-image:
+      linear-gradient(135deg, rgba(255,255,255,0.035), transparent 44%, rgba(0,0,0,0.18)) !important;
+    border-color: rgba(255, 244, 223, 0.22) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 244, 223, 0.06),
+      0 0.9rem 2.2rem rgba(0, 0, 0, 0.18) !important;
+  }
+
+  #stage .hero-actions .cta-secondary:hover,
+  #stage .hero-actions .cta-secondary:focus-visible {
+    color: rgba(255, 244, 223, 0.96) !important;
+    border-color: rgba(126, 240, 200, 0.42) !important;
+  }
+
+  #stage .hero-jumps {
+    display: none !important;
+  }
+
+  @media (max-width: 860px) {
+    #stage .hero-actions {
+      width: 100% !important;
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 0.65rem !important;
+    }
+
+    #stage .hero-actions .cta {
+      width: 100% !important;
+    }
+  }
+
+  /* Codex hero secondary action softness */
+  #stage .hero-actions {
+    width: min(100%, 23rem) !important;
+  }
+
+  #stage .hero-actions .cta-secondary {
+    min-height: 0 !important;
+    padding: 0.4rem 0.15rem !important;
+    color: rgba(255, 244, 223, 0.66) !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  #stage .hero-actions .cta-secondary::before {
+    display: none !important;
+  }
+
+  #stage .hero-actions .cta-secondary::after {
+    content: "" !important;
+    display: inline-block !important;
+    width: 2rem !important;
+    height: 1px !important;
+    margin-left: 0.75rem !important;
+    background: currentColor !important;
+    opacity: 0.48 !important;
+    transform: translateY(-0.18rem) !important;
+  }
+
+  #stage .hero-actions .cta-secondary:hover,
+  #stage .hero-actions .cta-secondary:focus-visible {
+    color: rgba(255, 244, 223, 0.9) !important;
+  }
+
+  @media (max-width: 860px) {
+    #stage .hero-actions {
+      gap: 0.4rem !important;
+    }
+
+    #stage .hero-actions .cta-secondary {
+      width: fit-content !important;
+      justify-self: center !important;
+      padding: 0.25rem 0.15rem !important;
+    }
+  }
+
+  /* Codex clear global treatment from secondary hero action */
+  body.aaa-hardware-lit #stage .hero-actions .cta-secondary,
+  #stage .hero-actions .cta-secondary {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Codex living hero rift warp */
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    opacity: 0.72 !important;
+    mix-blend-mode: normal !important;
+    filter:
+      saturate(1.2)
+      contrast(1.08)
+      brightness(0.92)
+      drop-shadow(0 0 2.4rem rgba(126, 240, 200, 0.12)) !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      opacity: 0.72 !important;
+      filter: saturate(1.16) contrast(1.06) brightness(0.86) !important;
+    }
+  }
+
+  /* Codex hero warp tuning marker */
+
+  /* Codex music disc proportional containment */
+  .music-disc-stage {
+    --disc-left: 30% !important;
+    --disc-width: 64% !important;
+    --disc-height: 82%;
+  }
+
+  #music-disc-canvas {
+    top: 50% !important;
+    bottom: auto !important;
+    height: var(--disc-height) !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .music-disc-stage::after {
+    left: calc(var(--disc-left) + 20%) !important;
+    width: min(38%, 19rem) !important;
+  }
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    .music-disc-stage {
+      --disc-left: 30% !important;
+      --disc-width: 64% !important;
+      --disc-height: 80%;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .music-disc-stage {
+      --disc-left: 30% !important;
+      --disc-width: 64% !important;
+      --disc-height: 78%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .music-disc-stage {
+      --disc-left: 30% !important;
+      --disc-width: 62% !important;
+      --disc-height: 76%;
+    }
+  }
+
+  /* Codex move Chapter One status out of hero */
+  #stage .aaa-signal {
+    display: none !important;
+  }
+
+  #chapter-one .chapter-status {
+    align-self: center;
+    width: min(100%, 36rem);
+    margin: 1.15rem auto 0;
+    padding: 0.95rem 1.1rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(137, 215, 255, 0.2);
+    background:
+      radial-gradient(circle at var(--mx, 18%) var(--my, 8%), rgba(126, 240, 200, 0.12), transparent 10rem),
+      linear-gradient(135deg, rgba(255,255,255,0.045), transparent 38%, rgba(0,0,0,0.24)),
+      rgba(2, 7, 8, 0.66);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 244, 223, 0.08),
+      0 1.2rem 3.5rem rgba(0, 0, 0, 0.26);
+    color: rgba(255, 244, 223, 0.82);
+    text-align: left;
+    clip-path: polygon(0.45rem 0, calc(100% - 0.45rem) 0, 100% 0.45rem, 100% calc(100% - 0.45rem), calc(100% - 0.45rem) 100%, 0.45rem 100%, 0 calc(100% - 0.45rem), 0 0.45rem);
+  }
+
+  #chapter-one .chapter-status span,
+  #chapter-one .chapter-status small {
+    display: block;
+    color: rgba(126, 240, 200, 0.78);
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  #chapter-one .chapter-status strong {
+    display: block;
+    margin: 0.32rem 0;
+    color: rgba(255, 244, 223, 0.96);
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+
+  #chapter-one .chapter-status small {
+    color: rgba(255, 244, 223, 0.58);
+    line-height: 1.5;
+    text-transform: none;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 700px) {
+    #chapter-one .chapter-status {
+      width: 100%;
+      margin-top: 0.9rem;
+    }
+  }
+
+  /* Codex equal stacked hero buttons */
+  #stage .hero-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: fit-content !important;
+    min-width: 11.75rem !important;
+    gap: 0.55rem !important;
+    margin-top: 0.9rem !important;
+  }
+
+  #stage .hero-actions .cta,
+  #stage .hero-actions .cta-primary,
+  body.aaa-hardware-lit #stage .hero-actions .cta-secondary,
+  #stage .hero-actions .cta-secondary {
+    width: 100% !important;
+    min-width: 11.75rem !important;
+    min-height: 2.8rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0.84rem 1.05rem !important;
+    color: var(--aaa-bone) !important;
+    border: 1px solid var(--aaa-line) !important;
+    background:
+      linear-gradient(135deg, rgba(213, 166, 74, 0.34), rgba(155, 31, 45, 0.18)) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 207, 115, 0.18),
+      0 1.2rem 3rem rgba(0, 0, 0, 0.28) !important;
+    backdrop-filter: blur(14px) !important;
+  }
+
+  #stage .hero-actions .cta-secondary::before {
+    display: block !important;
+  }
+
+  #stage .hero-actions .cta-secondary::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  @media (max-width: 860px) {
+    #stage .hero-actions {
+      width: 100% !important;
+      min-width: 0 !important;
+      gap: 0.65rem !important;
+    }
+
+    #stage .hero-actions .cta,
+    #stage .hero-actions .cta-primary,
+    body.aaa-hardware-lit #stage .hero-actions .cta-secondary,
+    #stage .hero-actions .cta-secondary {
+      min-width: 0 !important;
+      justify-content: center !important;
+    }
+  }
+
+  /* Codex identical hero button treatment */
+  body.aaa-hardware-lit #stage .hero-actions .cta,
+  body.aaa-hardware-lit #stage .hero-actions .cta-primary,
+  body.aaa-hardware-lit #stage .hero-actions .cta-secondary,
+  #stage .hero-actions .cta,
+  #stage .hero-actions .cta-primary,
+  #stage .hero-actions .cta-secondary {
+    background-color: rgba(2, 7, 8, 0.64) !important;
+    background-image:
+      radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(137, 215, 255, 0.13), transparent 8rem),
+      linear-gradient(135deg, rgba(182, 255, 104, 0.035), transparent 35%, rgba(255, 112, 89, 0.05)),
+      repeating-linear-gradient(100deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 9px) !important;
+    border-color: rgba(137, 215, 255, 0.18) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(137, 215, 255, 0.20),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.48),
+      0 1.05rem 3.05rem rgba(0, 0, 0, 0.42),
+      0 0 1.35rem rgba(126, 240, 200, 0.055) !important;
+  }
+  /* Codex temporal fracture rift pass */
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    opacity: 0.82 !important;
+    filter:
+      saturate(1.34)
+      contrast(1.14)
+      brightness(0.92)
+      drop-shadow(0 0 2.8rem rgba(117, 226, 255, 0.16))
+      drop-shadow(0 0 4.4rem rgba(255, 118, 51, 0.10)) !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      opacity: 0.74 !important;
+      filter:
+        saturate(1.24)
+        contrast(1.10)
+        brightness(0.86)
+        drop-shadow(0 0 2.2rem rgba(117, 226, 255, 0.13)) !important;
+    }
+  }
+  /* Codex music disc authentic cover sizing */
+  .music-disc-stage {
+    --sleeve-size: min(58%, 25rem) !important;
+    --disc-left: 26% !important;
+    --disc-width: 64% !important;
+    --disc-height: 100% !important;
+  }
+
+  #music-disc-canvas {
+    inset: auto auto auto var(--disc-left) !important;
+    top: 50% !important;
+    width: var(--disc-width) !important;
+    height: var(--disc-height) !important;
+    transform: translateY(-50%) !important;
+    max-width: none !important;
+  }
+
+  .music-sleeve {
+    width: var(--sleeve-size) !important;
+  }
+
+  .music-disc-stage::before {
+    left: calc(var(--sleeve-size) - 0.36rem) !important;
+    height: calc(var(--sleeve-size) * 0.94) !important;
+  }
+
+  .music-disc-stage::after {
+    left: calc(var(--disc-left) + 18%) !important;
+    width: min(44%, 21rem) !important;
+  }
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    .music-disc-stage {
+      --sleeve-size: 60% !important;
+      --disc-left: 28% !important;
+      --disc-width: 64% !important;
+      --disc-height: 98% !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .music-disc-stage {
+      --sleeve-size: 58% !important;
+      --disc-left: 24% !important;
+      --disc-width: 68% !important;
+      --disc-height: 93% !important;
+    }
+
+    .music-disc-stage::after {
+      left: calc(var(--disc-left) + 18%) !important;
+      width: 45% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .music-disc-stage {
+      --sleeve-size: 57% !important;
+      --disc-left: 22% !important;
+      --disc-width: 70% !important;
+      --disc-height: 86% !important;
+    }
+
+    .music-disc-stage::after {
+      left: calc(var(--disc-left) + 18%) !important;
+      width: 44% !important;
+    }
+  }
+  /* Codex music disc exact cover diameter tune */
+  .music-disc-stage {
+    --disc-height: 104% !important;
+  }
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    .music-disc-stage {
+      --disc-height: 102% !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .music-disc-stage {
+      --disc-height: 97% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .music-disc-stage {
+      --disc-height: 90% !important;
+    }
+  }
+  /* Codex hero rift cinematic glass correction */
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    opacity: 0.70 !important;
+    filter:
+      saturate(1.12)
+      contrast(1.10)
+      brightness(0.90)
+      drop-shadow(0 0 2.2rem rgba(205, 231, 235, 0.10))
+      drop-shadow(0 0 3.8rem rgba(255, 125, 61, 0.08)) !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      opacity: 0.62 !important;
+      filter:
+        saturate(1.08)
+        contrast(1.08)
+        brightness(0.86)
+        drop-shadow(0 0 2rem rgba(205, 231, 235, 0.08)) !important;
+    }
+  }
+  /* Codex ominous portal correction: no scanlines, no crack glow */
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    opacity: 0.54 !important;
+    mix-blend-mode: normal !important;
+    filter:
+      saturate(0.92)
+      contrast(1.06)
+      brightness(0.78)
+      drop-shadow(0 0 2.4rem rgba(0, 0, 0, 0.28)) !important;
+  }
+
+  body.hero-zone #hero-rift-art,
+  #hero-rift-art {
+    filter:
+      saturate(0.96)
+      contrast(1.06)
+      brightness(0.84) !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      opacity: 0.46 !important;
+      filter:
+        saturate(0.90)
+        contrast(1.05)
+        brightness(0.74)
+        drop-shadow(0 0 2rem rgba(0, 0, 0, 0.24)) !important;
+    }
+
+    body.hero-zone #hero-rift-art,
+    #hero-rift-art {
+      filter:
+        saturate(0.94)
+        contrast(1.05)
+        brightness(0.82) !important;
+    }
+  }
+  /* Codex music disc round geometry fix */
+  .music-disc-stage {
+    --sleeve-size: min(58%, 25rem) !important;
+    --disc-size: min(60%, 25.85rem) !important;
+    --disc-left: 28% !important;
+    --disc-width: var(--disc-size) !important;
+    --disc-height: var(--disc-size) !important;
+  }
+
+  #music-disc-canvas {
+    left: var(--disc-left) !important;
+    right: auto !important;
+    top: 50% !important;
+    bottom: auto !important;
+    width: var(--disc-size) !important;
+    height: var(--disc-size) !important;
+    aspect-ratio: 1 / 1 !important;
+    transform: translateY(-50%) !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  .music-sleeve {
+    width: var(--sleeve-size) !important;
+  }
+
+  .music-disc-stage::before {
+    left: calc(var(--sleeve-size) - 0.34rem) !important;
+    height: calc(var(--sleeve-size) * 0.94) !important;
+  }
+
+  .music-disc-stage::after {
+    left: calc(var(--disc-left) + 20%) !important;
+    width: min(44%, 21rem) !important;
+  }
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    .music-disc-stage {
+      --sleeve-size: 60% !important;
+      --disc-size: 62% !important;
+      --disc-left: 29% !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .music-disc-stage {
+      --sleeve-size: 58% !important;
+      --disc-size: 60% !important;
+      --disc-left: 28% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .music-disc-stage {
+      --sleeve-size: 57% !important;
+      --disc-size: 60% !important;
+      --disc-left: 27% !important;
+    }
+  }
+  /* Codex music disc square percentage tune */
+  .music-disc-stage {
+    --disc-left: 26% !important;
+    --disc-width: 66% !important;
+    --disc-height: 89% !important;
+  }
+
+  #music-disc-canvas {
+    left: var(--disc-left) !important;
+    width: var(--disc-width) !important;
+    height: var(--disc-height) !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    .music-disc-stage {
+      --disc-left: 26% !important;
+      --disc-width: 66% !important;
+      --disc-height: 84% !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .music-disc-stage {
+      --disc-left: 26% !important;
+      --disc-width: 66% !important;
+      --disc-height: 83% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .music-disc-stage {
+      --disc-left: 25% !important;
+      --disc-width: 66% !important;
+      --disc-height: 78% !important;
+    }
+  }
+  /* Codex black-hole lensing rift: subtle optical pull */
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    opacity: 0.42 !important;
+    mix-blend-mode: normal !important;
+    filter:
+      saturate(0.88)
+      contrast(1.08)
+      brightness(0.72)
+      drop-shadow(0 0 2.8rem rgba(0, 0, 0, 0.34)) !important;
+  }
+
+  body.hero-zone #hero-rift-art,
+  #hero-rift-art {
+    filter:
+      saturate(0.94)
+      contrast(1.07)
+      brightness(0.82) !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      opacity: 0.36 !important;
+      filter:
+        saturate(0.88)
+        contrast(1.06)
+        brightness(0.72)
+        drop-shadow(0 0 2rem rgba(0, 0, 0, 0.30)) !important;
+    }
+
+    body.hero-zone #hero-rift-art,
+    #hero-rift-art {
+      filter:
+        saturate(0.92)
+        contrast(1.06)
+        brightness(0.80) !important;
+    }
+  }
+  /* Codex Chapter One single status panel */
+  #chapter-one .chapter-status {
+    display: none !important;
+  }
+
+  #chapter-one > .chapter-note {
+    margin-top: 1.05rem !important;
+    margin-bottom: clamp(1.6rem, 4vw, 2.4rem) !important;
+    max-width: 46rem !important;
+  }
+
+  /* Codex colored divider replacement */
+  #content section {
+    border-top: 0 !important;
+  }
+
+  #content section::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 1px !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+    background:
+      linear-gradient(90deg,
+        transparent 0%,
+        rgba(126, 240, 200, 0.52) 24%,
+        rgba(182, 255, 104, 0.24) 50%,
+        rgba(255, 112, 89, 0.34) 76%,
+        transparent 100%) !important;
+    box-shadow:
+      0 0 1.2rem rgba(126, 240, 200, 0.12),
+      0 0 1.8rem rgba(255, 112, 89, 0.08) !important;
+  }
+
+  #content section::before {
+    border-color: rgba(126, 240, 200, 0.14) !important;
+  }
+
+  #content section:nth-of-type(even)::before {
+    border-color: rgba(255, 112, 89, 0.14) !important;
+  }
+
+  #content .rule {
+    background: none !important;
+  }
+
+  #content .rule::before,
+  #content .rule::after {
+    border-color: transparent !important;
+    background:
+      linear-gradient(90deg,
+        transparent 0%,
+        rgba(126, 240, 200, 0.58) 22%,
+        rgba(182, 255, 104, 0.28) 50%,
+        rgba(255, 112, 89, 0.36) 78%,
+        transparent 100%) !important;
+    box-shadow:
+      0 0 1.2rem rgba(126, 240, 200, 0.14),
+      0 0 1.6rem rgba(255, 112, 89, 0.08) !important;
+  }
+
+  /* Codex visible black-hole rift lensing */
+  body.hero-zone #hero-rift,
+  #hero-rift {
+    opacity: 0.88 !important;
+    mix-blend-mode: normal !important;
+    filter:
+      saturate(1.08)
+      contrast(1.14)
+      brightness(0.88)
+      drop-shadow(0 0 3rem rgba(0, 0, 0, 0.42)) !important;
+  }
+
+  body.hero-zone #hero-rift-art,
+  #hero-rift-art {
+    opacity: 0.74 !important;
+    filter:
+      saturate(0.92)
+      contrast(1.08)
+      brightness(0.74) !important;
+  }
+
+  @media (max-width: 900px) {
+    body.hero-zone #hero-rift,
+    #hero-rift {
+      opacity: 0.92 !important;
+      filter:
+        saturate(1.08)
+        contrast(1.12)
+        brightness(0.86)
+        drop-shadow(0 0 2.2rem rgba(0, 0, 0, 0.44)) !important;
+    }
+
+    body.hero-zone #hero-rift-art,
+    #hero-rift-art {
+      opacity: 0.70 !important;
+      filter:
+        saturate(0.90)
+        contrast(1.08)
+        brightness(0.72) !important;
+    }
+  }
+
+  /* Codex premium Chapter One subheaders */
+  #chapter-one .sub {
+    width: 100%;
+  }
+
+  #chapter-one .sub-heading {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, max-content) minmax(8rem, 1fr);
+    align-items: end;
+    gap: clamp(0.85rem, 2.2vw, 1.4rem);
+    width: 100%;
+    margin: clamp(2.5rem, 5vw, 4.25rem) 0 clamp(1.25rem, 2.6vw, 2rem);
+    padding: 0 0 0.85rem;
+    isolation: isolate;
+  }
+
+  #chapter-one .sub-heading::before,
+  #chapter-one .sub-heading::after {
+    content: "";
+    pointer-events: none;
+  }
+
+  #chapter-one .sub-heading::before {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background:
+      linear-gradient(90deg,
+        rgba(126, 240, 200, 0.64),
+        rgba(182, 255, 104, 0.28) 44%,
+        rgba(255, 112, 89, 0.32) 70%,
+        transparent 100%);
+    box-shadow:
+      0 0 1.4rem rgba(126, 240, 200, 0.16),
+      0 0 1.8rem rgba(255, 112, 89, 0.08);
+  }
+
+  #chapter-one .sub-heading::after {
+    width: clamp(4rem, 12vw, 10rem);
+    height: 1px;
+    justify-self: stretch;
+    align-self: center;
+    background:
+      linear-gradient(90deg,
+        rgba(126, 240, 200, 0.36),
+        rgba(255, 112, 89, 0.22),
+        transparent);
+    transform: translateY(-0.2rem);
+  }
+
+  #chapter-one .sub-kicker {
+    grid-column: 1 / -1;
+    width: fit-content;
+    color: rgba(126, 240, 200, 0.78);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(0.68rem, 1.1vw, 0.78rem);
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    line-height: 1;
+    text-transform: uppercase;
+    text-shadow: 0 0 1.2rem rgba(126, 240, 200, 0.16);
+  }
+
+  #chapter-one .sub-heading h3 {
+    margin: 0;
+    color: rgba(255, 244, 223, 0.96);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: clamp(1.7rem, 3.6vw, 3.2rem);
+    font-weight: 920;
+    letter-spacing: 0;
+    line-height: 0.98;
+    text-transform: none;
+    text-wrap: balance;
+  }
+
+  #chapter-one .sub-heading + .plates-2,
+  #chapter-one .sub-heading + .cast-grid {
+    margin-top: 0 !important;
+  }
+
+  #cast > .label {
+    display: none !important;
+  }
+
+  @media (max-width: 700px) {
+    #chapter-one .sub-heading {
+      grid-template-columns: 1fr;
+      gap: 0.55rem;
+      margin-top: clamp(2.1rem, 10vw, 3rem);
+      padding-bottom: 0.72rem;
+    }
+
+    #chapter-one .sub-heading::after {
+      display: none;
+    }
+
+    #chapter-one .sub-heading h3 {
+      font-size: clamp(1.65rem, 9vw, 2.45rem);
+      line-height: 1.02;
+    }
+  }
+
+  /* Codex music single-line boundary */
+  #music.music-player-section::after {
+    display: none !important;
+  }
+
+  #music.music-player-section::before {
+    border: 0 !important;
+    background:
+      radial-gradient(circle at 26% 45%, rgba(126, 240, 200, 0.055), transparent 24rem),
+      radial-gradient(circle at 78% 34%, rgba(255, 112, 89, 0.035), transparent 20rem),
+      linear-gradient(115deg, rgba(137, 215, 255, 0.035), transparent 34%, rgba(182, 255, 104, 0.022)),
+      linear-gradient(180deg, rgba(2, 7, 8, 0.10), rgba(2, 7, 8, 0.012)) !important;
+    box-shadow: none !important;
+  }
+
+  #music.music-player-section {
+    border-top: 0 !important;
+  }
+
+  /* Codex Game section */
+  #game.game-section {
+    display: grid !important;
+    grid-template-columns: minmax(0, 0.86fr) minmax(18rem, 1.14fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center !important;
+    min-height: clamp(34rem, 66vw, 45rem);
+    padding-top: clamp(5rem, 9vw, 8rem) !important;
+    padding-bottom: clamp(5rem, 9vw, 8rem) !important;
+    overflow: clip;
+  }
+
+  #game .game-copy {
+    position: relative;
+    z-index: 2;
+    max-width: 41rem;
+  }
+
+  #game h2 {
+    max-width: 9em !important;
+    font-size: clamp(3.1rem, 8vw, 7rem) !important;
+    line-height: 0.86 !important;
+    letter-spacing: 0 !important;
+  }
+
+  #game .chapter-note {
+    margin-top: 1.35rem !important;
+    max-width: 34rem !important;
+  }
+
+  #game .game-world {
+    position: relative;
+    min-height: clamp(22rem, 41vw, 36rem);
+    transform-style: preserve-3d;
+    perspective: 1200px;
+    isolation: isolate;
+  }
+
+  #game .game-world::before {
+    content: "";
+    position: absolute;
+    inset: 7% 0 5% 7%;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.92) 0 11%, rgba(4, 9, 9, 0.48) 22%, transparent 50%),
+      radial-gradient(circle at 48% 50%, rgba(126, 240, 200, 0.26), transparent 38%),
+      radial-gradient(circle at 62% 42%, rgba(255, 112, 89, 0.14), transparent 36%);
+    filter: blur(0.2px);
+    transform: rotateX(58deg) rotateZ(-12deg) translateZ(-30px);
+    opacity: 0.88;
+  }
+
+  #game .game-world::after {
+    content: "";
+    position: absolute;
+    inset: 10% 3% 8% 0;
+    z-index: 1;
+    border: 1px solid rgba(126, 240, 200, 0.18);
+    background:
+      linear-gradient(90deg, rgba(126, 240, 200, 0.16), transparent 26%, rgba(255, 112, 89, 0.10) 76%, transparent),
+      linear-gradient(180deg, rgba(255, 244, 223, 0.045), transparent 34%, rgba(0, 0, 0, 0.22));
+    clip-path: polygon(7% 0, 100% 10%, 92% 100%, 0 86%);
+    transform: rotateY(-17deg) rotateX(6deg) translateZ(4px);
+    box-shadow:
+      0 2rem 6rem rgba(0, 0, 0, 0.46),
+      inset 0 1px 0 rgba(255, 244, 223, 0.08);
+    opacity: 0.70;
+  }
+
+  #game .game-portal {
+    position: absolute;
+    inset: 2% 6% 0 3%;
+    z-index: 3;
+    background:
+      radial-gradient(circle at 44% 48%, rgba(0, 0, 0, 0.98) 0 10%, rgba(0, 0, 0, 0.46) 17%, transparent 27%),
+      conic-gradient(from 18deg at 44% 48%, rgba(126, 240, 200, 0.0), rgba(126, 240, 200, 0.42), rgba(255, 112, 89, 0.30), rgba(182, 255, 104, 0.24), rgba(126, 240, 200, 0.0)),
+      radial-gradient(circle at 44% 48%, transparent 0 22%, rgba(126, 240, 200, 0.18) 26%, transparent 48%);
+    mask-image: radial-gradient(ellipse at 44% 48%, #000 0 50%, transparent 72%);
+    transform: rotateY(-22deg) rotateX(8deg) translateZ(44px);
+    filter: saturate(1.14) contrast(1.08) drop-shadow(0 0 2.2rem rgba(126, 240, 200, 0.16));
+    animation: gamePortalBreathe 9s ease-in-out infinite;
+  }
+
+  #game .game-axis {
+    position: absolute;
+    z-index: 4;
+    left: 8%;
+    right: 8%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(126, 240, 200, 0.58), rgba(255, 112, 89, 0.32), transparent);
+    transform-origin: 44% 50%;
+    opacity: 0.68;
+  }
+
+  #game .game-axis-a {
+    top: 47%;
+    transform: rotateY(-26deg) rotateZ(-12deg) translateZ(68px);
+  }
+
+  #game .game-axis-b {
+    top: 53%;
+    transform: rotateY(-26deg) rotateZ(17deg) translateZ(54px);
+    opacity: 0.42;
+  }
+
+  #game .game-status {
+    position: absolute;
+    right: clamp(0.5rem, 2vw, 1rem);
+    bottom: clamp(0.5rem, 2vw, 1rem);
+    z-index: 5;
+    width: min(15rem, 60%);
+    padding: 0.85rem 0.95rem;
+    border: 1px solid rgba(126, 240, 200, 0.22);
+    background:
+      linear-gradient(135deg, rgba(2, 7, 8, 0.82), rgba(2, 7, 8, 0.48)),
+      radial-gradient(circle at 20% 0%, rgba(126, 240, 200, 0.12), transparent 70%);
+    box-shadow: 0 1.4rem 3rem rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(14px);
+  }
+
+  #game .game-status span,
+  #game .game-status strong {
+    display: block;
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    text-transform: uppercase;
+  }
+
+  #game .game-status span {
+    color: rgba(126, 240, 200, 0.74);
+    font-size: 0.66rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+  }
+
+  #game .game-status strong {
+    margin-top: 0.34rem;
+    color: rgba(255, 244, 223, 0.94);
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+  }
+
+  @keyframes gamePortalBreathe {
+    0%, 100% {
+      transform: rotateY(-22deg) rotateX(8deg) translateZ(44px) scale(0.985);
+      opacity: 0.78;
+    }
+    50% {
+      transform: rotateY(-22deg) rotateX(8deg) translateZ(54px) scale(1.025);
+      opacity: 0.95;
+    }
+  }
+
+  @media (max-width: 900px) {
+    #game.game-section {
+      grid-template-columns: 1fr;
+      gap: clamp(1.6rem, 8vw, 2.5rem);
+      min-height: 0;
+    }
+
+    #game h2 {
+      font-size: clamp(3rem, 17vw, 4.8rem) !important;
+    }
+
+    #game .game-world {
+      min-height: clamp(20rem, 86vw, 30rem);
+    }
+
+    #game .game-status {
+      width: min(16rem, 74%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #game .game-portal {
+      animation: none !important;
+    }
+  }
+
+  /* Codex cast silhouette constellation */
+  #cast {
+    margin-top: clamp(1rem, 3vw, 2rem) !important;
+  }
+
+  #cast .cast-grid {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    gap: clamp(0.95rem, 2vw, 1.35rem) !important;
+    align-items: center !important;
+    width: 100%;
+    margin-top: clamp(1.2rem, 3vw, 2rem) !important;
+    padding: clamp(1rem, 2.5vw, 2rem) 0 clamp(1.8rem, 4vw, 3.2rem) !important;
+    isolation: isolate;
+  }
+
+  #cast .cast-grid::before {
+    content: "";
+    position: absolute;
+    inset: 5% -2% 10%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(112deg, transparent 3%, rgba(126, 240, 200, 0.24) 17%, transparent 18% 30%, rgba(255, 112, 89, 0.17) 44%, transparent 45% 62%, rgba(126, 240, 200, 0.18) 76%, transparent 77%),
+      linear-gradient(24deg, transparent 8%, rgba(182, 255, 104, 0.11) 27%, transparent 28% 55%, rgba(126, 240, 200, 0.12) 72%, transparent 73%),
+      radial-gradient(circle at 17% 26%, rgba(126, 240, 200, 0.16), transparent 12rem),
+      radial-gradient(circle at 82% 58%, rgba(255, 112, 89, 0.10), transparent 13rem);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    opacity: 0.55;
+    filter: blur(0.2px);
+  }
+
+  #cast .cast,
+  #cast .cast:nth-child(-n + 3),
+  #cast .cast:nth-child(n + 4) {
+    grid-column: span 2 !important;
+    position: relative !important;
+    min-height: 0 !important;
+    aspect-ratio: 3 / 4 !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(126, 240, 200, 0.16) !important;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(126, 240, 200, 0.10), transparent 42%),
+      linear-gradient(180deg, rgba(2, 7, 8, 0.78), rgba(0, 0, 0, 0.92)) !important;
+    box-shadow:
+      0 1.4rem 3.2rem rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 244, 223, 0.055) !important;
+    clip-path: polygon(8% 0, 100% 5%, 92% 100%, 0 94%);
+    transform: translateY(var(--fog-y, 0)) rotate(var(--fog-r, 0deg)) !important;
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  }
+
+  #cast .cast:nth-child(1) { --fog-y: 0.7rem; --fog-r: -1.4deg; }
+  #cast .cast:nth-child(2) { --fog-y: -0.85rem; --fog-r: 1.1deg; }
+  #cast .cast:nth-child(3) { --fog-y: 1.25rem; --fog-r: -0.6deg; }
+  #cast .cast:nth-child(4) { --fog-y: -0.35rem; --fog-r: 1.5deg; }
+  #cast .cast:nth-child(5) { --fog-y: -0.75rem; --fog-r: -1.0deg; }
+  #cast .cast:nth-child(6) { --fog-y: 1.05rem; --fog-r: 1.2deg; }
+  #cast .cast:nth-child(7) { --fog-y: -0.2rem; --fog-r: -1.5deg; }
+  #cast .cast:nth-child(8) { --fog-y: 0.85rem; --fog-r: 0.8deg; }
+
+  #cast .cast:hover,
+  #cast .cast:focus-within {
+    border-color: rgba(126, 240, 200, 0.32) !important;
+    box-shadow:
+      0 1.8rem 4.2rem rgba(0, 0, 0, 0.42),
+      0 0 2.4rem rgba(126, 240, 200, 0.08),
+      inset 0 1px 0 rgba(255, 244, 223, 0.08) !important;
+    transform: translateY(calc(var(--fog-y, 0) - 0.22rem)) rotate(var(--fog-r, 0deg)) !important;
+  }
+
+  #cast .cast .frame {
+    position: absolute !important;
+    inset: 0 !important;
+    height: 100% !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+  }
+
+  #cast .cast img,
+  #cast .cast:nth-child(-n + 3) img,
+  #cast .cast:nth-child(n + 4) img {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+    object-fit: cover !important;
+    object-position: center top !important;
+    filter: grayscale(1) saturate(0) contrast(1.95) brightness(0.16) !important;
+    opacity: 0.92 !important;
+    transform: scale(1.08) !important;
+  }
+
+  #cast .cast::before,
+  #cast .cast:nth-child(-n + 3)::before,
+  #cast .cast:nth-child(n + 4)::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    background:
+      radial-gradient(circle at 50% 26%, transparent 0 18%, rgba(0, 0, 0, 0.50) 45%, rgba(0, 0, 0, 0.88) 100%),
+      linear-gradient(115deg, rgba(126, 240, 200, 0.20), transparent 24%, rgba(255, 112, 89, 0.10) 82%, transparent),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.76)) !important;
+    mix-blend-mode: normal !important;
+  }
+
+  #cast .cast::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 1px !important;
+    z-index: 3 !important;
+    pointer-events: none !important;
+    border: 1px solid rgba(255, 244, 223, 0.045);
+    background:
+      repeating-linear-gradient(90deg, rgba(255, 244, 223, 0.045) 0 1px, transparent 1px 11px),
+      radial-gradient(circle at 50% 21%, rgba(126, 240, 200, 0.18), transparent 34%);
+    opacity: 0.34;
+    clip-path: inherit;
+  }
+
+  #cast .cast figcaption,
+  #cast .cast:nth-child(-n + 3) figcaption,
+  #cast .cast:nth-child(n + 4) figcaption {
+    position: absolute !important;
+    left: 0.72rem !important;
+    right: 0.72rem !important;
+    bottom: 0.72rem !important;
+    z-index: 4 !important;
+    margin: 0 !important;
+    padding: 0.82rem 0.85rem !important;
+    color: rgba(255, 244, 223, 0.92) !important;
+    background:
+      linear-gradient(135deg, rgba(0, 0, 0, 0.68), rgba(2, 7, 8, 0.38)),
+      radial-gradient(circle at 0 0, rgba(126, 240, 200, 0.14), transparent 64%) !important;
+    border: 1px solid rgba(126, 240, 200, 0.14);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif !important;
+    font-size: clamp(0.72rem, 0.95vw, 0.86rem) !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.04em !important;
+    line-height: 1.15 !important;
+    text-align: left !important;
+    text-transform: none !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9), 0 0 1.2rem rgba(126, 240, 200, 0.18) !important;
+    backdrop-filter: blur(12px);
+  }
+
+  @media (max-width: 1100px) and (min-width: 701px) {
+    #cast .cast-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    }
+
+    #cast .cast,
+    #cast .cast:nth-child(-n + 3),
+    #cast .cast:nth-child(n + 4) {
+      grid-column: span 2 !important;
+    }
+  }
+
+  @media (max-width: 700px) {
+    #cast .cast-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 0.86rem !important;
+      padding-top: 0.5rem !important;
+    }
+
+    #cast .cast,
+    #cast .cast:nth-child(1),
+    #cast .cast:nth-child(n + 2),
+    #cast .cast:nth-child(-n + 3),
+    #cast .cast:nth-child(n + 4) {
+      grid-column: span 1 !important;
+      aspect-ratio: 3 / 4 !important;
+      transform: translateY(var(--fog-y-mobile, 0)) rotate(var(--fog-r, 0deg)) !important;
+    }
+
+    #cast .cast:nth-child(odd) { --fog-y-mobile: 0.42rem; }
+    #cast .cast:nth-child(even) { --fog-y-mobile: -0.22rem; }
+
+    #cast .cast figcaption,
+    #cast .cast:nth-child(-n + 3) figcaption,
+    #cast .cast:nth-child(n + 4) figcaption {
+      left: 0.5rem !important;
+      right: 0.5rem !important;
+      bottom: 0.5rem !important;
+      padding: 0.62rem 0.6rem !important;
+      font-size: 0.68rem !important;
+    }
+  }
+
+  /* Codex hero format line under title */
+  #stage .format-line {
+    margin-top: clamp(0.55rem, 1.4vw, 0.95rem) !important;
+    margin-bottom: clamp(0.85rem, 2vw, 1.25rem) !important;
+    color: rgba(126, 240, 200, 0.76) !important;
+    text-shadow: 0 0 1.3rem rgba(126, 240, 200, 0.14) !important;
+  }
+
+  #stage .logline {
+    margin-top: 0 !important;
+  }
+
+  @media (max-width: 860px) {
+    #stage .format-line {
+      margin-top: 0.45rem !important;
+      margin-bottom: 0.75rem !important;
+      font-size: 0.68rem !important;
+    }
+  }
+  /* Codex hero universe-only landing */
+  #stage .logline {
+    display: none !important;
+  }
+
+  #stage .format-line {
+    display: block !important;
+    margin-top: clamp(0.35rem, 1vw, 0.65rem) !important;
+    margin-bottom: clamp(1.05rem, 2.4vw, 1.55rem) !important;
+  }
+
+  #stage .hero-actions {
+    margin-top: 0 !important;
+  }
+  /* Codex hero title lockup alignment */
+  #stage .hero-lockup {
+    display: grid !important;
+    justify-items: stretch !important;
+    width: max-content !important;
+    max-width: min(92vw, 58rem) !important;
+    pointer-events: none !important;
+  }
+
+  #stage .hero-lockup #hello {
+    width: max-content !important;
+    max-width: 100% !important;
+    justify-self: stretch !important;
+  }
+
+  #stage .hero-lockup .studio,
+  #stage .hero-lockup .format-line {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  #stage .hero-lockup .studio {
+    justify-self: start !important;
+    text-align: left !important;
+  }
+
+  #stage .hero-lockup .format-line {
+    justify-self: end !important;
+    text-align: right !important;
+    margin-top: clamp(0.35rem, 1vw, 0.68rem) !important;
+    margin-bottom: clamp(1.05rem, 2.4vw, 1.55rem) !important;
+  }
+
+  @media (max-width: 860px) {
+    #stage .hero-lockup {
+      width: min-content !important;
+      max-width: calc(100vw - 2rem) !important;
+    }
+
+    #stage .hero-lockup .studio,
+    #stage .hero-lockup .format-line {
+      letter-spacing: 0.22em !important;
+    }
+
+    #stage .hero-lockup .format-line {
+      font-size: 0.66rem !important;
+    }
+  }
+  /* Codex publish guard: keep retired ritual UI out of the public page */
+  .aaa-signal,
+  #stage .aaa-signal,
+  #place,
+  #pen,
+  .seal {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 </style>
 </head>
 <body>
 <div id="stage">
-  <span class="studio">BreadFlows Studios Presents</span>
-  <div id="hello">Axiomort</div>
-  <p class="logline">A Dublin man finds a portal in his attic.<br>There are worlds inside a black lion.</p>
-  <p class="format-line">A film told in chapters — Chapter One in production</p>
-  <a class="cta" href="#teaser">▶ &nbsp;Watch Teaser 1</a>
-  <nav>
-    <a href="#beginning">The Beginning</a>
-    <a href="#teaser">Teaser</a>
-    <a href="#chapter-one">Chapter One</a>
-    <a href="#cast">The Cast</a>
-    <a href="#music">Music</a>
-  </nav>
+  <img id="hero-rift-art" src="assets/rifts/axiomort-portal-rift.jpg" alt="" aria-hidden="true">
+  <canvas id="hero-rift" aria-hidden="true"></canvas>
+  <div class="hero-lockup">
+    <span class="studio">BreadFlows Presents</span>
+    <div id="hello">Axiomort</div>
+    <p class="format-line">A universe told in chapters.</p>
+  </div>
+  <div class="hero-actions" aria-label="Primary AXIOMORT actions">
+    <a class="cta cta-primary" href="#teaser">&gt; &nbsp;Watch Teaser 1</a>
+    <a class="cta cta-secondary" href="#chapter-one">&gt; &nbsp;Chapter One</a>
+  </div>
 </div>
 <canvas id="c"></canvas>
 <canvas id="gpuc"></canvas>
+<canvas id="aaa-lightfield" aria-hidden="true"></canvas>
 <div id="place"></div>
 <div id="pen" aria-hidden="true">
   <svg width="26" height="52" viewBox="0 0 26 52">
@@ -343,34 +3802,40 @@
     <section id="beginning" class="passage">
       <span class="label">Prologue</span>
       <h2>In the beginning there was a black lion</h2>
-      <p>The cat was doing what cats do. Then, after one ordinary routine, he becomes host to a parasite — a cosmic, ink-black thing. But this is no ordinary lion. This is god for some, universe for others. There are worlds inside him.</p>
+      <figure class="beginning-lion-plate">
+        <img src="assets/characters/black-lion.jpg" alt="The Black Lion" loading="lazy">
+      </figure>
+      <p>The cat was doing what cats do. Then, after one ordinary routine, he becomes host to a parasite: a cosmic, ink-black thing. But this is no ordinary lion. This is god for some, universe for others. There are worlds inside him.</p>
       <p>In Dublin, a man finds a portal in his attic. He and the lion are quantum-linked: every convulsion inside the lion's universe surfaces in the man's life as another financial scam. As one world falls apart, the other gets billed for it.</p>
       <p>Will the lion's pain end? Will the Dublin man get financial relief? One question is cosmic. The other is not. They share an answer.</p>
     </section>
 
-    <div class="rule">❦</div>
+    <div class="rule">&loz;</div>
 
     <section id="teaser" class="chapter-sec">
-      <span class="label">i · Out Now</span>
+      <span class="label">i &middot; Out Now</span>
       <h2>Teaser One</h2>
-      <p class="chapter-note">The first transmission from the story.</p>
+      <p class="chapter-note">A first look at the world of AXIOMORT.</p>
       <div class="plate" style="margin-top: 30px;">
         <div class="media" id="teaser-media">
           <button class="playbtn" type="button" aria-label="Play AXIOMORT Teaser 1"></button>
         </div>
-        <p class="caption">AXIOMORT — Teaser 1 · out now</p>
+        <p class="caption">AXIOMORT. Teaser 1. Out now.</p>
       </div>
     </section>
 
-    <div class="rule">❦</div>
+    <div class="rule">&loz;</div>
 
     <section id="chapter-one" class="chapter-sec">
-      <span class="label">ii · In Production</span>
-      <h2>Chapter One — The Movie</h2>
-      <p class="chapter-note">The story begins as a film. Release date and first footage to be revealed — what follows is Chapter One as it takes shape.</p>
+      <span class="label">ii &middot; In Production</span>
+      <h2>Chapter One: The Movie</h2>
+      <p class="chapter-note">Chapter One is in production. A Dublin man finds a portal in his attic, and there are worlds inside a black lion. Release timing and final footage will be revealed when ready.</p>
 
       <div class="sub" id="stills">
-      <span class="label">From Chapter One</span>
+      <header class="sub-heading">
+        <span class="sub-kicker">World Frames</span>
+        <h3>From Chapter One</h3>
+      </header>
       <div class="plates-2">
         <figure class="plate wide"><img src="assets/stills/overlook.jpg" alt="Two figures overlook a sprawling ruined city at sunset" loading="lazy"></figure>
         <figure class="plate"><img src="assets/stills/interrogation.jpg" alt="An interrogation room" loading="lazy"></figure>
@@ -380,12 +3845,14 @@
         <figure class="plate wide"><img src="assets/stills/rooftop.jpg" alt="A black mass splattered across a skyscraper rooftop" loading="lazy"></figure>
       </div>
       </div>
-
       <div class="sub" id="cast">
-      <span class="label">Featured in Chapter One</span>
+      <header class="sub-heading">
+        <span class="sub-kicker">Characters</span>
+        <h3>Characters in Chapter One</h3>
+      </header>
       <div class="cast-grid">
         <figure class="cast" data-stone="3"><div class="frame"><img src="assets/characters/evander-questborne.jpg" alt="Evander Questborne" loading="lazy"></div><figcaption>Evander Questborne</figcaption></figure>
-        <figure class="cast" data-stone="4"><div class="frame"><img src="assets/characters/black-lion.jpg" alt="The Black Lion" loading="lazy"></div><figcaption>The Black Lion</figcaption></figure>
+
         <figure class="cast" data-stone="1"><div class="frame"><img src="assets/characters/nyther-solis.jpg" alt="Nyther Solis" loading="lazy"></div><figcaption>Nyther Solis</figcaption></figure>
         <figure class="cast" data-stone="0"><div class="frame"><img src="assets/characters/malik-creed.jpg" alt="Malik Creed" loading="lazy"></div><figcaption>Malik Creed</figcaption></figure>
         <figure class="cast" data-stone="2"><div class="frame"><img src="assets/characters/maya.jpg" alt="Maya" loading="lazy"></div><figcaption>Maya</figcaption></figure>
@@ -397,20 +3864,44 @@
       </div>
     </section>
 
-    <div class="rule">❦</div>
+    <div class="rule">&loz;</div>
 
-    <section id="music">
-      <span class="label">The Sound</span>
-      <h2>Music</h2>
-      <p class="passage">Original music from BreadFlows, released alongside the story.</p>
-      <div class="links">
-        <a href="https://open.spotify.com/artist/3yobavZLdSYOHnAqCPN8AD" target="_blank" rel="noopener">Spotify</a>
-        <a href="https://www.youtube.com/playlist?list=OLAK5uy_kiKDg22GWozeichkwirezck_z8oc3fiq8" target="_blank" rel="noopener">Album</a>
-        <a href="https://youtube.com/@breadflows" target="_blank" rel="noopener">YouTube</a>
+    <section id="music" class="music-player-section">
+      <div class="music-player">
+        <div class="music-disc-stage" aria-hidden="true">
+          <canvas id="music-disc-canvas"></canvas>
+          <img class="music-sleeve" src="assets/music/axiomort-soundtrack-cover.jpg" alt="AXIOMORT soundtrack cover" loading="lazy">
+          <div class="music-shadow"></div>
+        </div>
+        <div class="music-copy">
+          <span class="label">Listen before the film</span>
+          <h2>AXIOMORT Soundtrack</h2>
+          <p class="passage">Listen to AXIOMORT before Chapter One is released with the original soundtrack.</p>
+          <div class="links music-actions">
+            <a class="play-now" href="https://open.spotify.com/artist/3yobavZLdSYOHnAqCPN8AD" target="_blank" rel="noopener" aria-label="Open BreadFlows on Spotify">Play on Spotify</a>
+          </div>
+        </div>
       </div>
     </section>
 
-    <footer>AXIOMORT™ © 2026 BreadFlows Studios</footer>
+    <section id="game" class="game-section">
+      <div class="game-copy">
+        <span class="label">After the Film</span>
+        <h2>THE GAME</h2>
+        <p class="chapter-note">After Chapter One, AXIOMORT continues as a game. The film introduces the world first. The playable version comes afterward.</p>
+      </div>
+      <div class="game-world" aria-hidden="true">
+        <div class="game-portal"></div>
+        <div class="game-axis game-axis-a"></div>
+        <div class="game-axis game-axis-b"></div>
+        <div class="game-status">
+          <span>Playable World</span>
+          <strong>Coming Afterward</strong>
+        </div>
+      </div>
+    </section>
+
+    <footer>AXIOMORT&trade; &copy; 2026 BreadFlows</footer>
 
   </div>
 </main>
@@ -1296,20 +4787,11 @@ const displayShader = `
   }
 
   void main () {
-    vec2 p = vec2(vUv.x * uAspect, vUv.y);
-    vec3 paper = (uWorld < 0.5) ? texture2D(uPaper, vUv).rgb : crtWorld(p, vUv);
+    vec3 paper = texture2D(uPaper, vUv).rgb;
     float dd = clamp(texture2D(uTexture, vUv).r, 0.0, 1.0);
     float ink = 1.0 - pow(1.0 - dd, 1.6);
     vec3 stainInk = mix(vec3(0.52, 0.42, 0.30), vec3(0.07, 0.055, 0.04), smoothstep(0.12, 0.85, ink));
     vec3 col = paper * mix(vec3(1.0), stainInk, ink);
-
-    col = rift(col, p);
-    col = crystal(col, p, vec2(uCrysPos[0].x * uAspect, uCrysPos[0].y),  0.10, 0.034, vec3(0.78, 0.10, 0.10), uWake[0], 0.13); // Malik red
-    col = crystal(col, p, vec2(uCrysPos[1].x * uAspect, uCrysPos[1].y), -0.14, 0.031, vec3(0.05, 0.60, 0.58), uWake[1], 0.37); // Nyther teal
-    col = crystal(col, p, vec2(uCrysPos[2].x * uAspect, uCrysPos[2].y), -0.07, 0.030, vec3(0.46, 0.16, 0.62), uWake[2], 0.55); // Maya purple
-    col = crystal(col, p, vec2(uCrysPos[3].x * uAspect, uCrysPos[3].y),  0.12, 0.032, vec3(0.82, 0.60, 0.12), uWake[3], 0.72); // Evander gold
-    col = crystal(col, p, vec2(uCrysPos[4].x * uAspect, uCrysPos[4].y),  0.03, 0.031, vec3(0.12, 0.55, 0.22), uWake[4], 0.91); // Black Lion green
-
     gl_FragColor = vec4(col, 1.0);
   }
 `;
@@ -1351,6 +4833,17 @@ const blit = (() => {
 // ---------- Framebuffers ----------
 let dye, velocity, divergence, curl, pressure, paper;
 let paperSeed = Math.random() * 100.0; // each load ages a slightly different page
+
+function destroyFBO(f) {
+  if (!f) return;
+  if (f.texture) gl.deleteTexture(f.texture);
+  if (f.fbo) gl.deleteFramebuffer(f.fbo);
+}
+function destroyDoubleFBO(df) {
+  if (!df) return;
+  destroyFBO(df.read);
+  destroyFBO(df.write);
+}
 
 function createFBO (w, h, internalFormat, format, type, filter) {
   gl.activeTexture(gl.TEXTURE0);
@@ -1405,6 +4898,13 @@ function getResolution (resolution) {
 }
 
 function initFramebuffers () {
+  if (dye) destroyDoubleFBO(dye);
+  if (velocity) destroyDoubleFBO(velocity);
+  if (divergence) destroyFBO(divergence);
+  if (curl) destroyFBO(curl);
+  if (pressure) destroyDoubleFBO(pressure);
+  if (paper) destroyFBO(paper);
+
   const simRes = getResolution(config.SIM_RESOLUTION);
   const dyeRes = getResolution(config.DYE_RESOLUTION);
   const texType = ext.halfFloatTexType;
@@ -1694,40 +5194,9 @@ function step (dt) {
 }
 
 function render () {
-  /* the stones ride their cast cards: card rect -> page uv, with a slow bob */
-  const t = performance.now() / 1000;
-  for (let i = 0; i < 5; i++) {
-    const el = stoneEls[i];
-    if (!el) { CRYSTALS[i][0] = -9; CRYSTALS[i][1] = -9; continue; }
-    const r = el.getBoundingClientRect();
-    if (r.bottom < -80 || r.top > window.innerHeight + 80) { CRYSTALS[i][0] = -9; CRYSTALS[i][1] = -9; continue; }
-    const bob = Math.sin(t * 1.3 + i * 1.7) * 7;
-    CRYSTALS[i][0] = (r.left + r.width / 2) / window.innerWidth;
-    CRYSTALS[i][1] = 1 - (r.top - 30 + bob) / window.innerHeight;
-  }
-  for (let i = 0; i < 5; i++) { crystalFlat[i * 2] = CRYSTALS[i][0]; crystalFlat[i * 2 + 1] = CRYSTALS[i][1]; }
-
   displayProgram.bind();
-  gl.uniform2f(displayProgram.uniforms.texelSize, 1.0 / gl.drawingBufferWidth, 1.0 / gl.drawingBufferHeight);
   gl.uniform1i(displayProgram.uniforms.uTexture, dye.read.attach(0));
   gl.uniform1i(displayProgram.uniforms.uPaper, paper.attach(1));
-  gl.uniform1f(displayProgram.uniforms.uTime, performance.now() / 1000);
-  const aspect = gl.drawingBufferWidth / gl.drawingBufferHeight;
-  gl.uniform1f(displayProgram.uniforms.uAspect, aspect);
-  gl.uniform1fv(displayProgram.uniforms['uWake[0]'], crystalWake);
-  gl.uniform2fv(displayProgram.uniforms['uCrysPos[0]'], crystalFlat);
-  gl.uniform1f(displayProgram.uniforms.uRift, rift.open);
-  gl.uniform1f(displayProgram.uniforms.uReach, rift.reach);
-  gl.uniform1f(displayProgram.uniforms.uFlare, rift.flare);
-  gl.uniform1f(displayProgram.uniforms.uWorld, worldType);
-  gl.uniform3f(displayProgram.uniforms.uWorldColor, worldColor[0], worldColor[1], worldColor[2]);
-  gl.uniform1fv(displayProgram.uniforms['uTVSeed[0]'], tvSeeds);
-  gl.uniform1f(displayProgram.uniforms.uDgTV, dgTV);
-  gl.uniform1f(displayProgram.uniforms.uDgT, dgT);
-  gl.uniform3f(displayProgram.uniforms.uRiftColor, rift.color[0], rift.color[1], rift.color[2]);
-  gl.uniform2f(displayProgram.uniforms.uRiftA, rift.a[0] * aspect, rift.a[1]);
-  gl.uniform2f(displayProgram.uniforms.uRiftB, rift.b[0] * aspect, rift.b[1]);
-  gl.uniform2f(displayProgram.uniforms.uPointer, pointer.x, pointer.y);
   blit(null);
 }
 
@@ -1738,6 +5207,7 @@ const crystalWake = new Float32Array(5);
 const CRYSTALS = [[-9, -9], [-9, -9], [-9, -9], [-9, -9], [-9, -9]];
 const crystalFlat = new Float32Array(10).fill(-9);
 const stoneEls = [null, null, null, null, null];
+const stoneRects = [null, null, null, null, null];
 const SOUL_COLORS = [
   [0.78, 0.10, 0.10], // Malik red
   [0.05, 0.60, 0.58], // Nyther teal
@@ -1899,6 +5369,7 @@ function tryWakeCrystal (ux, uy) {
 
 // ---------- Splats (ink drops) ----------
 function splat (x, y, dx, dy, amount, radius) {
+  if (window.__gpuInkReady) return;
   splatProgram.bind();
   gl.uniform2f(splatProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
   gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
@@ -1948,25 +5419,19 @@ function updatePointer (clientX, clientY) {
 canvas.style.touchAction = 'pan-y'; /* leave vertical scroll to the page; drawing still works */
 
 if (window.PointerEvent) {
-  /* Site mode: no free drawing. The canvas only listens for taps on
-     the stones and TVs; ink now answers the interface (see the hover
-     wiring at the end of the page). */
   canvas.addEventListener('pointerdown', e => {
     pointer.isTouch = (e.pointerType !== 'mouse');
     pointer.primed = false;
-    updatePointer(e.clientX, e.clientY); // primes position only
-    tryWakeCrystal(pointer.x, pointer.y) || tryTapTV(pointer.x, pointer.y);
+    updatePointer(e.clientX, e.clientY);
   });
   canvas.addEventListener('pointerup', () => { pointer.primed = false; });
   canvas.addEventListener('pointercancel', () => { pointer.primed = false; });
 } else {
-  // Fallback for ancient browsers
   window.addEventListener('touchstart', e => {
     pointer.isTouch = true;
     const t = e.targetTouches[0];
     pointer.primed = false;
     updatePointer(t.clientX, t.clientY);
-    tryWakeCrystal(pointer.x, pointer.y) || tryTapTV(pointer.x, pointer.y);
   }, { passive: true });
   window.addEventListener('touchend', () => { pointer.primed = false; }, { passive: true });
 }
@@ -2149,13 +5614,12 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 // ---------- Main loop ----------
 let lastTime = performance.now();
 function frame (now) {
-  const rawDt = Math.min((now - lastTime) / 1000, 0.5); // wall-clock, for animation dynamics
-  const dt = Math.min(rawDt, 0.0166);                   // capped, for the sim
+  const rawDt = Math.min((now - lastTime) / 1000, 0.5);
+  const dt = Math.min(rawDt, 0.0166);
   lastTime = now;
 
   if (pointer.moved) {
     const speed = Math.hypot(pointer.dx, pointer.dy);
-    // mouse hover = incidental → faint. touch drag = deliberate → real ink.
     const maxInk  = pointer.isTouch ? 0.55 : config.TRAIL_MAX_INK;
     const radius  = pointer.isTouch ? config.SPLAT_RADIUS * 0.9 : config.TRAIL_RADIUS;
     const amount = Math.min(speed / 4000, 1.0) * maxInk;
@@ -2164,49 +5628,7 @@ function frame (now) {
     pointer.moved = false;
   }
 
-  updateLion(now);
-  const wakeDecay = Math.exp(-0.21 * rawDt);
-  for (let i = 0; i < 5; i++) crystalWake[i] *= wakeDecay; // woken stones settle slowly
-
-  // rift dynamics (time-based: identical feel at any framerate)
-  const k = rift.target > rift.open ? (rift.target > 2.0 ? 5.0 : 4.2) : 2.1;
-  rift.open += (rift.target - rift.open) * Math.min(1.0, k * rawDt);
-  rift.flare *= Math.exp(-4.5 * rawDt);
-
-  // bursts of fibre and ink at the travelling rip-point
-  if (lion.phase === 'tear' && rift.reach > 0.02 && rift.reach < 0.99) {
-    const t = rift.reach;
-    const x = rift.a[0] + (rift.b[0] - rift.a[0]) * t;
-    const y = rift.a[1] + (rift.b[1] - rift.a[1]) * t;
-    window.gpuInk && gpuInk.burst(x, y, 900, 0, 0);
-    splat(x, y, (Math.random() - 0.5) * 800, (Math.random() - 0.5) * 800, 0.25, 0.35);
-    if (Math.random() < 0.3) addShake(0.18);
-  }
-  // during eruption the guardian's ink pours from the open wound
-  if (rift.open > 0.25 && lion.phase === 'erupt') {
-    for (let k = 0; k < 2; k++) {
-      const t = Math.random();
-      const x = rift.a[0] + (rift.b[0] - rift.a[0]) * t;
-      const y = rift.a[1] + (rift.b[1] - rift.a[1]) * t;
-      const nx = -(rift.b[1] - rift.a[1]), ny = (rift.b[0] - rift.a[0]);
-      const s = (Math.random() < 0.5 ? 1 : -1) * (600 + Math.random() * 800);
-      window.gpuInk && gpuInk.burst(x, y, 2500, nx * s * 0.06, ny * s * 0.06);
-      splat(x, y, nx * s, ny * s, 0.6, 0.5);
-    }
-  }
-
-  // screen shake, decaying
-  shakeAmt *= Math.exp(-6.0 * rawDt);
-  if (shakeAmt > 0.002) {
-    const sx = (Math.random() - 0.5) * shakeAmt * 22;
-    const sy = (Math.random() - 0.5) * shakeAmt * 22;
-    document.body.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
-  } else if (document.body.style.transform) {
-    document.body.style.transform = '';
-  }
-
-  penUpdate();
-  step(dt);
+  if (!window.__gpuInkReady) step(dt);
   render();
   requestAnimationFrame(frame);
 }
@@ -2726,16 +6148,864 @@ init().then(() => { document.title += ''; window.__gpuInkReady = true; })
   for (let i = 0; i < 5; i++) {
     stoneEls[i] = document.querySelector('[data-stone="' + i + '"]');
   }
+  function updateStoneRects() {
+    for (let i = 0; i < 5; i++) {
+      if (stoneEls[i]) stoneRects[i] = stoneEls[i].getBoundingClientRect();
+    }
+  }
+  window.addEventListener('scroll', updateStoneRects, { passive: true });
+  window.addEventListener('resize', updateStoneRects, { passive: true });
+  setTimeout(updateStoneRects, 50);
 
   document.querySelector('.playbtn').addEventListener('click', () => {
     const media = document.getElementById('teaser-media');
     const f = document.createElement('iframe');
     f.src = 'https://www.youtube.com/embed/hs5fbREGA9o?rel=0&autoplay=1';
-    f.title = 'AXIOMORT — Teaser 1';
+    f.title = 'AXIOMORT - Teaser 1';
     f.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture';
     f.allowFullscreen = true;
     media.replaceChildren(f);
   });
 </script>
+<script>
+  /* Codex AAA interaction pass: keep the real-time ink tech, retire the
+     shake/tear/roar ritual, and add depth inspection to existing media. */
+  (() => {
+    const hello = document.getElementById('hello');
+    if (hello && !hello.querySelector('.trade')) {
+      hello.innerHTML = 'AXIOMORT<span class="trade">&trade;</span>';
+    }
+
+
+    function setPointerVars(element, event) {
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(rect.width, 1)));
+      const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(rect.height, 1)));
+      element.style.setProperty('--mx', `${x * 100}%`);
+      element.style.setProperty('--my', `${y * 100}%`);
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && (element.classList.contains('plate') || element.classList.contains('cast'))) {
+        element.style.setProperty('--ry', `${((x - 0.5) * 8).toFixed(2)}deg`);
+        element.style.setProperty('--rx', `${((0.5 - y) * 6).toFixed(2)}deg`);
+      }
+    }
+
+    document.querySelectorAll('#stage .cta, #stage nav a, #content a, #content button, .plate, .cast').forEach((element) => {
+      element.addEventListener('pointermove', (event) => setPointerVars(element, event), { passive: true });
+      element.addEventListener('pointerleave', () => {
+        element.style.setProperty('--rx', '0deg');
+        element.style.setProperty('--ry', '0deg');
+      });
+    });
+    try {
+      addShake = function () { shakeAmt = 0; };
+      summonLion = function (soulColor) {
+        if (typeof splat === 'function') {
+          const x = 0.5;
+          const y = 0.5;
+          splat(x, y, 0, 0, 0.22, 0.16);
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2;
+            splat(x + Math.cos(a) * 0.12, y + Math.sin(a) * 0.08, Math.cos(a) * 180, Math.sin(a) * 180, 0.08, 0.08);
+          }
+        }
+        if (window.gpuInk && typeof gpuInk.burst === 'function') {
+          gpuInk.burst(0.5, 0.5, 1200, 0, 0);
+        }
+        if (typeof lion !== 'undefined') {
+          lion.phase = 'idle';
+          lion.active = false;
+          lion.strength = 0;
+          lion.emit = 0;
+        }
+        if (typeof rift !== 'undefined') {
+          rift.active = false;
+          rift.open = 0;
+          rift.shock = 0;
+        }
+      };
+      updateLion = function () {
+        if (typeof lion !== 'undefined') {
+          lion.phase = 'idle';
+          lion.active = false;
+          lion.strength = 0;
+          lion.emit = 0;
+        }
+        if (typeof rift !== 'undefined') {
+          rift.active = false;
+          rift.open = 0;
+          rift.shock = 0;
+        }
+        shakeAmt = 0;
+      };
+    } catch (error) {
+      console.debug('AAA ritual neutralizer skipped:', error);
+    }
+  })();
+</script>
+
+<script>
+  /* Codex AAA lightfield: real-time procedural normal mapped surface.
+     The shader creates height, normals, pointer light, scroll veins,
+     and exposes the same light position to the HTML material system. */
+  (() => {
+    const canvas = document.getElementById('aaa-lightfield');
+    if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const gl = canvas.getContext('webgl', {
+      alpha: false,
+      depth: false,
+      stencil: false,
+      antialias: false,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance'
+    });
+
+    const root = document.documentElement;
+    document.body.classList.add('aaa-hardware-lit');
+
+    let pointerX = 0.52;
+    let pointerY = 0.36;
+    let targetX = pointerX;
+    let targetY = pointerY;
+    let lastScroll = -1;
+
+    function setLightVars() {
+      root.style.setProperty('--light-x', `${(pointerX * 100).toFixed(2)}%`);
+      root.style.setProperty('--light-y', `${(pointerY * 100).toFixed(2)}%`);
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      const scrollT = Math.min(1, Math.max(0, scrollY / maxScroll));
+      root.style.setProperty('--scroll-glow', (0.25 + Math.sin(scrollT * Math.PI) * 0.75).toFixed(3));
+    }
+
+    addEventListener('pointermove', (event) => {
+      targetX = event.clientX / Math.max(innerWidth, 1);
+      targetY = event.clientY / Math.max(innerHeight, 1);
+    }, { passive: true });
+
+    if (!gl) {
+      setLightVars();
+      addEventListener('scroll', setLightVars, { passive: true });
+      return;
+    }
+
+    const vertexSource = `
+      attribute vec2 aPos;
+      varying vec2 vUv;
+      void main() {
+        vUv = aPos * 0.5 + 0.5;
+        gl_Position = vec4(aPos, 0.0, 1.0);
+      }
+    `;
+
+    const fragmentSource = `
+      precision highp float;
+      varying vec2 vUv;
+      uniform sampler2D uImage;
+      uniform vec2 uResolution;
+      uniform vec2 uImageSize;
+      uniform vec2 uPointer;
+      uniform float uTime;
+
+      float hash(vec2 p) {
+        p = fract(p * vec2(127.1, 311.7));
+        p += dot(p, p + 74.7);
+        return fract(p.x * p.y);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+      }
+
+      float fbm(vec2 p) {
+        float v = 0.0;
+        float a = 0.5;
+        mat2 m = mat2(0.82, -0.57, 0.57, 0.82);
+        for (int i = 0; i < 5; i++) {
+          v += noise(p) * a;
+          p = m * p * 2.08 + 19.3;
+          a *= 0.5;
+        }
+        return v;
+      }
+
+      mat2 rot(float a) {
+        float s = sin(a);
+        float c = cos(a);
+        return mat2(c, -s, s, c);
+      }
+
+      vec2 coverUv(vec2 uv) {
+        float imageAspect = uImageSize.x / max(uImageSize.y, 1.0);
+        float canvasAspect = uResolution.x / max(uResolution.y, 1.0);
+        vec2 outUv = uv;
+        if (imageAspect > canvasAspect) {
+          float scale = canvasAspect / imageAspect;
+          outUv.x = (uv.x - 0.5) * scale + 0.5;
+        } else {
+          float scale = imageAspect / canvasAspect;
+          outUv.y = (uv.y - 0.5) * scale + 0.5;
+        }
+        return outUv;
+      }
+
+      vec3 sampleArt(vec2 uv) {
+        uv = clamp(coverUv(uv), vec2(0.001), vec2(0.999));
+        return texture2D(uImage, uv).rgb;
+      }
+
+      float cellId(vec2 p) {
+        return hash(floor(p));
+      }
+
+      float fractureField(vec2 p, out float id) {
+        vec2 g = floor(p);
+        vec2 f = fract(p);
+        float d1 = 10.0;
+        float d2 = 10.0;
+        id = 0.0;
+        for (int y = -1; y <= 1; y++) {
+          for (int x = -1; x <= 1; x++) {
+            vec2 lattice = vec2(float(x), float(y));
+            vec2 seed = lattice + vec2(hash(g + lattice + 3.1), hash(g + lattice + 9.7));
+            seed = 0.5 + 0.5 * sin(6.2831 * seed + uTime * vec2(0.10, -0.08));
+            vec2 diff = lattice + seed - f;
+            float d = dot(diff, diff);
+            if (d < d1) {
+              d2 = d1;
+              d1 = d;
+              id = hash(g + lattice * 17.0);
+            } else if (d < d2) {
+              d2 = d;
+            }
+          }
+        }
+        return sqrt(d2) - sqrt(d1);
+      }
+
+      void main() {
+        vec2 uv = vUv;
+        float aspect = uResolution.x / max(uResolution.y, 1.0);
+        vec2 center = vec2(0.48, 0.43);
+        vec2 p = uv - center;
+        p.x *= aspect;
+
+        vec2 pointer = uPointer - vec2(0.5);
+        pointer.x *= aspect;
+        p -= pointer * 0.018;
+
+        float radius = length(p);
+        float angle = atan(p.y, p.x);
+        float breath = sin(uTime * 0.82) * 0.5 + 0.5;
+        float portal = smoothstep(0.64, 0.08, radius);
+        float mouth = smoothstep(0.255, 0.045, radius);
+        float eventEdge = smoothstep(0.36, 0.19, radius) * smoothstep(0.055, 0.21, radius);
+
+        vec2 pCore = rot(0.24 / (radius + 0.13) + uTime * 0.025) * p;
+        vec2 radialUv = vec2(pCore.x / aspect, pCore.y);
+        float turbulence = fbm(vec2(angle * 1.9, radius * 6.8) + vec2(uTime * 0.13, -uTime * 0.24));
+
+        float ringA = 1.0 - smoothstep(0.006, 0.038, abs(radius - (0.244 + sin(uTime * 0.82) * 0.010)));
+        float ringB = 1.0 - smoothstep(0.006, 0.034, abs(radius - (0.352 + sin(uTime * 0.54 + 1.8) * 0.013)));
+        float ringC = 1.0 - smoothstep(0.004, 0.025, abs(radius - (0.452 + sin(uTime * 0.39 + 3.1) * 0.016)));
+        float rings = clamp(ringA * 0.72 + ringB * 0.50 + ringC * 0.30, 0.0, 1.0);
+
+        float fractureId = 0.0;
+        vec2 shardSpace = rot(-0.42) * (p * vec2(2.8, 2.1) + vec2(0.03 * sin(uTime * 0.18), 0.0));
+        float fracture = fractureField(shardSpace * 4.0, fractureId);
+        float shardLine = smoothstep(0.040, 0.006, fracture) * smoothstep(0.66, 0.18, radius);
+        float shardMask = smoothstep(0.60, 0.14, radius) * (1.0 - mouth * 0.45);
+        float shardPulse = smoothstep(0.18, 0.92, sin(uTime * 1.25 + fractureId * 9.0 + radius * 12.0) * 0.5 + 0.5);
+
+        float sliceIndex = floor((uv.y + sin(uv.x * 8.0 + uTime * 0.55) * 0.010) * 22.0);
+        float sliceId = hash(vec2(sliceIndex, floor(uTime * 1.35)));
+        float sliceWake = smoothstep(0.88, 1.0, sin(uv.y * 86.0 + uTime * 4.1 + sliceId * 6.2) * 0.5 + 0.5);
+        float sliceMask = sliceWake * smoothstep(0.61, 0.18, radius) * (1.0 - mouth * 0.70);
+        vec2 sliceShift = vec2((sliceId - 0.5) * 0.026, (hash(vec2(sliceId, 4.2)) - 0.5) * 0.010) * sliceMask;
+
+        vec2 shardNormal = normalize(vec2(
+          noise(shardSpace * 9.0 + fractureId + uTime * 0.05) - 0.5,
+          noise(shardSpace.yx * 9.0 - fractureId - uTime * 0.04) - 0.5
+        ) + p * 1.55);
+
+        vec2 warp = radialUv * (0.020 + 0.052 * portal + 0.024 * rings);
+        warp += shardNormal * (0.010 + 0.030 * shardLine + 0.014 * shardPulse) * shardMask;
+        warp += vec2(cos(angle + uTime * 0.70), sin(angle - uTime * 0.48)) * (0.004 + 0.012 * portal) * eventEdge;
+        warp += vec2(turbulence - 0.5, fbm(p * 5.6 - uTime * 0.11) - 0.5) * 0.017 * portal;
+        warp += sliceShift;
+
+        float chroma = (0.004 + 0.018 * rings + 0.020 * shardLine + 0.012 * sliceMask) * smoothstep(0.66, 0.15, radius);
+        vec2 caDir = normalize(vec2(cos(angle + fractureId * 6.2831), sin(angle - fractureId * 4.2)));
+        vec3 base = sampleArt(uv + warp);
+        vec3 split;
+        split.r = sampleArt(uv + warp + caDir * chroma + vec2(0.006, 0.0) * sliceMask).r;
+        split.g = sampleArt(uv + warp - shardNormal * chroma * 0.18).g;
+        split.b = sampleArt(uv + warp - caDir * chroma * 0.86 - vec2(0.004, 0.0) * sliceMask).b;
+
+        float caustic = smoothstep(0.70, 0.97, sin(angle * 10.0 - uTime * 1.35 + turbulence * 5.4)) * eventEdge * (0.40 + breath * 0.45);
+        float crystalline = shardLine * (0.36 + 0.52 * shardPulse) + sliceMask * 0.36;
+        float edgeSpark = smoothstep(0.992, 1.0, noise(vec2(angle * 34.0, radius * 150.0) + uTime * 0.72)) * eventEdge;
+        vec3 prism = vec3(0.35, 0.86, 1.0) * caustic * 0.58
+          + vec3(1.0, 0.45, 0.18) * rings * 0.46
+          + vec3(0.62, 0.94, 1.0) * crystalline * 0.38
+          + vec3(0.76, 1.0, 0.58) * edgeSpark * 0.75;
+
+        float temporalDim = 1.0 - sliceMask * 0.18 - shardLine * 0.08;
+        vec3 color = mix(base, split, 0.82) * (0.86 + portal * 0.20) * temporalDim;
+        color += prism;
+        color = mix(color, vec3(0.0), mouth * 0.46);
+
+        float alpha = clamp(portal * 0.28 + rings * 0.64 + caustic * 0.38 + crystalline * 0.34 + edgeSpark * 0.44, 0.0, 0.92);
+        alpha *= smoothstep(0.78, 0.12, radius);
+        gl_FragColor = vec4(color, alpha);
+      }
+    `;
+
+    function compile(type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(shader) || 'Shader compile failed');
+      }
+      return shader;
+    }
+
+    let program;
+    try {
+      program = gl.createProgram();
+      gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource));
+      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(program) || 'Shader link failed');
+      }
+    } catch (error) {
+      console.warn('AAA lightfield fallback:', error);
+      setLightVars();
+      return;
+    }
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+    const aPos = gl.getAttribLocation(program, 'aPos');
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uPointer = gl.getUniformLocation(program, 'uPointer');
+    const uTime = gl.getUniformLocation(program, 'uTime');
+    const uScroll = gl.getUniformLocation(program, 'uScroll');
+
+    function resize() {
+      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      const w = Math.max(1, Math.floor(innerWidth * dpr));
+      const h = Math.max(1, Math.floor(innerHeight * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    }
+
+    function frame(time) {
+      resize();
+      pointerX += (targetX - pointerX) * 0.075;
+      pointerY += (targetY - pointerY) * 0.075;
+
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      const scrollT = Math.min(1, Math.max(0, scrollY / maxScroll));
+      if (Math.abs(scrollT - lastScroll) > 0.001) {
+        lastScroll = scrollT;
+        setLightVars();
+      }
+
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
+      gl.uniform2f(uPointer, pointerX, 1.0 - pointerY);
+      gl.uniform1f(uTime, time * 0.001);
+      gl.uniform1f(uScroll, scrollT);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(frame);
+    }
+
+    addEventListener('resize', resize, { passive: true });
+    setLightVars();
+    requestAnimationFrame(frame);
+  })();
+</script>
+<script>
+  /* Codex GPU soundtrack disc: a procedural 3D-feeling disc, not a static mockup. */
+  (() => {
+    const canvas = document.getElementById('music-disc-canvas');
+    const stage = document.querySelector('.music-disc-stage');
+    if (!canvas || !stage) return;
+
+    const gl = canvas.getContext('webgl', {
+      alpha: true,
+      depth: false,
+      stencil: false,
+      antialias: true,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance'
+    });
+    if (!gl) return;
+
+    const vertexSource = `
+      attribute vec2 aPos;
+      varying vec2 vUv;
+      void main() {
+        vUv = aPos * 0.5 + 0.5;
+        gl_Position = vec4(aPos, 0.0, 1.0);
+      }
+    `;
+
+    const fragmentSource = `
+      precision highp float;
+      varying vec2 vUv;
+      uniform vec2 uResolution;
+      uniform vec2 uPointer;
+      uniform float uTime;
+
+      float hash(vec2 p) {
+        p = fract(p * vec2(123.34, 345.45));
+        p += dot(p, p + 34.23);
+        return fract(p.x * p.y);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0,0.0)), u.x), mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+      }
+
+      void main() {
+        vec2 uv = vUv;
+        vec2 p = uv - vec2(0.50, 0.50);
+        p.x *= uResolution.x / max(uResolution.y, 1.0);
+
+        float tilt = 1.0;
+        p.y /= tilt;
+        float r = length(p);
+        float a = atan(p.y, p.x);
+        float spin = uTime * 0.55;
+
+        float outer = smoothstep(0.490, 0.475, r);
+        float inner = smoothstep(0.078, 0.095, r);
+        float alpha = outer * inner;
+        float rim = smoothstep(0.472, 0.452, r) - smoothstep(0.415, 0.395, r);
+        float hole = smoothstep(0.12, 0.102, r);
+        float label = smoothstep(0.165, 0.145, r) * inner;
+        float grooves = sin(r * 430.0 + noise(vec2(a * 4.0, r * 32.0)) * 4.0);
+        grooves = smoothstep(0.52, 0.9, grooves) * 0.18;
+        float bands = sin(r * 78.0 - spin * 5.0) * 0.5 + 0.5;
+        float glint = pow(max(cos(a - spin - 0.7), 0.0), 26.0) * smoothstep(0.13, 0.42, r);
+        float glint2 = pow(max(cos(a - spin * 0.62 + 2.4), 0.0), 36.0) * smoothstep(0.2, 0.44, r);
+        float pointer = exp(-dot((uv - uPointer) * vec2(1.4, 1.0), (uv - uPointer) * vec2(1.4, 1.0)) * 7.0);
+
+        vec3 vinyl = vec3(0.006, 0.007, 0.008);
+        vec3 graphite = vec3(0.045, 0.050, 0.052);
+        vec3 cyan = vec3(0.20, 0.86, 1.00);
+        vec3 magenta = vec3(1.00, 0.10, 0.52);
+        vec3 acid = vec3(0.62, 1.00, 0.36);
+        vec3 labelColor = vec3(0.86, 0.90, 0.86);
+
+        vec3 color = mix(vinyl, graphite, bands * 0.16 + grooves);
+        color += cyan * glint * 0.72;
+        color += magenta * glint2 * 0.34;
+        color += acid * rim * 0.18;
+        color += cyan * pointer * 0.08 * alpha;
+        color = mix(color, labelColor, label * 0.88);
+        color *= 0.82 + smoothstep(0.46, 0.12, r) * 0.38;
+        color += vec3(0.0, 0.0, 0.0) * hole;
+
+        alpha *= smoothstep(0.505, 0.488, r);
+        gl_FragColor = vec4(color, alpha);
+      }
+    `;
+
+    function compile(type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(shader) || 'Disc shader compile failed');
+      }
+      return shader;
+    }
+
+    let program;
+    try {
+      program = gl.createProgram();
+      gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource));
+      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(program) || 'Disc shader link failed');
+      }
+    } catch (error) {
+      console.warn('Music disc shader fallback:', error);
+      return;
+    }
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+    const aPos = gl.getAttribLocation(program, 'aPos');
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uPointer = gl.getUniformLocation(program, 'uPointer');
+    const uTime = gl.getUniformLocation(program, 'uTime');
+    const pointer = { x: 0.62, y: 0.42 };
+    const target = { x: 0.62, y: 0.42 };
+
+    stage.addEventListener('pointermove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      target.x = (event.clientX - rect.left) / Math.max(rect.width, 1);
+      target.y = 1.0 - (event.clientY - rect.top) / Math.max(rect.height, 1);
+    }, { passive: true });
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    }
+
+    function frame(time) {
+      resize();
+      pointer.x += (target.x - pointer.x) * 0.08;
+      pointer.y += (target.y - pointer.y) * 0.08;
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
+      gl.uniform2f(uPointer, pointer.x, pointer.y);
+      gl.uniform1f(uTime, time * 0.001);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+  })();
+</script>
+<script>
+  /* Codex hero rift warp: animate the real attic portal art, not a generic tear. */
+  (() => {
+    const canvas = document.getElementById('hero-rift');
+    const stage = document.getElementById('stage');
+    const art = document.getElementById('hero-rift-art');
+    if (!canvas || !stage || !art || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const gl = canvas.getContext('webgl', {
+      alpha: true,
+      depth: false,
+      stencil: false,
+      antialias: false,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance'
+    });
+    if (!gl) return;
+
+    canvas.dataset.heroWarp = 'booting';
+
+    const vertexSource = `
+      attribute vec2 aPos;
+      varying vec2 vUv;
+      void main() {
+        vUv = aPos * 0.5 + 0.5;
+        gl_Position = vec4(aPos, 0.0, 1.0);
+      }
+    `;
+
+    const fragmentSource = `
+      precision highp float;
+      varying vec2 vUv;
+      uniform sampler2D uImage;
+      uniform vec2 uResolution;
+      uniform vec2 uImageSize;
+      uniform vec2 uPointer;
+      uniform float uTime;
+
+      float hash(vec2 p) {
+        p = fract(p * vec2(127.1, 311.7));
+        p += dot(p, p + 74.7);
+        return fract(p.x * p.y);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+      }
+
+      float fbm(vec2 p) {
+        float v = 0.0;
+        float a = 0.5;
+        mat2 m = mat2(0.82, -0.57, 0.57, 0.82);
+        for (int i = 0; i < 5; i++) {
+          v += noise(p) * a;
+          p = m * p * 2.04 + 19.3;
+          a *= 0.5;
+        }
+        return v;
+      }
+
+      vec2 coverUv(vec2 uv) {
+        float imageAspect = uImageSize.x / max(uImageSize.y, 1.0);
+        float canvasAspect = uResolution.x / max(uResolution.y, 1.0);
+        vec2 outUv = uv;
+        if (imageAspect > canvasAspect) {
+          float scale = canvasAspect / imageAspect;
+          outUv.x = (uv.x - 0.5) * scale + 0.5;
+        } else {
+          float scale = imageAspect / canvasAspect;
+          outUv.y = (uv.y - 0.5) * scale + 0.5;
+        }
+        return outUv;
+      }
+
+      vec3 sampleArt(vec2 uv) {
+        uv = clamp(coverUv(uv), vec2(0.001), vec2(0.999));
+        return texture2D(uImage, uv).rgb;
+      }
+
+      void main() {
+        vec2 uv = vUv;
+        float aspect = uResolution.x / max(uResolution.y, 1.0);
+
+        vec2 center = vec2(0.486, 0.427);
+        vec2 p = uv - center;
+        p.x *= aspect;
+
+        vec2 pointer = uPointer - vec2(0.5);
+        pointer.x *= aspect;
+        p -= pointer * 0.010;
+
+        float r = length(p);
+        vec2 dir = normalize(p + vec2(0.00017, -0.00013));
+        vec2 tangent = vec2(-dir.y, dir.x);
+        float angle = atan(p.y, p.x);
+
+        float breath = 0.5 + 0.5 * sin(uTime * 0.19);
+        float drift = fbm(vec2(angle * 1.24, r * 8.2) + vec2(uTime * 0.030, -uTime * 0.018));
+        float innerDrift = fbm(vec2(angle * 2.05 + uTime * 0.035, r * 14.0 - uTime * 0.020));
+        float ringWave = sin(r * 39.0 - uTime * 0.34 + drift * 3.7) * 0.5 + 0.5;
+
+        float field = smoothstep(0.86, 0.085, r);
+        float ring = smoothstep(0.58, 0.18, r) * smoothstep(0.070, 0.285, r);
+        float eventCore = smoothstep(0.255, 0.045, r);
+        float innerMouth = smoothstep(0.175, 0.030, r);
+
+        float gravity = 0.038 / (r * 1.9 + 0.115);
+        float radialFold = sin((r * 28.0) - uTime * 0.22 + drift * 3.0) * 0.010 * ring;
+        float pull = gravity * field * (0.82 + breath * 0.18 + ringWave * 0.22);
+        float spin = (0.050 / (r + 0.17)) * ring * (0.72 + innerDrift * 0.36);
+
+        vec2 lens = dir * pull;
+        lens += tangent * spin;
+        lens += dir * radialFold;
+        lens += tangent * (drift - 0.5) * field * 0.014;
+
+        vec2 uvWarp = uv + lens;
+        vec3 warped = sampleArt(uvWarp);
+
+        float ca = (0.006 + ring * 0.018 + eventCore * 0.012) * (0.65 + ringWave * 0.35);
+        vec3 split;
+        split.r = sampleArt(uvWarp + dir * ca + tangent * ca * 0.35).r;
+        split.g = sampleArt(uvWarp - dir * ca * 0.18).g;
+        split.b = sampleArt(uvWarp - dir * ca - tangent * ca * 0.25).b;
+
+        vec3 color = mix(warped, split, ring * 0.78 + eventCore * 0.44);
+        float pressure = ring * (0.10 + ringWave * 0.17) + eventCore * 0.30;
+        color *= 1.02 - pressure;
+        color = mix(color, vec3(0.0), innerMouth * 0.76);
+
+        float amber = smoothstep(0.84, 0.995, ringWave) * ring * 0.11;
+        float coldEdge = smoothstep(0.18, 0.62, ring) * (0.55 + drift * 0.45) * 0.045;
+        color += vec3(0.42, 0.17, 0.055) * amber;
+        color += vec3(0.08, 0.30, 0.31) * coldEdge;
+
+        float alpha = field * 0.36 + ring * 0.36 + eventCore * 0.30;
+        alpha *= smoothstep(0.90, 0.060, r);
+        alpha = clamp(alpha, 0.0, 0.84);
+
+        gl_FragColor = vec4(color, alpha);
+      }
+    `;
+
+    function compile(type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(shader) || 'Hero warp shader compile failed');
+      }
+      return shader;
+    }
+
+    let program;
+    try {
+      program = gl.createProgram();
+      gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource));
+      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(program) || 'Hero warp shader link failed');
+      }
+    } catch (error) {
+      canvas.dataset.heroWarp = 'fallback';
+      console.warn('Hero warp fallback:', error);
+      return;
+    }
+
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+    const aPos = gl.getAttribLocation(program, 'aPos');
+    const uImage = gl.getUniformLocation(program, 'uImage');
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uImageSize = gl.getUniformLocation(program, 'uImageSize');
+    const uPointer = gl.getUniformLocation(program, 'uPointer');
+    const uTime = gl.getUniformLocation(program, 'uTime');
+    const pointer = { x: 0.52, y: 0.50 };
+    const target = { x: 0.52, y: 0.50 };
+    let textureReady = false;
+
+    function uploadTexture() {
+      if (!art.complete || !art.naturalWidth) return;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, art);
+      textureReady = true;
+      canvas.dataset.heroWarpTexture = 'ready';
+    }
+
+    if (art.complete && art.naturalWidth) {
+      uploadTexture();
+    } else {
+      art.addEventListener('load', uploadTexture, { once: true });
+    }
+
+    stage.addEventListener('pointermove', (event) => {
+      const rect = stage.getBoundingClientRect();
+      target.x = (event.clientX - rect.left) / Math.max(rect.width, 1);
+      target.y = (event.clientY - rect.top) / Math.max(rect.height, 1);
+    }, { passive: true });
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    }
+
+    function frame(time) {
+      resize();
+      if (!textureReady) uploadTexture();
+      pointer.x += (target.x - pointer.x) * 0.055;
+      pointer.y += (target.y - pointer.y) * 0.055;
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      if (textureReady) {
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.useProgram(program);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(uImage, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.enableVertexAttribArray(aPos);
+        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+        gl.uniform2f(uResolution, canvas.width, canvas.height);
+        gl.uniform2f(uImageSize, art.naturalWidth || 2200, art.naturalHeight || 1228);
+        gl.uniform2f(uPointer, pointer.x, pointer.y);
+        gl.uniform1f(uTime, time * 0.001);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        canvas.dataset.heroWarp = 'running';
+      }
+      requestAnimationFrame(frame);
+    }
+
+    addEventListener('resize', resize, { passive: true });
+    requestAnimationFrame(frame);
+  })();
+</script>
+<script>
+  /* Codex hero focus toggle: only the hero rift owns the first viewport. */
+  (() => {
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+
+    function updateHeroZone() {
+      const rect = stage.getBoundingClientRect();
+      const active = rect.bottom > innerHeight * 0.18 && rect.top < innerHeight * 0.72;
+      document.body.classList.toggle('hero-zone', active);
+    }
+
+    addEventListener('scroll', updateHeroZone, { passive: true });
+    addEventListener('resize', updateHeroZone, { passive: true });
+    updateHeroZone();
+  })();
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
