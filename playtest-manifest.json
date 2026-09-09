@@ -1,0 +1,182 @@
+{
+  "profile": "universe-and-survival",
+  "files": [
+    {
+      "path": "cinematic/favicon.svg",
+      "bytes": 409
+    },
+    {
+      "path": "index.html",
+      "bytes": 5551
+    },
+    {
+      "path": "landing/arrival.webp",
+      "bytes": 527606
+    },
+    {
+      "path": "landing/campaign-v1.webp",
+      "bytes": 323940
+    },
+    {
+      "path": "landing/expedition.webp",
+      "bytes": 425742
+    },
+    {
+      "path": "landing/gameplay/island.webp",
+      "bytes": 62240
+    },
+    {
+      "path": "landing/gameplay/rift.webp",
+      "bytes": 51976
+    },
+    {
+      "path": "landing/gameplay/shelter.webp",
+      "bytes": 114496
+    },
+    {
+      "path": "landing/refuge.webp",
+      "bytes": 482280
+    },
+    {
+      "path": "landing/site.css",
+      "bytes": 11325
+    },
+    {
+      "path": "landing/site.js",
+      "bytes": 4011
+    },
+    {
+      "path": "runtime/addons/environments/RoomEnvironment.js",
+      "bytes": 4960
+    },
+    {
+      "path": "runtime/addons/loaders/GLTFLoader.js",
+      "bytes": 117570
+    },
+    {
+      "path": "runtime/addons/objects/SkyMesh.js",
+      "bytes": 12862
+    },
+    {
+      "path": "runtime/addons/utils/BufferGeometryUtils.js",
+      "bytes": 37712
+    },
+    {
+      "path": "runtime/addons/utils/SkeletonUtils.js",
+      "bytes": 11535
+    },
+    {
+      "path": "runtime/three.core.js",
+      "bytes": 1458113
+    },
+    {
+      "path": "runtime/three.tsl.js",
+      "bytes": 36854
+    },
+    {
+      "path": "runtime/three.webgpu.js",
+      "bytes": 2284823
+    },
+    {
+      "path": "survival/assets/axio.glb",
+      "bytes": 173352
+    },
+    {
+      "path": "survival/assets/cookset.glb",
+      "bytes": 68484
+    },
+    {
+      "path": "survival/assets/ink-theme.ogg",
+      "bytes": 326403
+    },
+    {
+      "path": "survival/assets/mountain.ogg",
+      "bytes": 53325
+    },
+    {
+      "path": "survival/assets/portal.ogg",
+      "bytes": 45864
+    },
+    {
+      "path": "survival/chapter.js",
+      "bytes": 1236
+    },
+    {
+      "path": "survival/coast.js",
+      "bytes": 7501
+    },
+    {
+      "path": "survival/construction.js",
+      "bytes": 4261
+    },
+    {
+      "path": "survival/controller.js",
+      "bytes": 1022
+    },
+    {
+      "path": "survival/expedition.js",
+      "bytes": 1717
+    },
+    {
+      "path": "survival/game.js",
+      "bytes": 39088
+    },
+    {
+      "path": "survival/portal-reference.jpg",
+      "bytes": 920775
+    },
+    {
+      "path": "survival/preparation.js",
+      "bytes": 1325
+    },
+    {
+      "path": "survival/rifts.js",
+      "bytes": 1434
+    },
+    {
+      "path": "survival/setpieces.js",
+      "bytes": 3787
+    },
+    {
+      "path": "survival/sound.js",
+      "bytes": 2198
+    },
+    {
+      "path": "survival/state.js",
+      "bytes": 14234
+    },
+    {
+      "path": "survival/style.css",
+      "bytes": 13410
+    },
+    {
+      "path": "survival/world.js",
+      "bytes": 23045
+    },
+    {
+      "path": "survival.html",
+      "bytes": 4351
+    },
+    {
+      "path": "THIRD-PARTY-LICENSES.txt",
+      "bytes": 1081
+    },
+    {
+      "path": "trials/game.js",
+      "bytes": 9808
+    },
+    {
+      "path": "trials/rules.js",
+      "bytes": 1133
+    },
+    {
+      "path": "trials/style.css",
+      "bytes": 4285
+    },
+    {
+      "path": "trials.html",
+      "bytes": 1992
+    }
+  ],
+  "totalBytes": 7699116
+}
